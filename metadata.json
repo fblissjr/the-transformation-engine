@@ -1,0 +1,5 @@
+{
+  "name": "The Transformation Engine",
+  "description": "A local-first toolset for engineering, managing, and remixing multi-modal prompts for generative AI",
+  "requestFramePermissions": []
+}

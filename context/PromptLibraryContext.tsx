@@ -1,0 +1,110 @@
+import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode } from 'react';
+import { Prompt } from '../types';
+import * as dbService from '../services/dbService';
+
+interface PromptLibraryContextType {
+  prompts: Prompt[];
+  selectedPromptIds: string[];
+  loadPrompts: () => Promise<void>;
+  searchPrompts: (searchTerm: string) => Promise<void>;
+  addPrompt: (promptData: Omit<Prompt, 'id' | 'createdAt'>) => Promise<Prompt>;
+  deletePrompt: (promptId: string) => Promise<void>;
+  toggleFavorite: (promptId: string) => Promise<void>;
+  toggleSelectPrompt: (promptId: string) => void;
+}
+
+const PromptLibraryContext = createContext<PromptLibraryContextType | undefined>(undefined);
+
+export const PromptLibraryProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>([]);
+
+  const loadPrompts = useCallback(async () => {
+    try {
+      const allPrompts = await dbService.getPrompts();
+      setPrompts(allPrompts);
+    } catch (e) {
+      console.error("Failed to load prompts:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const initDb = async () => {
+      await dbService.initDB();
+      await dbService.ensureDefaultData();
+      loadPrompts();
+    };
+    initDb();
+  }, [loadPrompts]);
+
+  const searchPrompts = useCallback(async (searchTerm: string) => {
+    try {
+      const searchedPrompts = await dbService.searchPrompts(searchTerm);
+      setPrompts(searchedPrompts);
+    } catch (e) {
+      console.error("Failed to search prompts:", e);
+    }
+  }, []);
+
+  const addPrompt = async (promptData: Omit<Prompt, 'id' | 'createdAt'>): Promise<Prompt> => {
+    const savedPrompt = await dbService.addPrompt(promptData);
+    await loadPrompts();
+    return savedPrompt;
+  };
+
+  const deletePrompt = async (promptId: string) => {
+    try {
+      await dbService.deleteVersions(promptId);
+      await dbService.deletePrompt(promptId);
+      await loadPrompts();
+    } catch (e: any) {
+      console.error(`Failed to delete prompt: ${e.message}`);
+      throw e;
+    }
+  };
+
+  const toggleFavorite = async (promptId: string) => {
+    const prompt = prompts.find(p => p.id === promptId);
+    if (!prompt) return;
+    const updatedPrompt = { ...prompt, isFavorite: !prompt.isFavorite };
+    setPrompts(prompts.map(p => p.id === promptId ? updatedPrompt : p));
+    try {
+      await dbService.updatePrompt(updatedPrompt);
+    } catch (e: any) {
+      // Revert on error
+      setPrompts(prompts.map(p => p.id === promptId ? prompt : p));
+      console.error(`Failed to update favorite status: ${e.message}`);
+    }
+  };
+
+  const toggleSelectPrompt = (promptId: string) => {
+    setSelectedPromptIds(prev => {
+      if (prev.includes(promptId)) {
+        return prev.filter(id => id !== promptId);
+      } else {
+        return [...prev, promptId];
+      }
+    });
+  };
+
+  const value = {
+    prompts,
+    selectedPromptIds,
+    loadPrompts,
+    searchPrompts,
+    addPrompt,
+    deletePrompt,
+    toggleFavorite,
+    toggleSelectPrompt,
+  };
+
+  return <PromptLibraryContext.Provider value={value}>{children}</PromptLibraryContext.Provider>;
+};
+
+export const usePromptLibrary = (): PromptLibraryContextType => {
+  const context = useContext(PromptLibraryContext);
+  if (context === undefined) {
+    throw new Error('usePromptLibrary must be used within a PromptLibraryProvider');
+  }
+  return context;
+};
