@@ -25,6 +25,10 @@ npm run dev
 
 Open http://localhost:1847 (or custom port via `npm run dev -- --port 12345`)
 
+**API Key Setup** (choose one):
+1. Environment variable: Copy `.env.example` to `.env.local`, add your key
+2. In-app: Enter when prompted
+
 Get API key: [Google AI Studio](https://aistudio.google.com/app/apikey)
 
 **Documentation:** [User Guide](./docs/user_guide.md) - includes installation, features, and advanced usage
@@ -32,7 +36,7 @@ Get API key: [Google AI Studio](https://aistudio.google.com/app/apikey)
 ## Storage
 
 - **Prompts/versions/media**: IndexedDB (browser-local)
-- **API key**: Session memory only (not persisted)
+- **API key**: Environment variable (optional) or session memory
 - **Cache & custom system prompts**: localStorage (models list, API responses, edited prompts)
 
 Data only sent to Google Gemini API when you explicitly trigger generation/transformation.

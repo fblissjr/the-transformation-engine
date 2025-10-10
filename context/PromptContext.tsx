@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useContext, ReactNode } from 'react';
 import { PromptLibraryProvider, usePromptLibrary } from './PromptLibraryContext';
 import { ActivePromptProvider, useActivePrompt } from './ActivePromptContext';
@@ -70,8 +71,11 @@ export const usePrompts = () => {
     searchPrompts: library.searchPrompts,
     addPrompt: library.addPrompt,
     deletePrompt: library.deletePrompt,
+    deletePrompts: library.deletePrompts,
+    duplicatePrompts: library.duplicatePrompts,
     toggleFavorite: library.toggleFavorite,
     toggleSelectPrompt: library.toggleSelectPrompt,
+    clearSelection: library.clearSelection,
 
     // From ActivePromptContext
     activePrompt: active.activePrompt,

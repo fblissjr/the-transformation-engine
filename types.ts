@@ -30,12 +30,44 @@ export interface Prompt {
   isFavorite: boolean;
 }
 
+export interface GenerationMetadata {
+  // Input
+  naturalLanguageInput: string;
+  mediaReferences?: MediaReference[];
+
+  // Settings
+  format: string;
+  schemaKeys: string[];
+  mixOptions: MixOption[];
+  modelName: string;
+  temperature?: number;
+  topP?: number;
+  maxTokens?: number;
+
+  // Prompts used (for full transparency)
+  systemPrompt: string;
+  userPrompt: string;
+
+  // Operation type
+  operationType: 'generate' | 'mix' | 'normalize' | 'schema_inference';
+  mixSourcePromptIds?: string[]; // If this is a mix operation
+  normalizeInstruction?: string; // If this is a normalize operation
+
+  // API Response
+  tokensUsed?: number;
+  apiLatencyMs?: number;
+
+  // Lineage
+  parentVersionId?: string; // For branching/history tracking
+}
+
 export interface PromptVersion {
   versionId: string;
   promptId: string;
   savedAt: string;
   structuredOutput: string;
   normalizedOutput: string;
+  metadata?: GenerationMetadata; // Optional for backward compatibility
 }
 
 export interface PromptSettings {

@@ -14,9 +14,10 @@ const ApiKeyContext = createContext<ApiKeyContextType | undefined>(undefined);
 
 export const ApiKeyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [apiKey, setApiKey] = useState<string | null>(() => {
-    // Safely check for process.env.API_KEY in a browser environment
-    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-      return process.env.API_KEY;
+    // Check for Vite environment variable first
+    const envApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (envApiKey && typeof envApiKey === 'string') {
+      return envApiKey;
     }
     return null;
   });

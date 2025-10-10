@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode } from 'react';
 import { Prompt } from '../types';
 import * as dbService from '../services/dbService';
@@ -9,8 +10,11 @@ interface PromptLibraryContextType {
   searchPrompts: (searchTerm: string) => Promise<void>;
   addPrompt: (promptData: Omit<Prompt, 'id' | 'createdAt'>) => Promise<Prompt>;
   deletePrompt: (promptId: string) => Promise<void>;
+  deletePrompts: (promptIds: string[]) => Promise<void>;
+  duplicatePrompts: (promptIds: string[]) => Promise<void>;
   toggleFavorite: (promptId: string) => Promise<void>;
   toggleSelectPrompt: (promptId: string) => void;
+  clearSelection: () => void;
 }
 
 const PromptLibraryContext = createContext<PromptLibraryContextType | undefined>(undefined);
@@ -87,6 +91,44 @@ export const PromptLibraryProvider: React.FC<{children: ReactNode}> = ({ childre
     });
   };
 
+  const clearSelection = () => {
+    setSelectedPromptIds([]);
+  };
+
+  const deletePrompts = async (promptIds: string[]) => {
+    try {
+      for (const promptId of promptIds) {
+        await dbService.deleteVersions(promptId);
+        await dbService.deletePrompt(promptId);
+      }
+      await loadPrompts();
+      clearSelection();
+    } catch (e: any) {
+      console.error(`Failed to delete prompts: ${e.message}`);
+      throw e;
+    }
+  };
+
+  const duplicatePrompts = async (promptIds: string[]) => {
+    try {
+      for (const promptId of promptIds) {
+        const prompt = prompts.find(p => p.id === promptId);
+        if (prompt) {
+          const { id, createdAt, ...promptData } = prompt;
+          await dbService.addPrompt({
+            ...promptData,
+            title: `${prompt.title} (Copy)`,
+          });
+        }
+      }
+      await loadPrompts();
+      clearSelection();
+    } catch (e: any) {
+      console.error(`Failed to duplicate prompts: ${e.message}`);
+      throw e;
+    }
+  };
+
   const value = {
     prompts,
     selectedPromptIds,
@@ -94,8 +136,11 @@ export const PromptLibraryProvider: React.FC<{children: ReactNode}> = ({ childre
     searchPrompts,
     addPrompt,
     deletePrompt,
+    deletePrompts,
+    duplicatePrompts,
     toggleFavorite,
     toggleSelectPrompt,
+    clearSelection,
   };
 
   return <PromptLibraryContext.Provider value={value}>{children}</PromptLibraryContext.Provider>;

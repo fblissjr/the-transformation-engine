@@ -143,7 +143,7 @@ export const BUILT_IN_MIX_OPTIONS: MixOption[] = [
   {
     id: 'compress',
     name: 'Compress',
-    instruction: 'Remove all filler words and unnecessary language. Keep only essential descriptive content while maintaining clarity.',
+    instruction: 'COMPRESS AGGRESSIVELY. Each field must be under 10 words. Remove ALL adjectives, adverbs, and descriptive phrases. Use only nouns and verbs. Example: "scene: dark alley, man walks" NOT "scene: A dimly lit alleyway where a mysterious figure walks slowly". Final output MUST be 50% shorter.',
     isBuiltIn: true,
     isEnabled: false,
   },

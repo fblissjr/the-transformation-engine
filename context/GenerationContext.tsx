@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { Prompt } from '../types';
 import { STRINGS } from '../constants';
@@ -37,7 +38,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     setNaturalLanguageInput,
   } = useActivePrompt();
   const { mediaReferences } = useMedia();
-  const { addPrompt, prompts, selectedPromptIds } = usePromptLibrary();
+  const { addPrompt, prompts, selectedPromptIds, clearSelection } = usePromptLibrary();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isNormalizing, setIsNormalizing] = useState(false);
@@ -177,6 +178,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       };
       const savedPrompt = await addPrompt(newPromptData);
       selectPrompt(savedPrompt);
+      clearSelection();
       setProgress(100);
     } catch (e: any) {
       setError(`An error occurred during mixing: ${e.message}`);

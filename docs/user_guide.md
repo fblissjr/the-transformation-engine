@@ -70,7 +70,7 @@ speech: "CHEF: 'The key is in the wrist motion'"
 
 Enable transformations applied during generation:
 - **Reverse**: Reverses keys and content
-- **Compress**: Removes filler words
+- **Compress**: Aggressive compression (removes adjectives, filler, aims for 50% reduction)
 - **Expand**: Adds descriptive detail
 - **Technical**: Uses precise terminology
 - **Custom**: Define your own with instructions
@@ -93,6 +93,7 @@ Transformations use current structured output as input.
 2. Mix button appears at top
 3. Enter guidance or leave default
 4. Generates hybrid prompt
+5. Checkboxes auto-clear after mixing
 
 Example guidance: "Combine the mood of the first with the setting of the second"
 
@@ -164,14 +165,20 @@ Changes stored in localStorage and used for all subsequent generations.
 
 - Type in search bar (instant filter by title/content)
 - Star prompts for favorites
-- Delete via trash icon (confirms first)
 - Click prompt to load in editor
+
+**Multi-Selection**:
+- Check boxes next to prompts to select multiple
+- Bulk actions appear: Duplicate, Delete
+- Delete shows inline confirmation (red border, no popup)
+- Clear selection button to uncheck all
+- Export exports only selected prompts (if any checked)
 
 ### Import/Export
 
 **Prompt Library** (Bottom of left sidebar):
 - **Import Prompts**: Load JSON backup
-- **Export Prompts**: Save all prompts (or selected if checkboxes active)
+- **Export Prompts**: Save all prompts (or only selected if checkboxes are checked)
 
 **Configuration** (Center panel bottom bar):
 - **Export Config**: Save settings (format, mix options, schema keys, model, custom system prompts)

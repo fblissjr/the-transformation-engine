@@ -6,7 +6,6 @@ import ApiKeyModal from './components/ApiKeyModal';
 import LeftPanel from './components/LeftPanel';
 import CenterPanel from './components/CenterPanel';
 import RightPanel from './components/RightPanel';
-import ConfirmModal from './components/ConfirmModal';
 import { logger } from './services/loggerService';
 import { LogEntry } from './types';
 import { STRINGS } from './constants';
@@ -36,13 +35,7 @@ const App: React.FC = () => {
 
 const Main: React.FC = () => {
   const { isApiKeySet, isModalOpen, openModal, closeModal } = useApiKey();
-  const { error, deletePrompt } = usePrompts();
-  const [confirmModalState, setConfirmModalState] = useState({
-    isOpen: false,
-    title: '',
-    message: '',
-    onConfirm: () => {},
-  });
+  const { error } = usePrompts();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoggingEnabled, setIsLoggingEnabled] = useState(false);
 
@@ -65,40 +58,13 @@ const Main: React.FC = () => {
 
   const handleClearLogs = () => logger.clearLogs();
 
-  const closeConfirmModal = () => {
-    setConfirmModalState(prev => ({ ...prev, isOpen: false }));
-  };
-
-  const handleDeleteRequest = (promptId: string, promptTitle: string) => {
-    setConfirmModalState({
-        isOpen: true,
-        title: STRINGS.DELETE_PROMPT_CONFIRM_TITLE,
-        message: STRINGS.DELETE_PROMPT_CONFIRM_MESSAGE(promptTitle),
-        onConfirm: () => handleDeleteConfirm(promptId),
-    });
-  };
-
-  const handleDeleteConfirm = async (promptId: string) => {
-      await deletePrompt(promptId);
-      closeConfirmModal();
-  };
-
   return (
     <>
       {isModalOpen && <ApiKeyModal onClose={closeModal} />}
-      <ConfirmModal
-        isOpen={confirmModalState.isOpen}
-        title={confirmModalState.title}
-        message={confirmModalState.message}
-        onConfirm={handleDeleteConfirm}
-        onCancel={closeConfirmModal}
-        confirmText={STRINGS.CONFIRM_MODAL_DELETE_BUTTON_TEXT}
-        confirmButtonClass="bg-red-600 hover:bg-red-500"
-      />
       <div className="flex h-screen w-full bg-gray-950 font-sans">
-        <LeftPanel onDeleteRequest={handleDeleteRequest} />
+        <LeftPanel />
         <CenterPanel />
-        <RightPanel 
+        <RightPanel
           logs={logs}
           isLoggingEnabled={isLoggingEnabled}
           setIsLoggingEnabled={setIsLoggingEnabled}

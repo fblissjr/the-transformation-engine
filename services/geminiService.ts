@@ -52,24 +52,43 @@ export async function listAvailableModels(apiKey: string): Promise<GeminiModel[]
   }
 }
 
+export interface GenerationResult {
+  text: string;
+  tokensUsed?: number;
+  modelUsed: string;
+}
+
 export async function generateContent(
   apiKey: string,
   prompt: string,
   modelSettings?: ModelSettings
 ): Promise<string> {
+  const result = await generateContentWithMetadata(apiKey, prompt, modelSettings);
+  return result.text;
+}
+
+export async function generateContentWithMetadata(
+  apiKey: string,
+  prompt: string,
+  modelSettings?: ModelSettings
+): Promise<GenerationResult> {
   // Generate cache key
   const cacheKey = APICache.generateKey(prompt, modelSettings);
 
-  // Check cache
+  // Check cache (only cache the text)
   const cached = apiCache.get(cacheKey);
   if (cached !== null) {
-    return cached;
+    return {
+      text: cached,
+      modelUsed: modelSettings?.modelName || GEMINI_MODEL_NAME,
+    };
   }
 
   // Cache miss - call API
   const genAI = new GoogleGenerativeAI(apiKey);
+  const modelName = modelSettings?.modelName || GEMINI_MODEL_NAME;
   const model = genAI.getGenerativeModel({
-    model: modelSettings?.modelName || GEMINI_MODEL_NAME,
+    model: modelName,
     generationConfig: {
       maxOutputTokens: modelSettings?.maxTokens,
       temperature: modelSettings?.temperature,
@@ -80,10 +99,18 @@ export async function generateContent(
   const response = await result.response;
   const text = response.text();
 
+  // Extract usage metadata if available
+  const usageMetadata = (response as any).usageMetadata;
+  const tokensUsed = usageMetadata?.totalTokenCount;
+
   // Cache the result (5 minutes TTL for generation)
   apiCache.set(cacheKey, text, 300000);
 
-  return text;
+  return {
+    text,
+    tokensUsed,
+    modelUsed: modelName,
+  };
 }
 
 export async function generateJsonContent(

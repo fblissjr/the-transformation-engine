@@ -20,7 +20,7 @@ npm run dev    # Development server
 npm run build  # Production build
 ```
 
-**Requirements**: Gemini API key (user provides, stored in session only)
+**Requirements**: Gemini API key (set via `VITE_GEMINI_API_KEY` in `.env.local` or enter in-app)
 
 ---
 
@@ -190,7 +190,7 @@ Four core prompts (defaults in `constants.ts`, customizable in Settings → Syst
 
 ### Gemini API
 - Model: `gemini-2.5-pro` (configurable)
-- Key stored in session memory only
+- Key from `VITE_GEMINI_API_KEY` env var or session memory
 - Direct browser → Google API calls
 - Cached responses (see `services/apiCache.ts`)
 
@@ -297,7 +297,7 @@ Documentation:
 
 1. **No Emojis**: Per user preference, avoid emojis in code/docs
 2. **Local-First**: No backend, no accounts, privacy-first
-3. **API Key Security**: Never persist API key to disk
+3. **API Key**: Set via `VITE_GEMINI_API_KEY` env var (`.env.local`) or in-app
 4. **Blob Storage**: Use Blobs for media, not base64
 5. **Cache-First**: Check apiCache before API calls
 6. **Context Splitting**: Use specific hooks to minimize re-renders

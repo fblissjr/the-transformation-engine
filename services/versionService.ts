@@ -1,4 +1,4 @@
-import { Prompt, PromptVersion } from '../types';
+import { Prompt, PromptVersion, GenerationMetadata } from '../types';
 import * as dbService from './dbService';
 
 export async function getVersions(promptId: string): Promise<PromptVersion[]> {
@@ -10,7 +10,11 @@ export async function getVersions(promptId: string): Promise<PromptVersion[]> {
   }
 }
 
-export async function addVersion(prompt: Prompt): Promise<void> {
+export async function addVersion(
+  prompt: Prompt,
+  metadata?: GenerationMetadata,
+  parentVersionId?: string
+): Promise<void> {
   if (!prompt) return;
 
   try {
@@ -20,6 +24,7 @@ export async function addVersion(prompt: Prompt): Promise<void> {
       savedAt: new Date().toISOString(),
       structuredOutput: prompt.structuredOutput,
       normalizedOutput: prompt.normalizedOutput,
+      metadata: metadata ? { ...metadata, parentVersionId } : undefined,
     };
     await dbService.addVersion(newVersion);
   } catch (e) {
