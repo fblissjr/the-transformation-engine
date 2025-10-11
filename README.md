@@ -34,7 +34,7 @@ Upload images/videos, mix multiple prompts, and use AI vision analysis.
 <img src="assets/media-conditioning.png" alt="Media Conditioning" width="800">
 
 ### Model Selection
-Choose from 30+ Gemini models with real-time availability.
+Choose from all available Gemini models with real-time availability.
 
 <img src="assets/model-selector.png" alt="Model Selector" width="800">
 
