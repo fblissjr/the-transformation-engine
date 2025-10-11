@@ -16,6 +16,6 @@ Include rich detail for:
 - **Subjects:** Appearance, clothing, expressions, body language, positioning
 - **Environment:** Architecture, landscape features, weather, time of day, season
 - **Style:** Artistic style, color grading, film stock emulation, aesthetic references
-- **Audio:** Ambient sounds, sound effects, music style (even though Sora 2 is visual-only, audio descriptions help establish mood)
+- **Audio (optional):** Ambient sounds, sound effects, music style (Sora 2 generates audio automatically from visual content, but explicit audio descriptions can guide and enhance the soundtrack)
 
 **Target:** Aim for 300-500 words for optimal results. Don't just list elements—describe how they interact and contribute to the overall scene.

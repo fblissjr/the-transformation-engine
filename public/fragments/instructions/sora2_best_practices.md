@@ -17,27 +17,13 @@ description: Research-backed best practices for Sora 2 prompts with good/bad exa
 **Optimal Length**: 300-500 words (~1500-2400 characters)
 **Training**: Fine-tuned on detailed 300-500 word image-to-text captions
 **Architecture**: Diffusion-transformer with spacetime patches
-**Audio**: **NONE** - Sora 2 is visual-only (NO audio generation)
+**Audio**: Native video+audio generation (sound effects, music, dialogue generated automatically from visual content; explicit audio descriptions optional but can enhance soundtrack)
 
 ## What Sora 2 Needs
 
-### 1. Technical Specifications (REQUIRED)
-**Always specify upfront:**
-- Duration (e.g., "10s")
-- Resolution (e.g., "1920x1080")
-- Aspect Ratio (e.g., "16:9")
+**Note**: Technical specs (duration, resolution, aspect ratio) are **UI-controlled**, not prompt parameters. Duration is fixed at 10s, resolution at 1920x1080, and aspect ratio is a simple toggle (landscape/portrait). Don't waste characters on these.
 
-❌ **BAD** (no specs):
-```yaml
-scene: A woman walks down a hallway
-```
-
-✅ **GOOD** (specs explicit):
-```yaml
-technical_specs: "Duration: 10s | Resolution: 1920x1080 | Aspect Ratio: 16:9"
-```
-
-### 2. Temporal Progression (CRITICAL)
+### 1. Temporal Progression (CRITICAL)
 Describe HOW the scene evolves over 10 seconds. Spacetime patches process the entire video simultaneously - describe continuous progression, not snapshots.
 
 ❌ **BAD** (static description):
@@ -52,7 +38,7 @@ A deer standing in a forest
 [00:07-00:10] Deer slows, turns head toward sound off-frame, pauses mid-step
 ```
 
-### 3. Comprehensive Visual Detail
+### 2. Comprehensive Visual Detail
 More detail = better results. Sora 2 was trained on DETAILED captions, not terse descriptions.
 
 ❌ **BAD** (terse):
@@ -65,7 +51,7 @@ A city at night
 A sprawling futuristic metropolis at dusk. Towering skyscrapers with illuminated windows pierce a hazy sky. Flying vehicles trace light paths between buildings. Neon signs in vibrant blues, purples, and pinks create color accents. Atmospheric haze and distance fog create depth layers. Holographic advertisements float near several buildings.
 ```
 
-### 4. Camera Movement Specificity
+### 3. Camera Movement Specificity
 Use precise cinematography terminology. Sora 2's spacetime patches respond well to specific camera descriptions.
 
 ❌ **BAD** (vague):
@@ -78,18 +64,18 @@ The camera moves forward
 Smooth forward dolly (push-in) starting slow (0-3s) and building to moderate speed (3-10s). Movement is on steady axis toward central tower. Professionally stabilized - no shake or wobble. 35mm lens equivalent, f/2.8 aperture for shallow depth of field.
 ```
 
-### 5. NO Audio Descriptions
-**CRITICAL**: Sora 2 is visual-only. Do NOT include audio, sound effects, dialogue, or music descriptions.
+### 4. Audio Descriptions (Optional but Recommended)
+Sora 2 generates audio automatically from visual content, but explicit audio descriptions can guide and enhance the soundtrack.
 
-❌ **BAD** (includes audio):
+✅ **GOOD** (explicit audio guidance):
 ```yaml
-audio: Gentle waves, seabird calls, wind
-dialogue: "Hello there!"
+audio_design: Gentle ocean waves with rhythmic ebb and flow, distant seabird calls, soft wind
 ```
 
-✅ **GOOD** (visual-only):
+✅ **ALSO GOOD** (visual-only, audio inferred):
 ```yaml
 visual_description: Waves create rhythmic patterns on shore. Seabirds circle in background.
+# (Audio will be generated automatically from visual content)
 ```
 
 ## Prompt Length Guidelines
@@ -134,11 +120,16 @@ scene: A forest scene
 # (No duration, resolution, or aspect ratio specified)
 ```
 
-### Anti-Pattern 3: Audio Descriptions (Visual-Only Model!)
-❌ **BAD**:
+### Anti-Pattern 3: Vague Audio Descriptions
+❌ **BAD** (vague):
 ```yaml
-sounds: Thunder, rain, wind
-music: Dramatic orchestral score
+sounds: Nice sounds
+music: Good music
+```
+
+✅ **GOOD** (specific):
+```yaml
+audio_design: Deep rolling thunder with 2-3 second delays, heavy rain with droplet impacts, gusting wind at 20-30 mph
 ```
 
 ### Anti-Pattern 4: Rapid Scene Changes

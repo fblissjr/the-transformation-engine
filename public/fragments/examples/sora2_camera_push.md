@@ -12,8 +12,6 @@ subject_type: environment
 **Example Prompt (Cityscape Push)**:
 
 ```yaml
-technical_specs: "Duration: 15s | Resolution: 1920x1080 | Aspect Ratio: 21:9"
-
 temporal_progression: |
   [00:00-00:05] Opening frame: Wide aerial view of futuristic cityscape at dusk. Towering skyscrapers with illuminated windows stretch into purple-blue twilight sky. Camera begins slow dolly forward, accelerating gradually.
 
@@ -28,9 +26,9 @@ camera_movement: "Dynamic dolly-in starting at 0.5 m/s, accelerating to 2.5 m/s 
 
 cinematography: "Inspired by Blade Runner visual language. Strong depth of field changes create sense of scale and space compression. Vertical movement combined with forward motion. Use of leading lines from building edges to guide eye toward target window. Rain effects add atmospheric texture without obscuring primary subject."
 
-lighting: "Twilight ambient base with multiple artificial light sources. Neon signs provide colored accent lighting. Building windows glow with warm interior light. Holographic projections add animated light elements. Atmospheric lighting through rain/mist creates volumetric light rays from bright sources. High contrast between lit and shadow areas enhances noir aesthetic."
+lighting: "Twilight ambient base with multiple artificial light sources. Neon signs provide colored accent lighting (pink at 3200K, cyan at 7000K, amber at 2800K). Building windows glow with warm interior light (3000K tungsten equivalent). Holographic projections add animated light elements with RGB color shifts. Atmospheric lighting through rain/mist creates volumetric light rays (god rays) from bright sources with visible scattering. High contrast ratio (8:1) between lit windows and shadow areas enhances noir aesthetic. Rim lighting on building edges from distant light sources."
 
 audio_design: "Distant city ambience - muffled traffic sounds, electronic hums, echoing voices. Whoosh sounds from flying vehicles passing. Wind whistling through building gaps. Rain beginning to fall with gentle patter. Bass-heavy drone suggesting urban density and technological presence."
 
-style: "Cyberpunk/neo-noir cinematic. Desaturated base with selective color saturation on neon elements. Anamorphic lens flares from bright light sources. Subtle chromatic aberration at frame edges. Film grain texture overlay for organic feel. Moody, atmospheric, with emphasis on depth and layered composition."
+style: "Cyberpunk/neo-noir cinematic aesthetic inspired by Blade Runner and Ghost in the Shell. Desaturated base color palette (70% saturation) with selective color saturation boost on neon elements (120% saturation). Anamorphic lens flares with horizontal blue streaks from bright light sources. Subtle chromatic aberration at frame edges (2-3 pixel RGB separation). 35mm film grain texture overlay (ISO 800 equivalent) for organic feel against digital elements. Moody, atmospheric, with emphasis on depth through layered composition and multiple z-axis planes. Color grading: teal shadows, warm highlights, crushed blacks for contrast."
 ```

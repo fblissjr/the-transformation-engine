@@ -12,8 +12,6 @@ subject_type: object
 **Example Prompt (Product Showcase)**:
 
 ```yaml
-technical_specs: "Duration: 8s | Resolution: 1920x1080 | Aspect Ratio: 16:9"
-
 temporal_progression: |
   [00:00-00:02] Static shot establishing the product - a sleek wireless headphone set - resting on a minimalist wooden surface. Soft directional light from left creates gentle shadows. Product positioned in perfect thirds composition.
 
@@ -29,6 +27,8 @@ camera_movement: "Smooth mechanical orbit (turntable effect) - camera revolves 1
 lighting_setup: "Key light: Large softbox positioned camera-left at 45-degree angle, providing main illumination with soft shadows. Fill light: Subtle reflector panel camera-right reduces shadow density without eliminating depth. Rim light: Small focused LED backlight adds subtle highlight to product's top edge, separating it from background. Color temperature: Neutral 5500K with slight warm color cast to complement wooden surface. No harsh reflections on metallic surfaces - all catchlights controlled and intentional."
 
 environment: "Studio product photography setup but rendered naturalistically. Wooden display surface appears to be part of modern interior space. Background suggests bright, airy room with soft window light (motivated by key light direction). Clean, uncluttered aesthetic emphasizing product. No distracting elements - complete focus on headphones."
+
+audio_design: "Quiet studio ambience with subtle room tone. Soft mechanical sound of precision camera movement (smooth gimbal). Very subtle texture of headphones' materials - faint leather/foam compression. Minimal but present - emphasizing premium quality and craftsmanship. No music, letting product speak through visual elegance."
 
 style: "High-end commercial product videography. Clean, professional, sophisticated. Color grading with slightly elevated blacks for modern look. Crisp detail on product while maintaining organic feel through wooden surface texture. Subtle vignette at frame edges guides attention to center. Premium feel through careful lighting and precise camera movement."
 ```

@@ -343,17 +343,19 @@ const CenterPanel: React.FC = () => {
     { name: 'Music', keys: ['composition', 'instruments', 'mood', 'tempo'] },
     { name: 'Art Direction', keys: ['visual_style', 'color_palette', 'composition', 'mood'] },
 
-    // Sora 2 presets (visual-only, comprehensive detail)
+    // Sora 2 presets (video+audio, comprehensive detail)
     // Based on CANONICAL_SCHEMA_KEYS.sora2 from constants.ts
-    { name: 'Sora 2: Cinematic', keys: ['technical_specs', 'temporal_progression', 'visual_description', 'camera_movement', 'cinematography', 'lighting', 'style'] },
-    { name: 'Sora 2: Social Media', keys: ['technical_specs', 'temporal_progression', 'visual_description', 'camera_movement', 'style'] },
-    { name: 'Sora 2: Product Demo', keys: ['technical_specs', 'visual_description', 'camera_movement', 'cinematography', 'lighting', 'style'] },
+    // Note: technical_specs removed (UI-controlled: fixed 10s, 1920x1080, aspect ratio toggle)
+    { name: 'Sora 2: Cinematic', keys: ['temporal_progression', 'visual_description', 'camera_movement', 'cinematography', 'lighting', 'audio_design', 'style'] },
+    { name: 'Sora 2: Social Media', keys: ['temporal_progression', 'visual_description', 'camera_movement', 'audio_design', 'style'] },
+    { name: 'Sora 2: Product Demo', keys: ['visual_description', 'camera_movement', 'cinematography', 'lighting', 'audio_design', 'style'] },
 
     // Veo 3 presets (audio-first, 9-element framework)
     // Based on CANONICAL_SCHEMA_KEYS.veo3 from constants.ts
-    { name: 'Veo 3: Narrative Scene', keys: ['veo3_specs', 'subject', 'context', 'action', 'audio_elements', 'camera_motion', 'lighting_mood', 'composition'] },
-    { name: 'Veo 3: Cinematic Landscape', keys: ['veo3_specs', 'subject', 'context', 'style', 'camera_motion', 'audio_elements', 'lighting_mood', 'background_setting'] },
-    { name: 'Veo 3: Product Demo', keys: ['veo3_specs', 'subject', 'action', 'audio_elements', 'camera_motion', 'lighting_mood', 'composition'] },
+    // Note: veo3_specs removed (UI-controlled: fixed 8s, resolution/framerate settings)
+    { name: 'Veo 3: Narrative Scene', keys: ['subject', 'context', 'action', 'audio_elements', 'camera_motion', 'lighting_mood', 'composition'] },
+    { name: 'Veo 3: Cinematic Landscape', keys: ['subject', 'context', 'style', 'camera_motion', 'audio_elements', 'lighting_mood', 'background_setting'] },
+    { name: 'Veo 3: Product Demo', keys: ['subject', 'action', 'audio_elements', 'camera_motion', 'lighting_mood', 'composition'] },
   ];
 
   return (
@@ -480,13 +482,13 @@ const CenterPanel: React.FC = () => {
                     detectedTemplate === 'veo3' ? 'text-purple-400' :
                     'text-gray-400'
                   }`}>
-                    {detectedTemplate === 'sora2' && '🎬 Sora 2 (Visual-only, 10s clips, 300-500 words)'}
+                    {detectedTemplate === 'sora2' && '🎬 Sora 2 (Video+Audio, 10s clips, 300-500 words)'}
                     {detectedTemplate === 'veo3' && '🎵 Veo 3 (Audio-first, 8s clips, 200-400 words)'}
                     {detectedTemplate === 'generic' && '📝 Generic (Model-agnostic, 8-10s clips)'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500">
-                  {detectedTemplate === 'sora2' && 'Using research-backed Sora 2 template with spacetime coherence, temporal progression, comprehensive visual detail. NO audio generation.'}
+                  {detectedTemplate === 'sora2' && 'Using research-backed Sora 2 template with spacetime coherence, temporal progression, comprehensive visual detail. Native video+audio generation (audio descriptions optional).'}
                   {detectedTemplate === 'veo3' && 'Using research-backed Veo 3 template with 9-element framework, native audio generation (V2A), character consistency, cinematic language.'}
                   {detectedTemplate === 'generic' && 'Using generic template. For best results, use model-specific presets or schema keys.'}
                 </p>

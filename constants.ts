@@ -62,9 +62,10 @@ To foster creative interpretation, you MUST NOT use proper names of well-known f
 
 **Model-Specific Considerations:**
 - **If schema keys include audio/sound/dialogue**: Provide audio descriptions (dialogue, ambient sounds, music)
-- **If schema keys are visual-only**: Focus exclusively on visual elements (no audio descriptions)
 - **If schema keys include temporal_progression**: Describe how scene evolves from start to finish
 - **If schema keys include character/subject**: Provide 30-50 word detailed character descriptions
+- **For Sora 2**: Audio is generated automatically from visual content; explicit audio descriptions optional but can enhance soundtrack
+- **For Veo 3**: Audio descriptions are REQUIRED (native V2A system, dialogue in quotation marks)
 
 **Final Instruction:**
 Your response must contain ONLY the structured prompt itself, with no additional commentary, introductions, or explanations. Be comprehensive yet efficient - every word should add visual or temporal clarity.
@@ -303,7 +304,8 @@ export const CANONICAL_SCHEMA_KEYS = {
    * See internal/veo3/VEO3_RESEARCH_ANALYSIS.md for research details
    */
   veo3: [
-    'veo3_specs',        // Technical specifications (8s duration, 720p @ 24fps, native audio)
+    // NOTE: veo3_specs (duration/resolution/framerate) removed - these are UI-controlled, not prompt parameters
+    // Duration is fixed at 8s, resolution/framerate controlled by UI settings
     'subject',           // Main character/object with detailed description (30-50 words for consistency)
     'context',           // Setting and environmental context (where, when)
     'action',            // What happens in the scene with narrative progression (beginning/middle/end)
@@ -323,7 +325,8 @@ export const CANONICAL_SCHEMA_KEYS = {
    * Training: Fine-tuned on 300-500 word detailed captions
    * Architecture: Diffusion-transformer with spacetime patches
    * Duration: Typically 10 seconds
-   * NO AUDIO SUPPORT - Sora 2 is visual-only
+   * Audio: Native video+audio generation (sound effects, music, dialogue synchronized automatically)
+   *        Audio descriptions are OPTIONAL but can guide soundtrack generation
    *
    * NOTE: The storyboard patent (US_2025259361_A1) reveals a more advanced FRAME-BASED approach
    * with prompts at specific timestamps (0s, 2.5s, 5s, 7.5s, 10s). This is the FUTURE direction
@@ -331,12 +334,14 @@ export const CANONICAL_SCHEMA_KEYS = {
    * progression. See internal/sora/US_2025259361_STORYBOARD_ANALYSIS.md
    */
   sora2: [
-    'technical_specs',      // **REQUIRED** Duration, resolution, aspect ratio (determined BEFORE generation)
+    // NOTE: technical_specs (duration/resolution/aspect ratio) removed - these are UI-controlled, not prompt parameters
+    // Duration is fixed at 10s, resolution fixed at 1920x1080, aspect ratio is a UI toggle (landscape/portrait)
     'temporal_progression', // **CRITICAL** How scene evolves from start to finish with specific visual changes
     'visual_description',   // Rich visual details (colors, textures, atmospheric elements, depth, composition)
     'camera_movement',      // Specific camera techniques with technical precision (dolly, crane, pan, tilt, zoom, rack focus)
     'cinematography',       // Framing, composition, depth of field, focal length characteristics
     'lighting',             // Lighting setup, quality, direction, color temperature, mood
+    'audio_design',         // Sound effects, ambient sounds, music (optional but enhances soundtrack)
     'style',                // Visual aesthetic, artistic references, color grading, overall look
   ],
 
