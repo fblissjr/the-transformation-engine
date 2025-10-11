@@ -5,6 +5,7 @@ import { LogoIcon, PlusIcon, ImportIcon, ExportIcon, SettingsIcon, MixIcon, Tras
 import * as dbService from '../services/dbService';
 import ShareModal from './ShareModal';
 import SettingsModal from './SettingsModal';
+import { PrivacyDashboard } from './PrivacyDashboard';
 import { Prompt } from '../types';
 
 interface LeftPanelProps {
@@ -33,6 +34,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isPrivacyDashboardOpen, setIsPrivacyDashboardOpen] = useState(false);
   const [deleteConfirmIds, setDeleteConfirmIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -172,6 +174,10 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
               onSettingsChange={setSettings}
             />
         )}
+        <PrivacyDashboard
+          isOpen={isPrivacyDashboardOpen}
+          onClose={() => setIsPrivacyDashboardOpen(false)}
+        />
       <div className="p-4 border-b border-gray-800 flex items-center gap-3 shrink-0">
         <LogoIcon />
         <div>
@@ -343,8 +349,17 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
         </div>
       </div>
 
-      {/* Settings Button - At the very bottom */}
-      <div className="px-4 pb-4 pt-2 border-t border-gray-800 shrink-0">
+      {/* Privacy & Settings - At the very bottom */}
+      <div className="px-4 pb-4 pt-2 border-t border-gray-800 shrink-0 space-y-2">
+        <button
+          onClick={() => setIsPrivacyDashboardOpen(true)}
+          className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-medium py-2.5 px-3 rounded transition-colors text-sm"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          Privacy
+        </button>
         <button
           onClick={() => setIsSettingsModalOpen(true)}
           className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-medium py-2.5 px-3 rounded transition-colors text-sm"

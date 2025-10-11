@@ -1,39 +1,79 @@
 
-import React, { createContext, useState, useContext, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useMemo, useCallback, useEffect } from 'react';
+import { encryptedStorage } from '../services/encryptedStorage';
 
 interface ApiKeyContextType {
   apiKey: string | null;
-  setApiKey: (key: string | null) => void;
+  setApiKey: (key: string | null, ttl?: number) => Promise<void>;
   isApiKeySet: boolean;
   isModalOpen: boolean;
   openModal: () => void;
   closeModal: () => void;
+  clearApiKey: () => Promise<void>;
+  getApiKeyExpiration: () => Promise<number | null>;
 }
 
 const ApiKeyContext = createContext<ApiKeyContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'gemini_api_key';
+const DEFAULT_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 export const ApiKeyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [apiKey, setApiKey] = useState<string | null>(() => {
-    // Check for Vite environment variable first
-    const envApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (envApiKey && typeof envApiKey === 'string') {
-      return envApiKey;
-    }
-    return null;
-  });
+  const [apiKey, setApiKeyState] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load API key on mount
+  useEffect(() => {
+    const loadApiKey = async () => {
+      try {
+        // Check encrypted storage for user-provided key
+        const storedKey = await encryptedStorage.get(STORAGE_KEY);
+        if (storedKey) {
+          setApiKeyState(storedKey);
+        }
+      } catch (error) {
+        console.error('Failed to load API key:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadApiKey();
+  }, []);
+
+  const setApiKey = useCallback(async (key: string | null, ttl: number = DEFAULT_TTL) => {
+    if (key) {
+      await encryptedStorage.set(STORAGE_KEY, key, { ttl });
+      setApiKeyState(key);
+    } else {
+      await encryptedStorage.remove(STORAGE_KEY);
+      setApiKeyState(null);
+    }
+  }, []);
+
+  const clearApiKey = useCallback(async () => {
+    await encryptedStorage.remove(STORAGE_KEY);
+    setApiKeyState(null);
+  }, []);
+
+  const getApiKeyExpiration = useCallback(async () => {
+    return await encryptedStorage.getExpiration(STORAGE_KEY);
+  }, []);
 
   const openModal = useCallback(() => setIsModalOpen(true), []);
   const closeModal = useCallback(() => setIsModalOpen(false), []);
 
   const contextValue = useMemo(() => ({
-    apiKey,
+    apiKey: isLoading ? null : apiKey,
     setApiKey,
     isApiKeySet: !!apiKey,
     isModalOpen,
     openModal,
     closeModal,
-  }), [apiKey, isModalOpen, openModal, closeModal]);
+    clearApiKey,
+    getApiKeyExpiration,
+  }), [apiKey, isLoading, isModalOpen, openModal, closeModal, setApiKey, clearApiKey, getApiKeyExpiration]);
 
   return (
     <ApiKeyContext.Provider value={contextValue}>

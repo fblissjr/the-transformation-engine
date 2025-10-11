@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-10-09 | **Status**: Transparency Features Complete
+> **Last Updated**: 2025-10-11 | **Status**: Privacy & Multi-Tenant Ready
 
 ---
 
@@ -20,7 +20,7 @@ npm run dev    # Development server
 npm run build  # Production build
 ```
 
-**Requirements**: Gemini API key (set via `VITE_GEMINI_API_KEY` in `.env.local` or enter in-app)
+**Requirements**: Gemini API key (enter in-app, stored encrypted)
 
 ---
 
@@ -54,6 +54,49 @@ npm run build  # Production build
 - Blob storage → 33% reduction in media storage size
 - API caching → 40-60% reduction in API costs
 
+### Privacy & Security Architecture
+
+**100% Client-Side Guarantee**:
+- All API calls: Browser → Google Gemini (direct, no proxy)
+- All data storage: Browser IndexedDB (never uploaded)
+- All processing: Client-side JavaScript (no server backend)
+- Host sees: Only static file requests (HTML/JS/CSS)
+
+**Encrypted API Key Storage**:
+- `services/encryptedStorage.ts` - AES-GCM encryption via Web Crypto API
+- Keys encrypted with browser fingerprint (user-agent + language)
+- Configurable TTL (default: 7 days, user can adjust)
+- Automatic expiration and cleanup
+- Never stored in plaintext
+
+**Network Monitoring**:
+- `services/networkMonitor.ts` - Intercepts all fetch() calls
+- Real-time audit log (last 100 requests)
+- Approved domains whitelist (`generativelanguage.googleapis.com` only)
+- Detects unexpected network activity
+- Export audit logs for verification
+
+**Privacy Dashboard**:
+- `components/PrivacyDashboard.tsx` - Transparency UI
+- Network activity monitoring (by domain, purpose, media presence)
+- Storage usage tracking (IndexedDB quota)
+- API key expiration status
+- Export audit logs (JSON)
+- Verification instructions for users
+
+**Content Security Policy**:
+- Strict CSP in `index.html` and `netlify.toml`
+- Only whitelists: self + `generativelanguage.googleapis.com`
+- Blocks: object-src, frame-ancestors, base-uri hijacking
+- Allows: blob/data URIs for media (local only)
+
+**Multi-Tenant Deployment**:
+- Users provide their own API keys (encrypted client-side storage)
+- Static-only hosting (Netlify/Cloudflare/AWS S3)
+- Zero server-side data collection
+- GDPR/CCPA compliant by architecture
+- See `DEPLOYMENT.md` for full guide
+
 ---
 
 ## Core Features
@@ -83,9 +126,13 @@ npm run build  # Production build
 - **Inline Editing**: Edit prompts on-the-fly for one-off changes
 - **System Prompt Customization**: Edit all 4 core prompts in Settings
 - **Export/Import**: Save and load configurations (settings, mix options, schema keys)
-- **Privacy-First**: All data local, API key never persisted to disk
+- **Privacy Dashboard**: Real-time network monitoring, audit logs, storage tracking
+- **Encrypted Storage**: API keys encrypted with AES-GCM, configurable TTL
+- **Privacy-First**: 100% client-side, zero server-side data collection
 
 ### Recently Completed
+
+**Phase 1 (Transparency Features)**:
 - [x] Settings UI modal (API Key, Model Settings, System Prompts, Data & Cache tabs)
 - [x] Full configuration export/import (settings, mix options, schema keys, model)
 - [x] System Prompts editing (all 4 prompts editable in Settings)
@@ -93,6 +140,14 @@ npm run build  # Production build
 - [x] Models list caching (24hr TTL, prevents disappearing dropdown)
 - [x] Mix options system (replaced forwards/backwards with flexible transformations)
 - [x] Documentation consolidation (user_guide.md includes everything)
+
+**Phase 2 (Privacy & Multi-Tenant)**:
+- [x] Encrypted API key storage (AES-GCM, configurable TTL)
+- [x] Network monitoring service (fetch interception, audit logging)
+- [x] Privacy Dashboard UI (network activity, storage tracking, audit export)
+- [x] Content Security Policy (strict CSP headers)
+- [x] Multi-tenant deployment guide (Netlify/Cloudflare/AWS configs)
+- [x] Architecture redesign proposals (modular prompts + version control)
 
 ### Recent Bug Fixes
 - **Models dropdown disappearing**: Fixed useEffect dependency array to include `availableModels.length`, ensuring models reload from cache when state clears
@@ -107,21 +162,31 @@ npm run build  # Production build
 ## Key Files & Documentation
 
 ### Core Application
-- `App.tsx` - Main layout (3-panel design)
+- `App.tsx` - Main layout (3-panel design), network monitor initialization
 - `components/` - UI components
-  - `LeftPanel.tsx` - Prompt library, search, Import/Export
+  - `LeftPanel.tsx` - Prompt library, search, Import/Export, Privacy button
   - `CenterPanel.tsx` - Input, settings, generation controls
   - `RightPanel.tsx` - Output, versions, transformations
   - `SettingsModal.tsx` - API Key, Model Settings, System Prompts, Data & Cache
+  - `PrivacyDashboard.tsx` - Network monitoring, audit logs, privacy verification
 - `context/` - Split contexts (4 files)
+  - `ApiKeyContext.tsx` - Encrypted key storage with TTL
 - `services/` - DB, API, prompt generation, config management
+  - `encryptedStorage.ts` - AES-GCM encryption for sensitive data
+  - `networkMonitor.ts` - Fetch interception and audit logging
 
 ### Configuration
 - `constants.ts` - System prompts, defaults, settings
 - `types.ts` - TypeScript interfaces
 - `vite.config.ts` - Build config
+- `netlify.toml` - Netlify deployment config with CSP headers
+- `index.html` - CSP meta tags
 
 ### Documentation
+
+**Deployment & Privacy**:
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Multi-tenant deployment guide (Netlify/Cloudflare/AWS)
+
 **User Documentation**:
 - **[docs/user_guide.md](./docs/user_guide.md)** - Complete user guide (installation, features, settings, troubleshooting)
 
@@ -133,6 +198,11 @@ npm run build  # Production build
 5. **[TODO.md](./TODO.md)** - Comprehensive optimization roadmap
 6. **[PLAN.md](./PLAN.md)** - Phase 1 implementation plan
 7. **[PHASE1_TODO.md](./PHASE1_TODO.md)** - Phase 1 task checklist
+
+**Architecture Proposals** (internal/):
+1. **[VERSION_CONTROL_ARCHITECTURE.md](./internal/VERSION_CONTROL_ARCHITECTURE.md)** - Git-inspired branching system design
+2. **[PROMPT_ARCHITECTURE.md](./internal/PROMPT_ARCHITECTURE.md)** - Modular prompt system design
+3. **[JOINT_ARCHITECTURE_PROPOSAL.md](./internal/JOINT_ARCHITECTURE_PROPOSAL.md)** - Unified proposal combining both
 
 ---
 
@@ -190,7 +260,7 @@ Four core prompts (defaults in `constants.ts`, customizable in Settings → Syst
 
 ### Gemini API
 - Model: `gemini-2.5-pro` (configurable)
-- Key from `VITE_GEMINI_API_KEY` env var or session memory
+- Key from encrypted storage (user-provided, AES-GCM)
 - Direct browser → Google API calls
 - Cached responses (see `services/apiCache.ts`)
 
@@ -297,7 +367,7 @@ Documentation:
 
 1. **No Emojis**: Per user preference, avoid emojis in code/docs
 2. **Local-First**: No backend, no accounts, privacy-first
-3. **API Key**: Set via `VITE_GEMINI_API_KEY` env var (`.env.local`) or in-app
+3. **API Key**: User-provided, stored encrypted (AES-GCM, configurable TTL)
 4. **Blob Storage**: Use Blobs for media, not base64
 5. **Cache-First**: Check apiCache before API calls
 6. **Context Splitting**: Use specific hooks to minimize re-renders
@@ -319,3 +389,4 @@ Documentation:
 **For detailed technical architecture**: See [ARCHITECTURE.md](./ARCHITECTURE.md)
 **For optimization roadmap**: See [TODO.md](./TODO.md)
 **For Phase 1 details**: See [PLAN.md](./PLAN.md)
+- Always read @CLAUDE.md to get up to speed when you lack context. Ask yourself beforehand if you lack context to any request from me. Be concise in your edits and documentation. Aim for simplicity and extensibility. This is a hobbyist project, not a commercial one.

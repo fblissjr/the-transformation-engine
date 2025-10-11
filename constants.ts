@@ -1,13 +1,23 @@
-import { PromptSettings, SystemPromptConfig, AppSettings, OutputFormat, ModelSettings, MixOption } from './types';
+import {
+  PromptSettings,
+  SystemPromptConfig,
+  AppSettings,
+  OutputFormat,
+  ModelSettings,
+  MixOption,
+} from "./types";
 
 // Asset paths
-export const LOGO_PATH = 'assets/logo_256x256.png';
+export const LOGO_PATH = "assets/logo_256x256.png";
 
 export const PRIMARY_GENERATION_PROMPT = `
 You are a world-class structured prompt generator for text-to-video models. Your purpose is to translate a user's creative idea into a detailed, multi-modal, machine-readable prompt. You are descriptive yet to the point. Always exclude timestamps. Your knowledge of cinematic language and sound design is unparalleled.
 
 **Your Task:**
 Based on the user's creative idea and control parameters below, generate a complete prompt scene. Think like a director, a sound designer, and a composer simultaneously.
+
+**CRITICAL RULE: 8-10 second clips**
+All generated video clips are 8-10 seconds in duration. You must ensure you don't try to cram too much into one clip. Be concise and to the point. Pay attention to the formatting specifications provided by the user.
 
 **CRITICAL RULE: Obscuring Known Figures**
 To foster creative interpretation, you MUST NOT use proper names of well known figures. Instead, you must "talk around them." Describe them by their iconic roles, historical context, signature appearance, famous quotes, or public persona.
@@ -23,13 +33,16 @@ To foster creative interpretation, you MUST NOT use proper names of well known f
     {{formatGuidance}}
 2.  **Schema Keys:** Use ONLY the following keys/tags: {{schemaKeys}}.
 3.  **Text Direction:** {{textDirectionInstruction}}
-4.  **Length:** The final output must be under 2000 characters.
+4.  **Length:** The final output must be under 1500 characters.
 
 **Final Instruction:** Your response must contain ONLY the structured prompt itself, with no additional commentary, introductions, or explanations.
 `;
 
 export const SYNESTHETIC_MIXER_PROMPT = `
 You are an expert creative prompt blender. Your task is to analyze and synthesize the core cinematic, emotional, and thematic elements from two or more existing structured prompts. You will then generate a single, completely new, and coherent hybrid scene. Do not simply combine the prompts; create a novel synthesis inspired by them.
+
+**CRITICAL RULE: 8-10 second clips**
+All generated video clips are 8-10 seconds in duration. You must ensure you don't try to cram too much into one clip. Be concise and to the point. Pay attention to the formatting specifications provided by the user.
 
 **CRITICAL RULE: Obscuring Known Figures**
 This rule still applies. If the source prompts contain descriptions of known figures, maintain the obscured, descriptive style in your new creation.
@@ -48,14 +61,16 @@ This rule still applies. If the source prompts contain descriptions of known fig
         {{formatGuidance}}
     *   **Schema Keys:** {{schemaKeys}}
     *   **Text Direction:** {{textDirectionInstruction}}
-4.  The final output must be under 2000 characters.
+4.  The final output must be under 1500 characters.
 
 **Final Instruction:** Your response must contain ONLY the structured prompt itself, with no additional commentary, introductions, or explanations.
 `;
 
-
 export const NORMALIZER_PROMPT = `
 You are an expert prompt de-constructor and creative writer. Your task is to take a structured, machine-readable prompt and translate it into a single, coherent, and **cinematic** scene description in a flowing paragraph.
+
+**CRITICAL RULE: 8-10 second clips**
+All generated video clips are 8-10 seconds in duration. You must ensure you don't try to cram too much into one clip. Be concise and to the point. Pay attention to the formatting specifications provided by the user.
 
 **Instructions:**
 1.  Synthesize all the elements (scene, sound, music, speech) into a cohesive narrative.
@@ -96,85 +111,98 @@ Generate the JSON response now.
 `;
 
 export const DEFAULT_SETTINGS: PromptSettings = {
-  format: 'Standard YAML',
-  textDirection: 'Forwards', // Legacy, kept for backward compatibility
+  format: "Markdown",
+  textDirection: "Forwards", // Legacy, kept for backward compatibility
   mixOptions: [], // No options enabled by default
-  schemaKeys: ['scene', 'sound_effects', 'speech'],
+  schemaKeys: ["scene", "sound_effects", "speech"],
   advanced: {
     dialogue: [],
     soundscape: {
-      soundEffects: '',
-      musicDirection: '',
+      soundEffects: "",
+      musicDirection: "",
     },
     pacing: {
-      timingNotes: '',
+      timingNotes: "",
     },
   },
 };
 
 export const STRINGS = {
-  MIX_PROMPTS_GUIDANCE_PROMPT: "Optional: Provide any specific guidance for the mix:",
-  MIX_PROMPTS_GUIDANCE_DEFAULT: "Create a surprising and coherent blend of the selected prompts.",
+  MIX_PROMPTS_GUIDANCE_PROMPT:
+    "Optional: Provide any specific guidance for the mix:",
+  MIX_PROMPTS_GUIDANCE_DEFAULT:
+    "Create a surprising and coherent blend of the selected prompts.",
   DELETE_PROMPT_CONFIRM_TITLE: "Delete Prompt",
-  DELETE_PROMPT_CONFIRM_MESSAGE: (promptTitle: string) => `Are you sure you want to permanently delete "${promptTitle}"? This action cannot be undone.`,
+  DELETE_PROMPT_CONFIRM_MESSAGE: (promptTitle: string) =>
+    `Are you sure you want to permanently delete "${promptTitle}"? This action cannot be undone.`,
   CONFIRM_MODAL_DELETE_BUTTON_TEXT: "Delete",
   ERROR_MODAL_TITLE: "Error",
 };
 
-export const GEMINI_MODEL_NAME = 'gemini-2.5-pro';
+export const GEMINI_MODEL_NAME = "gemini-2.5-pro";
 
 export const BUILT_IN_FORMATS: OutputFormat[] = [
-  { id: 'yaml', name: 'Standard YAML', isBuiltIn: true },
-  { id: 'xml', name: 'Standard XML', isBuiltIn: true },
-  { id: 'json', name: 'JSON', isBuiltIn: true },
-  { id: 'markdown', name: 'Markdown', isBuiltIn: true },
-  { id: 'emoji', name: 'Emoji Script', isBuiltIn: true },
-  { id: 'reversed-yaml-xml', name: 'Reversed YAML-like in XML', isBuiltIn: true },
+  { id: "yaml", name: "Standard YAML", isBuiltIn: true },
+  { id: "xml", name: "Standard XML", isBuiltIn: true },
+  { id: "json", name: "JSON", isBuiltIn: true },
+  { id: "markdown", name: "Markdown", isBuiltIn: true },
+  { id: "emoji", name: "Emoji Script", isBuiltIn: true },
+  {
+    id: "reversed-yaml-xml",
+    name: "Reversed YAML-like in XML",
+    isBuiltIn: true,
+  },
 ];
 
 export const BUILT_IN_MIX_OPTIONS: MixOption[] = [
   {
-    id: 'reverse',
-    name: 'Reverse',
-    instruction: 'Apply reversal to both the keys and their content as specified by the format.',
+    id: "reverse",
+    name: "Reverse",
+    instruction:
+      "Apply reversal to both the keys and their content as specified by the format.",
     isBuiltIn: true,
     isEnabled: false,
   },
   {
-    id: 'compress',
-    name: 'Compress',
-    instruction: 'COMPRESS AGGRESSIVELY. Each field must be under 10 words. Remove ALL adjectives, adverbs, and descriptive phrases. Use only nouns and verbs. Example: "scene: dark alley, man walks" NOT "scene: A dimly lit alleyway where a mysterious figure walks slowly". Final output MUST be 50% shorter.',
+    id: "compress",
+    name: "Compress",
+    instruction:
+      'COMPRESS THE PROMPT AGGRESSIVELY. Remove ALL adjectives, adverbs, overly verbose descriptions and phrases, and filler words. Use only nouns and verbs, with adjectives used only when necessary. Example: "scene: dark alley, man walks" NOT "scene: A dimly lit alleyway where a mysterious figure walks slowly". Final output MUST be as concise and as compressed as possible while maintaining the overall specifics of the scene envisioned by the user.',
     isBuiltIn: true,
     isEnabled: false,
   },
   {
-    id: 'expand',
-    name: 'Expand',
-    instruction: 'Add rich descriptive detail and atmospheric language to enhance the scene.',
+    id: "expand",
+    name: "Expand",
+    instruction:
+      "Add rich descriptive detail and atmospheric language to enhance the scene.",
     isBuiltIn: true,
     isEnabled: false,
   },
   {
-    id: 'technical',
-    name: 'Technical',
-    instruction: 'Use precise, technical language and industry-specific terminology.',
+    id: "technical",
+    name: "Technical",
+    instruction:
+      "Use precise, technical language and industry-specific terminology.",
     isBuiltIn: true,
     isEnabled: false,
   },
 ];
 
 export const DEFAULT_MODEL_SETTINGS: ModelSettings = {
-  modelName: 'gemini-2.5-pro',
+  modelName: "gemini-2.5-pro",
   maxTokens: 2048,
   temperature: 1.0,
   topP: 0.95,
 };
 
-export const DEFAULT_SCHEMA_KEYS = ['scene', 'sound_effects', 'speech'];
+export const DEFAULT_SCHEMA_KEYS = ["scene", "sound_effects", "speech"];
 
-export const SETTINGS_ID = 'app-settings-singleton';
+export const SETTINGS_ID = "app-settings-singleton";
 
-export const createDefaultAppSettings = (defaultConfigId: string): Omit<AppSettings, 'id'> => ({
+export const createDefaultAppSettings = (
+  defaultConfigId: string,
+): Omit<AppSettings, "id"> => ({
   modelSettings: DEFAULT_MODEL_SETTINGS,
   defaultSchemaKeys: DEFAULT_SCHEMA_KEYS,
   outputFormats: BUILT_IN_FORMATS,
@@ -182,8 +210,11 @@ export const createDefaultAppSettings = (defaultConfigId: string): Omit<AppSetti
   updatedAt: new Date().toISOString(),
 });
 
-export const createDefaultPromptConfig = (): Omit<SystemPromptConfig, 'id' | 'createdAt' | 'updatedAt'> => ({
-  name: 'Default Configuration',
+export const createDefaultPromptConfig = (): Omit<
+  SystemPromptConfig,
+  "id" | "createdAt" | "updatedAt"
+> => ({
+  name: "Default Configuration",
   isDefault: true,
   prompts: {
     primary: PRIMARY_GENERATION_PROMPT,

@@ -10,6 +10,7 @@ import { logger } from './services/loggerService';
 import { LogEntry } from './types';
 import { STRINGS } from './constants';
 import SharePage from './components/SharePage';
+import './services/networkMonitor'; // Initialize network monitor
 
 const App: React.FC = () => {
   const [route, setRoute] = useState(window.location.pathname);
