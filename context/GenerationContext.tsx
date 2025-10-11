@@ -1,9 +1,15 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { Prompt } from '../types';
+import { Prompt, GenerationMetadata } from '../types';
 import { STRINGS } from '../constants';
 import * as geminiService from '../services/geminiService';
-import { generatePrimaryPrompt, generateNormalizePrompt, generateMixPrompt, generateSchemaInferencePrompt } from '../services/promptService';
+import {
+  generatePrimaryPromptV2,
+  generateNormalizePromptV2,
+  generateMixPromptV2,
+  generateSchemaInferencePromptV2,
+  fragmentLoader
+} from '../services/promptService';
 import { useApiKey } from './ApiKeyContext';
 import { useActivePrompt } from './ActivePromptContext';
 import { useMedia } from './MediaContext';
@@ -14,6 +20,7 @@ interface GenerationContextType {
   isNormalizing: boolean;
   error: string | null;
   progress: number;
+  loadingMessage: string;
   generate: () => Promise<void>;
   normalize: (transformInstruction?: string) => Promise<void>;
   mixPrompts: () => Promise<void>;
@@ -44,6 +51,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   const [isNormalizing, setIsNormalizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   const generate = async () => {
     if (!naturalLanguageInput.trim()) {
@@ -62,13 +70,23 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     setNormalizedOutput('');
 
     try {
-      setProgress(30);
-      const generationFullPrompt = generatePrimaryPrompt(naturalLanguageInput, settings);
-      setProgress(50);
+      setLoadingMessage('Composing prompt template...');
+      setProgress(20);
+      const generationFullPrompt = await generatePrimaryPromptV2(naturalLanguageInput, settings);
+
+      // Capture which fragments were used in this generation
+      const fragmentsUsed = fragmentLoader.getLoadedFragments();
+
+      setLoadingMessage('Sending request to Gemini AI...');
+      setProgress(40);
       const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
+      const apiStartTime = Date.now();
       const structuredRes = await geminiService.generateContent(apiKey, generationFullPrompt, modelSettings);
+      const apiLatencyMs = Date.now() - apiStartTime;
+
+      setLoadingMessage('Saving prompt to library...');
+      setProgress(80);
       setStructuredOutput(structuredRes);
-      setProgress(90);
 
       const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
         title: naturalLanguageInput.substring(0, 40) + '...',
@@ -81,8 +99,32 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         isFavorite: false,
       };
       const savedPrompt = await addPrompt(newPromptData);
+
+      // Create metadata for version tracking
+      const metadata: GenerationMetadata = {
+        naturalLanguageInput,
+        mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
+        format: settings.format,
+        schemaKeys: settings.schemaKeys,
+        mixOptions: settings.mixOptions,
+        modelName: settings.modelName || 'gemini-2.5-pro',
+        systemPrompt: generationFullPrompt,
+        userPrompt: naturalLanguageInput,
+        operationType: 'generate',
+        apiLatencyMs,
+        fragmentsUsed,
+        branchName: 'main', // Default branch
+      };
+
+      // Add initial version with metadata
+      const versionService = await import('../services/versionService');
+      await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
+
       selectPrompt(savedPrompt);
+
+      setLoadingMessage('Complete!');
       setProgress(100);
+      setTimeout(() => setLoadingMessage(''), 500);
     } catch (e: any) {
       setError(`An error occurred during generation: ${e.message}`);
     } finally {
@@ -104,20 +146,26 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
     setIsNormalizing(true);
     setError(null);
+    setLoadingMessage('Preparing transformation...');
 
     try {
       let transformPrompt: string;
 
       if (transformInstruction) {
         // Custom transformation
+        setLoadingMessage('Building custom transformation prompt...');
         transformPrompt = `Transform the following structured prompt according to these instructions:\n\n**Instructions:** ${transformInstruction}\n\n**Structured Prompt:**\n\`\`\`\n${structuredOutput}\n\`\`\`\n\nProvide the transformed output.`;
       } else {
         // Default: normalize to plain English
-        transformPrompt = generateNormalizePrompt(structuredOutput, 'English');
+        setLoadingMessage('Composing normalization prompt...');
+        transformPrompt = await generateNormalizePromptV2(structuredOutput, 'English');
       }
 
+      setLoadingMessage('Sending transformation request to Gemini AI...');
       const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
       const result = await geminiService.generateContent(apiKey, transformPrompt, modelSettings);
+
+      setLoadingMessage('Updating prompt...');
       setNormalizedOutput(result);
 
       // Update the saved prompt if we have an active one
@@ -128,6 +176,9 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         };
         await updatePromptInDb(updatedPrompt);
       }
+
+      setLoadingMessage('Complete!');
+      setTimeout(() => setLoadingMessage(''), 500);
     } catch (e: any) {
       setError(`An error occurred during transformation: ${e.message}`);
     } finally {
@@ -157,19 +208,33 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     clearActivePrompt();
 
     try {
-      setProgress(30);
+      setLoadingMessage(`Analyzing ${selectedPromptIds.length} prompts...`);
+      setProgress(20);
       const sourcePrompts = prompts.filter(p => selectedPromptIds.includes(p.id));
-      const mixFullPrompt = generateMixPrompt(sourcePrompts, settings, guidance);
-      setProgress(50);
+
+      setLoadingMessage('Composing synesthetic mix prompt...');
+      setProgress(40);
+      const mixFullPrompt = await generateMixPromptV2(sourcePrompts, settings, guidance);
+
+      // Capture fragments used in mix
+      const fragmentsUsed = fragmentLoader.getLoadedFragments();
+
+      setLoadingMessage('Sending mix request to Gemini AI...');
+      setProgress(60);
       const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
+      const apiStartTime = Date.now();
       const structuredRes = await geminiService.generateContent(apiKey, mixFullPrompt, modelSettings);
+      const apiLatencyMs = Date.now() - apiStartTime;
+
+      setLoadingMessage('Saving mixed prompt...');
+      setProgress(85);
       setStructuredOutput(structuredRes);
-      setProgress(90);
 
       const title = `Mix of ${sourcePrompts.map(p => p.title.substring(0,10)).join(', ')}...`;
+      const mixInput = `Mixed from ${sourcePrompts.length} prompts. Guidance: ${guidance}`;
       const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
         title,
-        naturalLanguageInput: `Mixed from ${sourcePrompts.length} prompts. Guidance: ${guidance}`,
+        naturalLanguageInput: mixInput,
         structuredOutput: structuredRes,
         normalizedOutput: '',
         settingsSnapshot: JSON.stringify(settings),
@@ -177,9 +242,33 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         isFavorite: false,
       };
       const savedPrompt = await addPrompt(newPromptData);
+
+      // Create metadata for mix operation
+      const metadata: GenerationMetadata = {
+        naturalLanguageInput: mixInput,
+        format: settings.format,
+        schemaKeys: settings.schemaKeys,
+        mixOptions: settings.mixOptions,
+        modelName: settings.modelName || 'gemini-2.5-pro',
+        systemPrompt: mixFullPrompt,
+        userPrompt: guidance,
+        operationType: 'mix',
+        mixSourcePromptIds: selectedPromptIds,
+        apiLatencyMs,
+        fragmentsUsed,
+        branchName: 'main',
+      };
+
+      // Add initial version with metadata
+      const versionService = await import('../services/versionService');
+      await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
+
       selectPrompt(savedPrompt);
       clearSelection();
+
+      setLoadingMessage('Complete!');
       setProgress(100);
+      setTimeout(() => setLoadingMessage(''), 500);
     } catch (e: any) {
       setError(`An error occurred during mixing: ${e.message}`);
     } finally {
@@ -200,12 +289,18 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     }
     setIsLoading(true);
     setError(null);
-    setProgress(30);
+    setProgress(0);
     try {
-      const inferencePrompt = generateSchemaInferencePrompt(naturalLanguageInput, settings.schemaKeys, mode);
+      setLoadingMessage('Analyzing input for schema suggestions...');
+      setProgress(25);
+      const inferencePrompt = await generateSchemaInferencePromptV2(naturalLanguageInput, settings.schemaKeys, mode);
+
+      setLoadingMessage('Requesting AI schema inference...');
       setProgress(50);
       const jsonResponse = await geminiService.generateJsonContent(apiKey, inferencePrompt);
-      setProgress(80);
+
+      setLoadingMessage('Processing schema keys...');
+      setProgress(75);
       if (!jsonResponse || !Array.isArray(jsonResponse.newSchemaKeys) || typeof jsonResponse.reasoning !== 'string') {
         throw new Error("Received an invalid response structure from the AI.");
       }
@@ -214,7 +309,10 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         const updatedKeys = mode === 'additional' ? [...new Set([...prev.schemaKeys, ...newSchemaKeys])] : newSchemaKeys;
         return { ...prev, schemaKeys: updatedKeys };
       });
+
+      setLoadingMessage('Schema updated!');
       setProgress(100);
+      setTimeout(() => setLoadingMessage(''), 500);
       alert(`Schema Updated!\n\nReasoning from AI:\n${reasoning}`);
     } catch (e: any) {
       setError(`An error occurred during schema inference: ${e.message}`);
@@ -236,6 +334,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     isNormalizing,
     error,
     progress,
+    loadingMessage,
     generate,
     normalize,
     mixPrompts,

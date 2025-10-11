@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-10-11 | **Status**: Privacy & Multi-Tenant Ready
+> **Last Updated**: 2025-10-11 | **Status**: Privacy & Multi-Tenant Ready | Model-Optimized (Sora 2 + Veo 3) | Modular Fragments LIVE | Version Control Branching LIVE
 
 ---
 
@@ -27,12 +27,24 @@ npm run build  # Production build
 ## Current Architecture (Post Phase 1)
 
 ### Context Structure (Split for Performance)
+**CRITICAL: Context Provider Order**
+```tsx
+ApiKeyProvider
+  → PromptProvider (composite wrapper)
+    → PromptLibraryProvider (independent)
+    → ActivePromptProvider (independent)
+    → MediaProvider (depends on ActivePromptContext)
+    → GenerationProvider (depends on all above)
+```
+
 - **PromptLibraryContext** - Prompt CRUD, search, favorites
 - **ActivePromptContext** - Current prompt, settings, versions
+- **MediaContext** - Image/video uploads, vision API (uses `useActivePrompt()`)
 - **GenerationContext** - LLM calls, loading states
-- **MediaContext** - Image/video uploads, vision API
 
 *Backward-compatible `usePrompts()` hook available*
+
+**Common Bug**: If MediaProvider wraps ActivePromptProvider, you'll get "useActivePrompt must be used within an ActivePromptProvider" error. MediaProvider MUST be inside ActivePromptProvider.
 
 ### Storage
 - **IndexedDB** (via idb library) - DB v6
@@ -105,9 +117,11 @@ npm run build  # Production build
 - Natural language input → structured output
 - Multi-modal support (image/video conditioning)
 - Dynamic schema keys with presets (Video Scene, Music, Art Direction)
+- **Model-specific optimization**: Sora 2 (OpenAI) and Veo 3 (Google) presets
 - AI-powered schema inference (suggest additional keys or full schema)
 - Mix options (Reverse, Compress, Expand, Technical, Custom)
 - Multiple output formats (YAML, JSON, XML, Markdown)
+- **Modular fragment system**: Reusable prompt components with @include directives
 
 ### Output Transformation
 - Flexible transformation engine (not just normalization)
@@ -149,10 +163,74 @@ npm run build  # Production build
 - [x] Multi-tenant deployment guide (Netlify/Cloudflare/AWS configs)
 - [x] Architecture redesign proposals (modular prompts + version control)
 
-### Recent Bug Fixes
+**Phase 3 (Model-Specific Optimization + Modular Prompts)**:
+- [x] Sora 2 doc analysis (spacetime patches, temporal progression, 300-500 words)
+- [x] Sora 2 fragment system (4 fragments: technical specs, temporal progression, camera detail, comprehensive detail)
+- [x] Sora 2 prompt templates (primary_sora2.md, mixer_sora2.md)
+- [x] Sora 2 few-shot system (3 examples: beach walk, camera push, interior product)
+- [x] Sora 2 few-shot service integration (keyword-based intelligent selection)
+- [x] Veo 3 research and implementation (native audio, 9 elements framework)
+- [x] Veo 3 fragment system (5 fragments: technical specs, 9 elements, audio integration, character consistency, cinematic language)
+- [x] Veo 3 prompt templates (primary_veo3.md, mixer_veo3.md)
+- [x] Veo 3 few-shot system (4 examples: coffee shop, product reveal, nature landscape, urban street)
+- [x] Veo 3 few-shot service integration (feature parity with Sora 2)
+- [x] MODEL_PRESETS system (generic, sora2, veo3, wan)
+- [x] Automatic model detection from schema keys (technical_specs → Sora 2, veo3_specs → Veo 3)
+- [x] UI presets for both models (6 Sora 2 + 3 Veo 3 presets)
+- [x] Context-aware UI tips (blue for Sora 2, green for Veo 3)
+- [x] Fragment composition engine (fragmentLoader.ts with @include directive support)
+- [x] V2 prompt generation functions fully integrated into GenerationContext
+- [x] Fragment path resolution (fixed from /prompts/ to / for public directory)
+- [x] PromptContext backward compatibility (added missing setStructuredOutput, setNormalizedOutput)
+- [x] End-to-end testing and verification (TypeScript compilation, build successful)
+
+**Phase 4 (Version Control Branching System)**:
+- [x] Added parentVersionId, branchName, fragmentsUsed to VersionNode structure (types.ts)
+- [x] Enhanced versionService with createBranch() and getVersionTree() functions
+- [x] Built VersionTree component with tree visualization (parent-child relationships)
+- [x] Fragment tracking in fragmentLoader (automatic tracking during composition)
+- [x] Integrated fragment tracking into GenerationContext (generate, mixPrompts)
+- [x] Tree view with collapsible branches, fragment badges, and branch creation UI
+- [x] Integrated VersionTree into RightPanel with toggle between list and tree view
+- [x] HMR-aware API key restoration (prevents key loss during development)
+
+**Phase 5 (UI Improvements & Model Conversion)**:
+- [x] Detailed loading status indicators for all Gemini API operations (CenterPanel, RightPanel)
+- [x] Progress bars with animated status messages (generate, mix, transform, schema inference, media description)
+- [x] Model conversion system with fragment-based templates (Sora 2 ↔ Veo 3 ↔ Generic)
+- [x] Character counter with color-coded warnings (green/yellow/red based on model limits)
+- [x] Auto-condense button for prompts exceeding Sora 2's 2500 character limit
+- [x] Smart model detection from schema keys (audio-first vs visual-first indicators)
+- [x] Optimized schema key presets (removed redundant technical_specs/veo3_specs)
+- [x] CSP update to allow blob: URLs for video/audio media (media-src directive)
+- [x] Fragment loader supports optional YAML frontmatter (graceful degradation)
+- [x] Removed legacy /public/prompts/ directory (consolidated to /core/ and /fragments/)
+
+**Phase 6 (Research-Based Schema Alignment)**:
+- [x] Detailed loading status indicators for all Gemini API operations (CenterPanel, RightPanel)
+- [x] Progress bars with animated status messages (generate, mix, transform, schema inference, media description)
+- [x] Model conversion system with fragment-based templates (Sora 2 ↔ Veo 3 ↔ Generic)
+- [x] Character counter with color-coded warnings (green/yellow/red based on model limits)
+- [x] Auto-condense button for prompts exceeding Sora 2's 2500 character limit
+- [x] Smart model detection from schema keys (audio-first vs visual-first indicators)
+- [x] Optimized schema key presets (removed redundant technical_specs/veo3_specs)
+- [x] CSP update to allow blob: URLs for video/audio media (media-src directive)
+- [x] Fragment loader supports optional YAML frontmatter (graceful degradation)
+- [x] Removed legacy /public/prompts/ directory (consolidated to /core/ and /fragments/)
+
+### Recent Bug Fixes (Phase 3-5)
+- **Context provider order**: Fixed MediaProvider wrapping ActivePromptProvider causing "useActivePrompt must be used within ActivePromptProvider" error. Correct order: PromptLibraryProvider → ActivePromptProvider → MediaProvider → GenerationProvider
+- **IndexedDB boolean query**: Fixed `getDefaultPromptConfig()` using `getAllFromIndex()` with boolean value (invalid IDBValidKey). Changed to `getAll()` + `find()` filter
 - **Models dropdown disappearing**: Fixed useEffect dependency array to include `availableModels.length`, ensuring models reload from cache when state clears
 - **Textarea losing focus on edit**: Split useEffect to prevent re-sync during typing in RightPanel
 - **System prompts not being used**: Updated promptService to check localStorage for custom prompts before using defaults
+- **Fragment composition integration**: Fixed GenerationContext to use V2 async functions (generatePrimaryPromptV2, generateMixPromptV2, generateNormalizePromptV2, generateSchemaInferencePromptV2)
+- **Fragment loading paths**: Corrected fetch paths from `/prompts/core/` and `/prompts/fragments/` to `/core/` and `/fragments/` (Vite serves public directory at root)
+- **Missing context exports**: Added `setStructuredOutput` and `setNormalizedOutput` to backward-compatible `usePrompts()` hook
+- **Video uploads blocked by CSP**: Added `media-src 'self' blob:` to CSP in index.html and netlify.toml
+- **Conversion templates frontmatter error**: Fixed generateConversionPrompt to use direct fetch() instead of fragmentLoader.loadFragment()
+- **Fragment loader frontmatter requirement**: Made YAML frontmatter optional in parseFragment() for backward compatibility
+- **Model detection after key removal**: Updated detectTargetModel to use semantic key analysis (audio-first vs visual-first) instead of technical_specs/veo3_specs
 
 ### Missing Features (Per Spec)
 - [ ] Sharing protocol (URL generation, `/share` route)
@@ -176,11 +254,54 @@ npm run build  # Production build
   - `networkMonitor.ts` - Fetch interception and audit logging
 
 ### Configuration
-- `constants.ts` - System prompts, defaults, settings
+- `constants.ts` - System prompts, defaults, MODEL_PRESETS
 - `types.ts` - TypeScript interfaces
 - `vite.config.ts` - Build config
 - `netlify.toml` - Netlify deployment config with CSP headers
 - `index.html` - CSP meta tags
+
+### Modular Prompt System (V2 Fragment-Based)
+**How It Works:**
+1. Templates in `/public/core/` use `@include[path/to/fragment.md]` directives
+2. `fragmentLoader.ts` fetches fragments from `/public/fragments/` and composes them
+3. Variables like `{{naturalLanguageInput}}` are interpolated with actual values
+4. GenerationContext calls V2 functions (generatePrimaryPromptV2, etc.)
+5. Falls back to legacy V1 if custom prompts found in localStorage
+
+**Directory Structure:**
+- `public/core/` - Main prompt templates (primary, mixer, normalizer, schema_inference)
+  - `primary.md` - Generic template
+  - `primary_sora2.md` - Sora 2-optimized (includes temporal progression, few-shot)
+  - `primary_veo3.md` - Veo 3-optimized (includes 9 elements, audio, few-shot)
+  - `mixer_sora2.md` - Sora 2-optimized mixer
+  - `mixer_veo3.md` - Veo 3-optimized mixer
+  - `normalizer.md` - Transformation template
+  - `schema_inference.md` - Schema suggestion template
+
+- `public/fragments/` - Reusable prompt components
+  - `rules/` - Technical specifications
+    - `sora2_technical_specs.md` - Duration, resolution, aspect ratio for Sora 2
+    - `veo3_technical_specs.md` - Duration, resolution, aspect ratio, fps for Veo 3
+    - `obscuring_figures_full.md` - Rule to avoid celebrity names
+  - `instructions/` - Guidance fragments
+    - Sora 2: `sora2_temporal_progression.md`, `sora2_comprehensive_detail.md`, `sora2_camera_detail.md`, `sora2_few_shot.md`
+    - Veo 3: `veo3_nine_elements.md`, `veo3_audio_integration.md`, `veo3_character_consistency.md`, `veo3_cinematic_language.md`, `veo3_few_shot.md`
+    - Generic: `format_constraints.md`, `output_purity.md`
+  - `examples/` - Few-shot examples (7 total)
+    - Sora 2: `sora2_beach_walk.md` (outdoor/nature), `sora2_camera_push.md` (urban/city), `sora2_interior_product.md` (product showcase)
+    - Veo 3: `veo3_coffee_shop.md` (dialogue/narrative), `veo3_product_reveal.md` (commercial/voiceover), `veo3_nature_landscape.md` (epic landscape), `veo3_urban_street.md` (documentary)
+  - `roles/` - Expert role templates
+    - `expert_role_template.md` - Defines AI persona with variables for expertise, capabilities, domain
+
+**Services:**
+- `services/fragmentLoader.ts` - Fragment composition engine
+  - `loadFragment(path)` - Fetches fragment, resolves nested @includes recursively
+  - `composePrompt(template, variables)` - Resolves includes + interpolates variables
+- `services/fewShotService.ts` - Intelligent example selection
+  - `SORA2_EXAMPLE_REGISTRY` - 3 Sora 2 examples with keyword metadata
+  - `VEO3_EXAMPLE_REGISTRY` - 4 Veo 3 examples with keyword metadata
+  - `selectFewShotExamples(input, maxExamples, model)` - Scores by keyword overlap, returns top N
+  - `shouldUseFewShot(schemaKeys)` - Returns 'sora2' | 'veo3' | null based on detected keys
 
 ### Documentation
 
@@ -199,6 +320,15 @@ npm run build  # Production build
 6. **[PLAN.md](./PLAN.md)** - Phase 1 implementation plan
 7. **[PHASE1_TODO.md](./PHASE1_TODO.md)** - Phase 1 task checklist
 
+**Model-Specific Research** (internal/):
+- **Sora 2 Research** (internal/sora/):
+  1. **[SORA2_DOC_ANALYSIS.md](./internal/sora/SORA2_DOC_ANALYSIS.md)** - Doc US_2025259362_A1 (Prompt Editor)
+  2. **[US_2025259361_STORYBOARD_ANALYSIS.md](./internal/sora/US_2025259361_STORYBOARD_ANALYSIS.md)** - Doc US_2025259361_A1 (Storyboard UI)
+  3. **[US_2025259272_BLENDING_ANALYSIS.md](./internal/sora/US_2025259272_BLENDING_ANALYSIS.md)** - Doc US_2025259272_A1 (Blending UI)
+  4. **[SORA_TODO.md](./internal/sora/SORA_TODO.md)** - Implementation roadmap based on doc analysis
+- **Veo 3 Research** (internal/veo3/):
+  1. **[VEO3_RESEARCH_ANALYSIS.md](./internal/veo3/VEO3_RESEARCH_ANALYSIS.md)** - Official docs + academic research
+
 **Architecture Proposals** (internal/):
 1. **[VERSION_CONTROL_ARCHITECTURE.md](./internal/VERSION_CONTROL_ARCHITECTURE.md)** - Git-inspired branching system design
 2. **[PROMPT_ARCHITECTURE.md](./internal/PROMPT_ARCHITECTURE.md)** - Modular prompt system design
@@ -208,26 +338,62 @@ npm run build  # Production build
 
 ## System Prompts
 
+### Legacy System Prompts (constants.ts)
 Four core prompts (defaults in `constants.ts`, customizable in Settings → System Prompts):
 
-1. **PRIMARY_GENERATION_PROMPT** - Main generation
-   - Takes natural language input + settings
-   - Outputs structured prompt
-   - Enforces "obscuring known figures" rule
-
-2. **MIX_PROMPTS_SYSTEM_PROMPT** - Synesthetic mixer
-   - Blends 2+ prompts into hybrid scene
-   - User-guided synthesis
-
+1. **PRIMARY_GENERATION_PROMPT** - Main generation (legacy, replaced by V2 system)
+2. **MIX_PROMPTS_SYSTEM_PROMPT** - Synesthetic mixer (legacy)
 3. **NORMALIZE_PROMPT_SYSTEM_PROMPT** - Transformation engine
-   - Converts structured → plain language
-   - Supports custom transformations
-
 4. **SCHEMA_INFERENCE_PROMPT** - Schema suggestions
-   - Suggests additional keys based on input
-   - Generates full schemas from scratch
 
-**Customization**: All prompts editable in Settings → System Prompts tab. Custom versions stored in localStorage. Use `{{placeholder}}` syntax for variables. See [docs/user_guide.md](./docs/user_guide.md) for details.
+**Customization**: All prompts editable in Settings → System Prompts tab. Custom versions stored in localStorage. Use `{{placeholder}}` syntax for variables.
+
+### V2 Modular Prompt System (Fragment-Based)
+
+**Status**: ✅ Fully integrated and functional (Day 2 complete)
+
+**How Prompts Are Generated**:
+1. User triggers generation (Primary, Mix, Normalize, or Schema Inference)
+2. `GenerationContext` calls V2 function (e.g., `generatePrimaryPromptV2`)
+3. `promptService.ts` detects target model from schema keys:
+   - `veo3_specs` → Veo 3
+   - `technical_specs` → Sora 2
+   - Default → Generic
+4. Loads model-specific template from `/public/core/{templateName}{suffix}.md`
+5. `fragmentLoader.composePrompt()` resolves all `@include[...]` directives recursively
+6. If few-shot enabled, `fewShotService.selectFewShotExamples()` picks relevant examples based on keyword scoring
+7. Variables ({{naturalLanguageInput}}, {{format}}, {{fewShotExamples}}, etc.) interpolated
+8. Composed prompt sent to Gemini API
+
+**Backward Compatibility**: If custom prompt found in localStorage, falls back to legacy V1 function (original monolithic strings).
+
+**Model-Specific Templates**:
+- `public/core/primary.md` - Generic template (fallback)
+- `public/core/primary_sora2.md` - Sora 2 optimized (spacetime patches, temporal progression, few-shot)
+- `public/core/primary_veo3.md` - Veo 3 optimized (native audio, 9 elements framework, few-shot)
+- `public/core/mixer_sora2.md` - Sora 2 mixer
+- `public/core/mixer_veo3.md` - Veo 3 mixer
+- `public/core/normalizer.md` - Transformation engine
+- `public/core/schema_inference.md` - Schema suggestions
+
+**Fragment Categories**:
+- **Rules** (3): Technical specs for Sora 2/Veo 3, obscuring celebrities rule
+- **Instructions** (11): Model-specific guidance (temporal, audio, 9 elements, camera, etc.)
+- **Examples** (7): Few-shot examples for both models (keyword-scored selection)
+- **Roles** (1): Expert persona template
+
+**Model Detection Logic** (`promptService.ts:230-248`):
+```typescript
+if (keys.includes("veo3_specs")) return "veo3";
+if (keys.includes("technical_specs")) return "sora2";
+return "generic";
+```
+
+**Few-Shot System**:
+- Sora 2: 3 examples covering outdoor/urban/product scenarios
+- Veo 3: 4 examples covering narrative/commercial/landscape/documentary scenarios
+- Intelligent selection: Scores examples by keyword overlap (scene type: 3pts, camera: 2pts, subject: 2pts, general: 1pt)
+- Returns top 2 examples by default, formatted with separator
 
 ---
 
@@ -274,17 +440,108 @@ Four core prompts (defaults in `constants.ts`, customizable in Settings → Syst
 
 ---
 
+## Model-Specific Optimization Details
+
+### Sora 2 (OpenAI)
+**Research Sources** (3 OpenAI docs analyzed):
+- Doc US_2025259362_A1: Prompt Editor (spacetime patches, comprehensive prompts)
+- Doc US_2025259361_A1: Storyboard UI (frame-by-frame temporal control) - **FUTURE FEATURE**
+- Doc US_2025259272_A1: Blending UI (dual-input video blending) - **FUTURE FEATURE**
+
+**Actual Product** (confirmed via screenshots):
+- **Text-to-Video**: Single text input "Describe your video..."
+- **Remix/Edit**: Single text input "Describe changes..." + video upload (supports temporal targeting)
+- **No storyboard timeline, no multi-frame input, no blend curves yet**
+
+**Key Insights**:
+- **Architecture**: Diffusion-transformer with spacetime patches (4D: height × width × time)
+- **Inference**: Entire video generated simultaneously (not frame-by-frame)
+- **Training**: Fine-tuned on comprehensive image-to-text captions (300-500 words)
+- **Audio**: Visual-only model, NO audio generation
+- **Optimal Prompts**: 300-500 words with embedded temporal progression (0-3s, 3-7s, 7-10s)
+- **API Limit**: 2500 characters (hard limit, prompts truncated)
+- **Technical Specs**: 10s duration, 1920x1080 resolution, 16:9 aspect ratio
+- **Remix Feature**: Supports temporal targeting ("At 3 seconds, change X", "From 2-5 seconds, transform Y")
+
+**Implementation**:
+- 4 Sora 2-specific fragments (technical specs, temporal progression, camera detail, comprehensive detail)
+- 3 few-shot examples with keyword-based selection
+- 1 best practices guide (sora2_best_practices.md) with good/bad examples
+- 1 remix prompting guide (sora2_remix_prompting.md) with 6 patterns
+- UI presets: Cinematic, Social Media, Product Demo (all use canonical keys)
+- Canonical schema keys (7 keys aligned with Sora doc 1)
+
+### Veo 3 (Google)
+**Research Sources**:
+- Google AI API Documentation (official prompt guide, technical specs)
+- VEO3_RESEARCH_ANALYSIS.md (consolidates official docs + academic research)
+- Academic papers: 1 peer-reviewed + 4 foundational papers
+
+**Key Insights**:
+- **Native Audio Generation**: Dialogue, ambient sounds, music (40+ multilingual voices with lip-sync via V2A system)
+- **9 Elements Framework**: Our expansion of Google's official 6-element framework
+  - Official 6: Subject, Action, Style, Camera, Composition, Ambiance
+  - Our 9: Adds Context, Audio Elements, separates Lighting/Background (documented in veo3_nine_elements.md)
+- **Character Consistency**: Detailed descriptions (30-50 words) maintain visual continuity across generations
+- **Narrative-Driven**: Responds exceptionally well to story structure within 8-second clips (beginning/middle/end)
+- **Negative Prompting**: Describe alternatives instead of using "no/don't" language
+- **Resolution**: Up to 4K (default 720p @ 24fps)
+- **Optimal Prompts**: 200-400 words with narrative arc, **ALWAYS include audio elements**
+
+**Implementation**:
+- 5 Veo 3-specific fragments (technical specs, 9 elements, audio integration, character consistency, cinematic language)
+- 8 few-shot examples (4 narrative + 4 audio-focused)
+- 1 best practices guide (veo3_best_practices.md) with good/bad examples
+- UI presets: Narrative Scene, Cinematic Landscape, Product Demo (all use canonical keys)
+- Canonical schema keys (10 keys aligned with official 6-element framework + research)
+
+### MODEL_PRESETS System (constants.ts)
+```typescript
+{
+  generic: { maxOutputTokens: 2048, recommendedLength: "1500 characters", lengthGuidance: "Be concise..." },
+  sora2: { maxOutputTokens: 4096, recommendedLength: "300-500 words", lengthGuidance: "Comprehensive detail...", technicalSpecs: {...} },
+  veo3: { maxOutputTokens: 3072, recommendedLength: "200-400 words", lengthGuidance: "Native audio...", technicalSpecs: {...} },
+  wan: { maxOutputTokens: 2048, recommendedLength: "150-300 words", lengthGuidance: "Balanced detail..." }
+}
+```
+
+### Comparison: Sora 2 vs Veo 3
+| Feature | Sora 2 | Veo 3 |
+|---------|--------|-------|
+| **Audio** | None (visual only) | Native (dialogue/ambient/music) |
+| **Duration** | 10 seconds | 8 seconds |
+| **Resolution** | Up to 1080p | Up to 4K (default 720p) |
+| **Prompt Style** | Temporal progression, spacetime | Narrative-driven, 9 elements |
+| **Optimal Length** | 300-500 words | 200-400 words |
+| **Key Differentiator** | Comprehensive visual detail | Audio-first storytelling |
+
+---
+
 ## Next Steps
 
-### Phase 2 (TODO.md - Issues #3, #6, #7)
+### Phase 4 (Version Control Branching - HIGH PRIORITY)
+**Goal**: Implement git-inspired branching system for prompt experimentation
+- Add parentVersionId and branchName to VersionNode structure
+- Build simple tree view showing version relationships
+- Basic branch creation UI
+- Connect fragments to version system (track which fragments were used in each version)
+- See internal/JOINT_ARCHITECTURE_PROPOSAL.md for full spec
+
+**Estimated**: 3-5 days (simplified, incremental approach for hobbyist project)
+
+### Phase 5 (Additional Models)
+- Add Wan Video (Alibaba) optimization (fragments + presets)
+- Research and implement other emerging models
+
+### Phase 6 (Performance & Scalability - TODO.md - Issues #3, #6, #7)
 - Implement pagination (unbounded data loading)
 - Optimize search with IndexedDB indexing
 - Migrate version service to IndexedDB
 
-### Phase 3 (TODO.md - Issue #5)
+### Phase 7 (Sharing Protocol - TODO.md - Issue #5)
 - Implement sharing protocol (per spec)
 
-### Phase 4 (TODO.md - Issues #8, #9, #10)
+### Phase 8 (Quality & Polish - TODO.md - Issues #8, #9, #10)
 - Add input validation (Zod)
 - Improve error handling (Error Boundaries)
 - Write automated tests (target 70% coverage)
@@ -333,7 +590,7 @@ Four core prompts (defaults in `constants.ts`, customizable in Settings → Syst
 the-transformation-engine/
 ├── components/          # React components
 │   ├── LeftPanel.tsx   # Prompt library
-│   ├── CenterPanel.tsx # Input & controls
+│   ├── CenterPanel.tsx # Input & controls (6 Sora 2 + 3 Veo 3 presets)
 │   ├── RightPanel.tsx  # Output & history
 │   └── SettingsModal.tsx # Settings UI (4 tabs)
 ├── context/            # React contexts (split)
@@ -345,20 +602,37 @@ the-transformation-engine/
 ├── services/           # Business logic
 │   ├── dbService.ts
 │   ├── geminiService.ts
-│   ├── promptService.ts
-│   ├── configService.ts  # Export/import config
+│   ├── promptService.ts      # V1 + V2 (fragment-based) functions
+│   ├── fragmentLoader.ts     # Fragment composition engine
+│   ├── fewShotService.ts     # Intelligent example selection
+│   ├── configService.ts      # Export/import config
 │   ├── apiCache.ts
 │   └── db/indexedDbService.ts
-├── constants.ts        # System prompts, defaults
+├── public/
+│   ├── core/                 # Main prompt templates
+│   │   ├── primary.md
+│   │   ├── primary_sora2.md
+│   │   ├── primary_veo3.md
+│   │   ├── mixer_sora2.md
+│   │   └── mixer_veo3.md
+│   └── fragments/            # Reusable prompt components
+│       ├── rules/            # Technical specs (sora2, veo3)
+│       ├── instructions/     # Guidance fragments
+│       ├── examples/         # Few-shot examples
+│       └── roles/            # Expert role templates
+├── constants.ts        # System prompts, MODEL_PRESETS
 ├── types.ts            # TypeScript interfaces
 └── App.tsx             # Main layout
 
 Documentation:
-├── CLAUDE.md           # This file
-├── docs/user_guide.md  # User documentation
-├── ARCHITECTURE.md     # Technical details
-├── TODO.md             # Optimization roadmap
-└── PLAN.md             # Phase 1 plan
+├── CLAUDE.md                 # This file
+├── docs/user_guide.md        # User documentation
+├── ARCHITECTURE.md           # Technical details
+├── TODO.md                   # Optimization roadmap
+├── PLAN.md                   # Phase 1 plan
+└── internal/
+    └── sora/                 # Sora 2 analysis
+    └── veo3/                 # Veo 3 analysis
 ```
 
 ---
@@ -371,9 +645,14 @@ Documentation:
 4. **Blob Storage**: Use Blobs for media, not base64
 5. **Cache-First**: Check apiCache before API calls
 6. **Context Splitting**: Use specific hooks to minimize re-renders
-7. **Models List Caching**: 24hr localStorage cache with dependency array fix to prevent dropdown disappearing
-8. **System Prompts**: Custom prompts in localStorage override constants.ts defaults
-9. **Transparency**: All prompts viewable/editable before sending to API
+7. **Context Provider Order**: CRITICAL - MediaProvider must be inside ActivePromptProvider (see bug fix above)
+8. **Models List Caching**: 24hr localStorage cache with dependency array fix to prevent dropdown disappearing
+9. **System Prompts**: Custom prompts in localStorage override constants.ts defaults (backward compatibility)
+10. **Transparency**: All prompts viewable/editable before sending to API
+11. **Model-Specific Optimization**: Automatic detection and template selection based on schema keys
+12. **Modular Fragments**: V2 system uses @include directives in templates, fully integrated into GenerationContext
+13. **Few-Shot Learning**: Intelligent keyword-based example selection for both Sora 2 and Veo 3
+14. **IndexedDB Queries**: Use `getAll()` + `find()` for boolean fields, not `getAllFromIndex()` with boolean values
 
 ---
 

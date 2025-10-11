@@ -6,7 +6,11 @@ import * as dbService from '../services/dbService';
 interface PromptLibraryContextType {
   prompts: Prompt[];
   selectedPromptIds: string[];
+  hasMore: boolean;
+  total: number;
+  isLoadingMore: boolean;
   loadPrompts: () => Promise<void>;
+  loadMore: () => Promise<void>;
   searchPrompts: (searchTerm: string) => Promise<void>;
   addPrompt: (promptData: Omit<Prompt, 'id' | 'createdAt'>) => Promise<Prompt>;
   deletePrompt: (promptId: string) => Promise<void>;
@@ -19,18 +23,44 @@ interface PromptLibraryContextType {
 
 const PromptLibraryContext = createContext<PromptLibraryContextType | undefined>(undefined);
 
+const PAGE_SIZE = 50;
+
 export const PromptLibraryProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
 
   const loadPrompts = useCallback(async () => {
     try {
-      const allPrompts = await dbService.getPrompts();
-      setPrompts(allPrompts);
+      const result = await dbService.getPromptsPaginated(PAGE_SIZE, 0);
+      setPrompts(result.prompts);
+      setHasMore(result.hasMore);
+      setTotal(result.total);
+      setOffset(PAGE_SIZE);
     } catch (e) {
       console.error("Failed to load prompts:", e);
     }
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    try {
+      const result = await dbService.getPromptsPaginated(PAGE_SIZE, offset);
+      setPrompts(prev => [...prev, ...result.prompts]);
+      setHasMore(result.hasMore);
+      setTotal(result.total);
+      setOffset(prev => prev + PAGE_SIZE);
+    } catch (e) {
+      console.error("Failed to load more prompts:", e);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [offset, hasMore, isLoadingMore]);
 
   useEffect(() => {
     const initDb = async () => {
@@ -43,12 +73,21 @@ export const PromptLibraryProvider: React.FC<{children: ReactNode}> = ({ childre
 
   const searchPrompts = useCallback(async (searchTerm: string) => {
     try {
+      if (!searchTerm.trim()) {
+        // If search is cleared, reload with pagination
+        await loadPrompts();
+        return;
+      }
+
+      // Search returns all results (no pagination for search)
       const searchedPrompts = await dbService.searchPrompts(searchTerm);
       setPrompts(searchedPrompts);
+      setHasMore(false); // Disable load more for search results
+      setTotal(searchedPrompts.length);
     } catch (e) {
       console.error("Failed to search prompts:", e);
     }
-  }, []);
+  }, [loadPrompts]);
 
   const addPrompt = async (promptData: Omit<Prompt, 'id' | 'createdAt'>): Promise<Prompt> => {
     const savedPrompt = await dbService.addPrompt(promptData);
@@ -132,7 +171,11 @@ export const PromptLibraryProvider: React.FC<{children: ReactNode}> = ({ childre
   const value = {
     prompts,
     selectedPromptIds,
+    hasMore,
+    total,
+    isLoadingMore,
     loadPrompts,
+    loadMore,
     searchPrompts,
     addPrompt,
     deletePrompt,

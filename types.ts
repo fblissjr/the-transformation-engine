@@ -57,8 +57,10 @@ export interface GenerationMetadata {
   tokensUsed?: number;
   apiLatencyMs?: number;
 
-  // Lineage
+  // Lineage & Branching
   parentVersionId?: string; // For branching/history tracking
+  branchName?: string; // Branch identifier (e.g., "main", "experiment-audio-focus")
+  fragmentsUsed?: string[]; // Track which fragments composed this prompt (e.g., ["sora2_temporal_progression", "sora2_technical_specs"])
 }
 
 export interface PromptVersion {
@@ -68,6 +70,11 @@ export interface PromptVersion {
   structuredOutput: string;
   normalizedOutput: string;
   metadata?: GenerationMetadata; // Optional for backward compatibility
+
+  // Branching fields (duplicated from metadata for easier access)
+  parentVersionId?: string; // Link to parent version
+  branchName?: string; // Branch identifier (defaults to "main")
+  fragmentsUsed?: string[]; // Track which fragments were used
 }
 
 export interface PromptSettings {

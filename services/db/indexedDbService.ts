@@ -70,6 +70,20 @@ export async function getPrompts(): Promise<Prompt[]> {
   return prompts.reverse();
 }
 
+export async function getPromptsPaginated(limit: number, offset: number): Promise<{
+  prompts: Prompt[];
+  hasMore: boolean;
+  total: number;
+}> {
+  const allPrompts = await db.getAllFromIndex(PROMPTS_STORE_NAME, 'createdAt');
+  const reversed = allPrompts.reverse();
+  const total = reversed.length;
+  const prompts = reversed.slice(offset, offset + limit);
+  const hasMore = (offset + limit) < total;
+
+  return { prompts, hasMore, total };
+}
+
 export async function searchPrompts(searchTerm: string): Promise<Prompt[]> {
     if (!db) await initDB();
     if (!searchTerm) {
@@ -148,8 +162,8 @@ export async function getPromptConfigs(): Promise<SystemPromptConfig[]> {
 }
 
 export async function getDefaultPromptConfig(): Promise<SystemPromptConfig | undefined> {
-  const configs = await db.getAllFromIndex(CONFIG_STORE_NAME, 'isDefault', true as any);
-  return configs[0];
+  const allConfigs = await db.getAll(CONFIG_STORE_NAME);
+  return allConfigs.find(config => config.isDefault);
 }
 
 export async function updatePromptConfig(config: SystemPromptConfig): Promise<void> {

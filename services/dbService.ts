@@ -5,6 +5,7 @@ export const {
   initDB,
   addPrompt,
   getPrompts,
+  getPromptsPaginated,
   searchPrompts,
   updatePrompt,
   deletePrompt,

@@ -4,10 +4,12 @@ import { MediaReference } from '../types';
 import * as geminiService from '../services/geminiService';
 import * as dbService from '../services/dbService';
 import { useApiKey } from './ApiKeyContext';
+import { useActivePrompt } from './ActivePromptContext';
 
 interface MediaContextType {
   mediaReferences: MediaReference[];
   isDescribing: boolean;
+  describingMessage: string;
   setMediaReferences: (value: React.SetStateAction<MediaReference[]>) => void;
   addMediaReference: (file: File) => Promise<void>;
   removeMediaReference: (id: string) => void;
@@ -18,8 +20,10 @@ const MediaContext = createContext<MediaContextType | undefined>(undefined);
 
 export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const { apiKey, openModal } = useApiKey();
+  const { settings } = useActivePrompt();
   const [mediaReferences, setMediaReferences] = useState<MediaReference[]>([]);
   const [isDescribing, setIsDescribing] = useState(false);
+  const [describingMessage, setDescribingMessage] = useState('');
 
   const addMediaReference = async (file: File): Promise<void> => {
     try {
@@ -59,6 +63,7 @@ export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => 
     }
 
     setIsDescribing(true);
+    setDescribingMessage('Loading media files...');
     try {
       // Convert blob references to data URLs for API call
       const referencesWithDataUrls = await Promise.all(
@@ -83,7 +88,18 @@ export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => 
         })
       );
 
-      const description = await geminiService.describeMedia(apiKey, referencesWithDataUrls);
+      setDescribingMessage(`Analyzing ${mediaReferences.length} media file${mediaReferences.length > 1 ? 's' : ''} with AI...`);
+      // Pass model settings to use user's selected model (not hardcoded default)
+      const modelSettings = {
+        modelName: settings.modelName,
+        maxTokens: 2048,
+        temperature: 1.0,
+        topP: 0.95,
+      };
+      const description = await geminiService.describeMedia(apiKey, referencesWithDataUrls, undefined, modelSettings);
+
+      setDescribingMessage('Complete!');
+      setTimeout(() => setDescribingMessage(''), 500);
       return description;
     } catch (e: any) {
       throw new Error(`Failed to describe media: ${e.message}`);
@@ -95,6 +111,7 @@ export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => 
   const value = {
     mediaReferences,
     isDescribing,
+    describingMessage,
     setMediaReferences,
     addMediaReference,
     removeMediaReference,

@@ -42,6 +42,21 @@ export const ApiKeyProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     loadApiKey();
   }, []);
 
+  // Handle HMR in development: reload key if state is empty but storage has it
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((import.meta as any).hot && !isLoading && !apiKey) {
+      const recheckApiKey = async () => {
+        const storedKey = await encryptedStorage.get(STORAGE_KEY);
+        if (storedKey && storedKey !== apiKey) {
+          console.log('HMR: Restoring API key from encrypted storage');
+          setApiKeyState(storedKey);
+        }
+      };
+      recheckApiKey();
+    }
+  }, [apiKey, isLoading]);
+
   const setApiKey = useCallback(async (key: string | null, ttl: number = DEFAULT_TTL) => {
     if (key) {
       await encryptedStorage.set(STORAGE_KEY, key, { ttl });

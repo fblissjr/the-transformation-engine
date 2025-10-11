@@ -193,7 +193,8 @@ export async function generateContentWithMedia(
 export async function describeMedia(
   apiKey: string,
   media: MediaReference[],
-  customInstruction?: string
+  customInstruction?: string,
+  modelSettings?: ModelSettings
 ): Promise<string> {
   const defaultPrompt = `Analyze this ${media[0].type} and provide a detailed, vivid description suitable for a text-to-video model prompt. Focus on:
 - Visual style, composition, and mood
@@ -205,5 +206,5 @@ export async function describeMedia(
 Be specific and cinematic in your description. This will be used to generate similar video content.`;
 
   const prompt = customInstruction || defaultPrompt;
-  return generateContentWithMedia(apiKey, prompt, media);
+  return generateContentWithMedia(apiKey, prompt, media, modelSettings);
 }

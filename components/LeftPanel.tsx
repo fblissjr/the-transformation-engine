@@ -17,6 +17,8 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
     prompts,
     activePrompt,
     selectedPromptIds,
+    hasMore,
+    isLoadingMore,
     settings,
     setSettings,
     selectPrompt,
@@ -24,6 +26,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
     newPrompt,
     mixPrompts,
     loadPrompts,
+    loadMore,
     toggleFavorite,
     searchPrompts,
     deletePrompts,
@@ -324,6 +327,17 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
           <div className="text-center p-8 text-gray-500">
             <p>No prompts found.</p>
             <p className="text-sm mt-1">Create a new prompt to get started.</p>
+          </div>
+        )}
+        {hasMore && sortedPrompts.length > 0 && (
+          <div className="p-4 border-t border-gray-800">
+            <button
+              onClick={loadMore}
+              disabled={isLoadingMore}
+              className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoadingMore ? 'Loading...' : 'Load More'}
+            </button>
           </div>
         )}
       </div>

@@ -9,21 +9,21 @@ import { MediaProvider, useMedia } from './MediaContext';
  * Composite Provider that wraps all context providers
  *
  * Context hierarchy:
- * 1. PromptLibraryContext - Prompt list, search, CRUD
- * 2. MediaContext - Media uploads, vision API (independent)
- * 3. ActivePromptContext - Current prompt, settings, versions
+ * 1. PromptLibraryContext - Prompt list, search, CRUD (independent)
+ * 2. ActivePromptContext - Current prompt, settings, versions (independent)
+ * 3. MediaContext - Media uploads, vision API (depends on ActivePromptContext)
  * 4. GenerationContext - LLM API calls, loading states (depends on 1, 2, 3)
  */
 export const PromptProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   return (
     <PromptLibraryProvider>
-      <MediaProvider>
-        <ActivePromptProvider>
+      <ActivePromptProvider>
+        <MediaProvider>
           <GenerationProvider>
             {children}
           </GenerationProvider>
-        </ActivePromptProvider>
-      </MediaProvider>
+        </MediaProvider>
+      </ActivePromptProvider>
     </PromptLibraryProvider>
   );
 };
@@ -67,7 +67,11 @@ export const usePrompts = () => {
     // From PromptLibraryContext
     prompts: library.prompts,
     selectedPromptIds: library.selectedPromptIds,
+    hasMore: library.hasMore,
+    total: library.total,
+    isLoadingMore: library.isLoadingMore,
     loadPrompts: library.loadPrompts,
+    loadMore: library.loadMore,
     searchPrompts: library.searchPrompts,
     addPrompt: library.addPrompt,
     deletePrompt: library.deletePrompt,
@@ -86,6 +90,8 @@ export const usePrompts = () => {
     promptVersions: active.promptVersions,
     setNaturalLanguageInput: active.setNaturalLanguageInput,
     setSettings: active.setSettings,
+    setStructuredOutput: active.setStructuredOutput,
+    setNormalizedOutput: active.setNormalizedOutput,
     selectPrompt: active.selectPrompt,
     newPrompt: active.newPrompt,
     updatePrompt: active.updatePrompt,
@@ -96,6 +102,7 @@ export const usePrompts = () => {
     isNormalizing: generation.isNormalizing,
     error: generation.error,
     progress: generation.progress,
+    loadingMessage: generation.loadingMessage,
     generate: generation.generate,
     normalize: generation.normalize,
     mixPrompts: generation.mixPrompts,
@@ -103,6 +110,8 @@ export const usePrompts = () => {
 
     // From MediaContext
     mediaReferences: media.mediaReferences,
+    isDescribing: media.isDescribing,
+    describingMessage: media.describingMessage,
     setMediaReferences: media.setMediaReferences,
     addMediaReference: media.addMediaReference,
     removeMediaReference: media.removeMediaReference,
