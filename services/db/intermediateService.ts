@@ -4,6 +4,7 @@
 
 import { initDB } from './indexedDbService';
 import type { IntermediatePrompt } from '../../types/intermediate';
+import { openDB } from 'idb';
 
 // Initialize DB connection
 let dbInstance: any = null;
@@ -11,8 +12,7 @@ let dbInstance: any = null;
 async function getDB() {
   if (!dbInstance) {
     await initDB();
-    const idb = await import('idb');
-    dbInstance = await idb.openDB('TransformationEngineDB', 7);
+    dbInstance = await openDB('TransformationEngineDB', 7);
   }
   return dbInstance;
 }

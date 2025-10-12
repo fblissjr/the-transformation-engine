@@ -7,6 +7,7 @@ import { LogEntry, PromptVersion } from '../types';
 import { VersionTree } from './VersionTree';
 import { generateConversionPrompt } from '../services/promptService';
 import { parsePromptToIntermediate } from '../services/migrations/promptToIntermediate';
+import * as intermediateServiceModule from '../services/db/intermediateService';
 import IntermediateEditor from './intermediate/IntermediateEditor';
 
 interface RightPanelProps {
@@ -178,8 +179,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                   // Parse existing prompt to intermediate
                   const intermediate = parsePromptToIntermediate(activePrompt);
                   // Create it in the context
-                  const { createIntermediate } = await import('../services/db/intermediateService');
-                  await createIntermediate(intermediate);
+                  await intermediateServiceModule.createIntermediate(intermediate);
                   // Load it in the editor
                   await loadIntermediate(intermediate.id);
                   setShowIntermediateEditor(true);

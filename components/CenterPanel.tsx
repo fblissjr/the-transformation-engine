@@ -4,51 +4,13 @@ import { useApiKey } from '../context/ApiKeyContext';
 import { useGeneration } from '../context/GenerationContext';
 import { SparklesIcon, WandIcon, EditIcon } from './icons';
 import IntermediateEditor from './intermediate/IntermediateEditor';
-import * as dbService from '../services/dbService';
 import * as geminiService from '../services/geminiService';
 import * as configService from '../services/configService';
 import * as promptService from '../services/promptService';
 import { transformToModel } from '../services/transformers';
+import { useMediaBlobUrls } from '../hooks/useMediaBlobUrls';
 import { MediaReference, MixOption, Prompt } from '../types';
 import { GEMINI_MODEL_NAME, BUILT_IN_MIX_OPTIONS, DEFAULT_MODEL_SETTINGS } from '../constants';
-
-// Custom hook to manage blob URLs for media references
-function useMediaBlobUrls(mediaReferences: MediaReference[]): Map<string, string> {
-  const [blobUrls, setBlobUrls] = useState<Map<string, string>>(new Map());
-
-  useEffect(() => {
-    const loadBlobUrls = async () => {
-      const newBlobUrls = new Map<string, string>();
-
-      for (const ref of mediaReferences) {
-        if (ref.blobId) {
-          const url = await dbService.getMediaBlobUrl(ref.blobId);
-          if (url) {
-            newBlobUrls.set(ref.id, url);
-          }
-        } else if (ref.dataUrl) {
-          // Legacy: use dataUrl directly
-          newBlobUrls.set(ref.id, ref.dataUrl);
-        }
-      }
-
-      setBlobUrls(newBlobUrls);
-    };
-
-    loadBlobUrls();
-
-    // Cleanup: revoke blob URLs on unmount
-    return () => {
-      blobUrls.forEach(url => {
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      });
-    };
-  }, [mediaReferences]);
-
-  return blobUrls;
-}
 
 const CenterPanel: React.FC = () => {
   const {

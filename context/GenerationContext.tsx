@@ -14,6 +14,8 @@ import {
 } from '../services/promptService';
 import * as intermediateService from '../services/db/intermediateService';
 import { transformToModel } from '../services/transformers';
+import * as versionService from '../services/versionService';
+import * as dbService from '../services/dbService';
 import { useApiKey } from './ApiKeyContext';
 import { useActivePrompt } from './ActivePromptContext';
 import { useMedia } from './MediaContext';
@@ -177,7 +179,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         };
 
         // Add initial version with metadata
-        const versionService = await import('../services/versionService');
         await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
 
         selectPrompt(savedPrompt);
@@ -321,7 +322,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       };
 
       // Add initial version with metadata
-      const versionService = await import('../services/versionService');
       await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
 
       selectPrompt(savedPrompt);
@@ -385,7 +385,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
   // Helper function to update prompt in DB and state
   const updatePromptInDb = async (updatedPrompt: Prompt) => {
-    const dbService = await import('../services/dbService');
     await dbService.updatePrompt(updatedPrompt);
     setActivePrompt(updatedPrompt);
   };
