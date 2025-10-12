@@ -9,8 +9,6 @@ description: Example of Veo 3 action sequence with comprehensive sound effect ch
 
 **VEO 3 EXAMPLE: Parkour Alley Run**
 
-**Technical Specs:** Duration: 8s | Resolution: 1080p | Aspect Ratio: 16:9 | Frame Rate: 24fps
-
 **Subject:**
 Athletic woman in her mid-20s, lean muscular build, short dark ponytail, wearing black compression tank top, gray cargo pants with multiple pockets, red running shoes with white soles. Determined focused expression, body always in motion, professional parkour practitioner energy. Wearing fingerless gloves.
 

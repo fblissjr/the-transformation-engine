@@ -11,7 +11,6 @@ subject_type: person
 
 **Example Prompt (Beach Walk)**:
 
-```yaml
 temporal_progression: |
   [00:00-00:03] A silhouetted figure enters frame left, their form backlit by the setting sun. They walk along wet sand, each footstep leaving a brief impression before being washed away by gentle waves lapping at the shore.
 
@@ -31,4 +30,3 @@ lighting: "Natural golden hour lighting from setting sun positioned low on horiz
 audio_design: "Gentle ocean waves with rhythmic ebb and flow, soft water lapping at shore. Distant seabirds calling intermittently. Soft breeze creating subtle ambient wind texture. Footsteps with slight squish on wet sand. Peaceful, meditative soundscape matching serene visual mood."
 
 style: "Cinematic naturalism with emphasis on color and light. Slight color grading enhancing warm sunset tones. Natural motion blur on moving elements (waves, subject's feet). Film-like quality with organic feel rather than overly processed digital aesthetic. Subtle film grain texture. Anamorphic-style bokeh in out-of-focus background elements."
-```

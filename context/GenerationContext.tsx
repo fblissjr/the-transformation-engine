@@ -8,8 +8,12 @@ import {
   generateNormalizePromptV2,
   generateMixPromptV2,
   generateSchemaInferencePromptV2,
+  generateIntermediate,
+  detectTargetModelFromIntermediate,
   fragmentLoader
 } from '../services/promptService';
+import * as intermediateService from '../services/db/intermediateService';
+import { transformToModel } from '../services/transformers';
 import { useApiKey } from './ApiKeyContext';
 import { useActivePrompt } from './ActivePromptContext';
 import { useMedia } from './MediaContext';
@@ -25,6 +29,12 @@ interface GenerationContextType {
   normalize: (transformInstruction?: string) => Promise<void>;
   mixPrompts: () => Promise<void>;
   inferSchema: (mode: 'additional' | 'full') => Promise<void>;
+  // Phase 9.4: Intermediate mode
+  useIntermediateMode: boolean;
+  setUseIntermediateMode: (value: boolean) => void;
+  generatedIntermediate: any | null;
+  selectedExportModel: 'sora2' | 'veo3' | 'generic';
+  setSelectedExportModel: (model: 'sora2' | 'veo3' | 'generic') => void;
 }
 
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
@@ -53,6 +63,11 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   const [progress, setProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
 
+  // Phase 9.4: Intermediate mode state
+  const [useIntermediateMode, setUseIntermediateMode] = useState(true); // Default to intermediate mode
+  const [generatedIntermediate, setGeneratedIntermediate] = useState<any | null>(null);
+  const [selectedExportModel, setSelectedExportModel] = useState<'sora2' | 'veo3' | 'generic'>('sora2');
+
   const generate = async () => {
     if (!naturalLanguageInput.trim()) {
       setError("Please enter a creative idea.");
@@ -70,61 +85,107 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     setNormalizedOutput('');
 
     try {
-      setLoadingMessage('Composing prompt template...');
-      setProgress(20);
-      const generationFullPrompt = await generatePrimaryPromptV2(naturalLanguageInput, settings);
+      if (useIntermediateMode) {
+        // NEW: Phase 9.4 - Intermediate-first generation
+        setLoadingMessage('Generating semantic intermediate...');
+        setProgress(20);
 
-      // Capture which fragments were used in this generation
-      const fragmentsUsed = fragmentLoader.getLoadedFragments();
+        const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
+        const apiStartTime = Date.now();
 
-      setLoadingMessage('Sending request to Gemini AI...');
-      setProgress(40);
-      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-      const apiStartTime = Date.now();
-      const structuredRes = await geminiService.generateContent(apiKey, generationFullPrompt, modelSettings);
-      const apiLatencyMs = Date.now() - apiStartTime;
+        // Generate intermediate structure
+        const intermediate = await generateIntermediate(
+          naturalLanguageInput,
+          apiKey,
+          {
+            modelName: modelSettings?.modelName,
+            temperature: 0.7,
+          }
+        );
+        const apiLatencyMs = Date.now() - apiStartTime;
 
-      setLoadingMessage('Saving prompt to library...');
-      setProgress(80);
-      setStructuredOutput(structuredRes);
+        setLoadingMessage('Saving intermediate to library...');
+        setProgress(50);
 
-      const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
-        title: naturalLanguageInput.substring(0, 40) + '...',
-        naturalLanguageInput,
-        mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
-        structuredOutput: structuredRes,
-        normalizedOutput: '',
-        settingsSnapshot: JSON.stringify(settings),
-        tags: '[]',
-        isFavorite: false,
-      };
-      const savedPrompt = await addPrompt(newPromptData);
+        // Save to intermediates store
+        await intermediateService.createIntermediate(intermediate);
+        setGeneratedIntermediate(intermediate);
 
-      // Create metadata for version tracking
-      const metadata: GenerationMetadata = {
-        naturalLanguageInput,
-        mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
-        format: settings.format,
-        schemaKeys: settings.schemaKeys,
-        mixOptions: settings.mixOptions,
-        modelName: settings.modelName || 'gemini-2.5-pro',
-        systemPrompt: generationFullPrompt,
-        userPrompt: naturalLanguageInput,
-        operationType: 'generate',
-        apiLatencyMs,
-        fragmentsUsed,
-        branchName: 'main', // Default branch
-      };
+        setLoadingMessage('Detecting best model format...');
+        setProgress(70);
 
-      // Add initial version with metadata
-      const versionService = await import('../services/versionService');
-      await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
+        // Auto-detect target model
+        const targetModel = detectTargetModelFromIntermediate(intermediate);
+        setSelectedExportModel(targetModel);
 
-      selectPrompt(savedPrompt);
+        setLoadingMessage('Transforming to model format...');
+        setProgress(85);
 
-      setLoadingMessage('Complete!');
-      setProgress(100);
-      setTimeout(() => setLoadingMessage(''), 500);
+        // Transform to model-specific YAML
+        const transformed = transformToModel(intermediate, targetModel);
+        setStructuredOutput(transformed);
+
+        setLoadingMessage('Complete!');
+        setProgress(100);
+        setTimeout(() => setLoadingMessage(''), 500);
+      } else {
+        // LEGACY: Original YAML generation flow
+        setLoadingMessage('Composing prompt template...');
+        setProgress(20);
+        const generationFullPrompt = await generatePrimaryPromptV2(naturalLanguageInput, settings);
+
+        // Capture which fragments were used in this generation
+        const fragmentsUsed = fragmentLoader.getLoadedFragments();
+
+        setLoadingMessage('Sending request to Gemini AI...');
+        setProgress(40);
+        const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
+        const apiStartTime = Date.now();
+        const structuredRes = await geminiService.generateContent(apiKey, generationFullPrompt, modelSettings);
+        const apiLatencyMs = Date.now() - apiStartTime;
+
+        setLoadingMessage('Saving prompt to library...');
+        setProgress(80);
+        setStructuredOutput(structuredRes);
+
+        const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
+          title: naturalLanguageInput.substring(0, 40) + '...',
+          naturalLanguageInput,
+          mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
+          structuredOutput: structuredRes,
+          normalizedOutput: '',
+          settingsSnapshot: JSON.stringify(settings),
+          tags: '[]',
+          isFavorite: false,
+        };
+        const savedPrompt = await addPrompt(newPromptData);
+
+        // Create metadata for version tracking
+        const metadata: GenerationMetadata = {
+          naturalLanguageInput,
+          mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
+          format: settings.format,
+          schemaKeys: settings.schemaKeys,
+          mixOptions: settings.mixOptions,
+          modelName: settings.modelName || 'gemini-2.5-pro',
+          systemPrompt: generationFullPrompt,
+          userPrompt: naturalLanguageInput,
+          operationType: 'generate',
+          apiLatencyMs,
+          fragmentsUsed,
+          branchName: 'main', // Default branch
+        };
+
+        // Add initial version with metadata
+        const versionService = await import('../services/versionService');
+        await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
+
+        selectPrompt(savedPrompt);
+
+        setLoadingMessage('Complete!');
+        setProgress(100);
+        setTimeout(() => setLoadingMessage(''), 500);
+      }
     } catch (e: any) {
       setError(`An error occurred during generation: ${e.message}`);
     } finally {
@@ -339,6 +400,12 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     normalize,
     mixPrompts,
     inferSchema,
+    // Phase 9.4: Intermediate mode
+    useIntermediateMode,
+    setUseIntermediateMode,
+    generatedIntermediate,
+    selectedExportModel,
+    setSelectedExportModel,
   };
 
   return <GenerationContext.Provider value={value}>{children}</GenerationContext.Provider>;

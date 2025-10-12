@@ -7,9 +7,6 @@ import {
   MixOption,
 } from "./types";
 
-// Asset paths
-export const LOGO_PATH = "assets/logo_256x256.png";
-
 export const PRIMARY_GENERATION_PROMPT = `
 You are a world-class structured prompt generator for text-to-video AI models. Your purpose is to translate a user's creative idea into a detailed, comprehensive, machine-readable prompt optimized for modern video generation systems.
 
@@ -144,7 +141,7 @@ Generate the JSON response now.
 `;
 
 export const DEFAULT_SETTINGS: PromptSettings = {
-  format: "Markdown",
+  format: "Standard YAML",
   textDirection: "Forwards", // Legacy, kept for backward compatibility
   mixOptions: [], // No options enabled by default
   schemaKeys: ["scene", "sound_effects", "speech"],
@@ -172,19 +169,20 @@ export const STRINGS = {
   ERROR_MODAL_TITLE: "Error",
 };
 
-export const GEMINI_MODEL_NAME = "gemini-2.5-flash";
+export const GEMINI_MODEL_NAME = "gemini-2.5-flash-latest";
 
 export const BUILT_IN_FORMATS: OutputFormat[] = [
-  { id: "markdown", name: "Markdown", isBuiltIn: true },
   { id: "yaml", name: "Standard YAML", isBuiltIn: true },
+  { id: "markdown", name: "Markdown", isBuiltIn: true },
+  { id: "natural", name: "Natural Language", isBuiltIn: true },
   { id: "xml", name: "Standard XML", isBuiltIn: true },
   { id: "json", name: "JSON", isBuiltIn: true },
-  { id: "emoji", name: "Emoji Script", isBuiltIn: true },
   {
     id: "reversed-yaml-xml",
     name: "Reversed YAML-like in XML",
     isBuiltIn: true,
   },
+  { id: "emoji", name: "Emoji Script", isBuiltIn: true },
 ];
 
 export const BUILT_IN_MIX_OPTIONS: MixOption[] = [
@@ -223,7 +221,7 @@ export const BUILT_IN_MIX_OPTIONS: MixOption[] = [
 ];
 
 export const DEFAULT_MODEL_SETTINGS: ModelSettings = {
-  modelName: "gemini-2.5-flash",
+  modelName: "gemini-2.5-flash-latest",
   maxTokens: 2048,
   temperature: 1.0,
   topP: 0.95,
@@ -236,7 +234,8 @@ export const MODEL_PRESETS = {
     maxOutputTokens: 2048,
     recommendedLength: "~1500 characters (terse, optimized)",
     maxInputChars: 2000,
-    lengthGuidance: "Be concise while maintaining the overall specifics of the scene.",
+    lengthGuidance:
+      "Be concise while maintaining the overall specifics of the scene.",
     templateSuffix: "", // Uses default templates
   },
   sora2: {
@@ -244,7 +243,8 @@ export const MODEL_PRESETS = {
     maxOutputTokens: 4096,
     recommendedLength: "300-500 words (~1500-2500 chars)",
     maxInputChars: 2500, // Empirical limit - Sora truncates longer prompts
-    lengthGuidance: "Comprehensive detail significantly outperforms terse descriptions. Aim for 300-500 words with rich visual, temporal, and atmospheric detail. WARNING: Sora 2 has a hard input limit of ~2500 characters. Longer prompts will be truncated.",
+    lengthGuidance:
+      "Comprehensive detail significantly outperforms terse descriptions. Aim for 300-500 words with rich visual, temporal, and atmospheric detail. WARNING: Sora 2 has a hard input limit of ~2500 characters. Longer prompts will be truncated.",
     templateSuffix: "_sora2", // Uses *_sora2.md templates
     technicalSpecs: {
       duration: "10s",
@@ -257,7 +257,8 @@ export const MODEL_PRESETS = {
     maxOutputTokens: 3072,
     recommendedLength: "200-400 words (~1000-2000 chars)",
     maxInputChars: 3000, // Conservative estimate
-    lengthGuidance: "Veo 3 excels at detailed, narrative-driven prompts with native audio generation. Structure your description using the 9 core elements framework. ALWAYS include audio elements (dialogue, ambient sound, music). Use professional cinematic terminology. Aim for 200-400 words with rich detail.",
+    lengthGuidance:
+      "Veo 3 excels at detailed, narrative-driven prompts with native audio generation. Structure your description using the 9 core elements framework. ALWAYS include audio elements (dialogue, ambient sound, music). Use professional cinematic terminology. Aim for 200-400 words with rich detail.",
     templateSuffix: "_veo3",
     technicalSpecs: {
       duration: "8s",
@@ -270,7 +271,8 @@ export const MODEL_PRESETS = {
     name: "Wan Video (Alibaba)",
     maxOutputTokens: 2048,
     recommendedLength: "150-300 words (balanced)",
-    lengthGuidance: "Balanced detail level. Focus on style consistency and coherent narratives. Aim for 150-300 words.",
+    lengthGuidance:
+      "Balanced detail level. Focus on style consistency and coherent narratives. Aim for 150-300 words.",
     templateSuffix: "_wan",
   },
 };
@@ -278,14 +280,9 @@ export const MODEL_PRESETS = {
 /**
  * Canonical schema keys for each model - RESEARCH-BASED
  *
- * These keys are derived from official documentation, patents, and peer-reviewed research.
+ * These keys are derived from official documentation, and peer-reviewed research.
  * They define the standard structure used in conversion templates and should be used in presets
  * to ensure consistency when converting between models.
- *
- * Sources:
- * - Veo 3: Google AI API docs + VEO3_RESEARCH_ANALYSIS.md
- * - Sora 2: US_2025259362_A1 (Prompt Editor Patent) + SORA2_DOC_ANALYSIS.md
- * - Storyboard approach: US_2025259361_A1 (Storyboard Patent) - future roadmap
  */
 export const CANONICAL_SCHEMA_KEYS = {
   /**
@@ -306,43 +303,36 @@ export const CANONICAL_SCHEMA_KEYS = {
   veo3: [
     // NOTE: veo3_specs (duration/resolution/framerate) removed - these are UI-controlled, not prompt parameters
     // Duration is fixed at 8s, resolution/framerate controlled by UI settings
-    'subject',           // Main character/object with detailed description (30-50 words for consistency)
-    'context',           // Setting and environmental context (where, when)
-    'action',            // What happens in the scene with narrative progression (beginning/middle/end)
-    'style',             // Visual aesthetic, artistic direction, color palette, mood
-    'camera_motion',     // Camera movement and angles (smooth tracking, handheld, static, crane)
-    'audio_elements',    // **CRITICAL** Dialogue (quoted), ambient sounds, music (Veo 3's key differentiator)
-    'lighting_mood',     // Lighting setup and emotional tone (warm/cool, harsh/soft, natural/artificial)
-    'background_setting',// Detailed environment (architecture, props, textures, depth elements)
-    'composition',       // Framing, focal points, visual hierarchy, rule of thirds, leading lines
+    "subject", // Main character/object with detailed description (30-50 words for consistency)
+    "context", // Setting and environmental context (where, when)
+    "action", // What happens in the scene with narrative progression (beginning/middle/end)
+    "style", // Visual aesthetic, artistic direction, color palette, mood
+    "camera_motion", // Camera movement and angles (smooth tracking, handheld, static, crane)
+    "audio_elements", // **CRITICAL** Dialogue (quoted), ambient sounds, music (Veo 3's key differentiator)
+    "lighting_mood", // Lighting setup and emotional tone (warm/cool, harsh/soft, natural/artificial)
+    "background_setting", // Detailed environment (architecture, props, textures, depth elements)
+    "composition", // Framing, focal points, visual hierarchy, rule of thirds, leading lines
   ],
 
   /**
    * Sora 2 (OpenAI): Comprehensive single-prompt approach
-   *
-   * Source: convert_to_sora2.md template + US_2025259362_A1 (Prompt Editor Patent)
    *
    * Training: Fine-tuned on 300-500 word detailed captions
    * Architecture: Diffusion-transformer with spacetime patches
    * Duration: Typically 10 seconds
    * Audio: Native video+audio generation (sound effects, music, dialogue synchronized automatically)
    *        Audio descriptions are OPTIONAL but can guide soundtrack generation
-   *
-   * NOTE: The storyboard patent (US_2025259361_A1) reveals a more advanced FRAME-BASED approach
-   * with prompts at specific timestamps (0s, 2.5s, 5s, 7.5s, 10s). This is the FUTURE direction
-   * but requires timeline UI. Current approach uses monolithic prompts with embedded temporal
-   * progression. See internal/sora/US_2025259361_STORYBOARD_ANALYSIS.md
    */
   sora2: [
     // NOTE: technical_specs (duration/resolution/aspect ratio) removed - these are UI-controlled, not prompt parameters
     // Duration is fixed at 10s, resolution fixed at 1920x1080, aspect ratio is a UI toggle (landscape/portrait)
-    'temporal_progression', // **CRITICAL** How scene evolves from start to finish with specific visual changes
-    'visual_description',   // Rich visual details (colors, textures, atmospheric elements, depth, composition)
-    'camera_movement',      // Specific camera techniques with technical precision (dolly, crane, pan, tilt, zoom, rack focus)
-    'cinematography',       // Framing, composition, depth of field, focal length characteristics
-    'lighting',             // Lighting setup, quality, direction, color temperature, mood
-    'audio_design',         // Sound effects, ambient sounds, music (optional but enhances soundtrack)
-    'style',                // Visual aesthetic, artistic references, color grading, overall look
+    "temporal_progression", // **CRITICAL** How scene evolves from start to finish with specific visual changes
+    "visual_description", // Rich visual details (colors, textures, atmospheric elements, depth, composition)
+    "camera_movement", // Specific camera techniques with technical precision (dolly, crane, pan, tilt, zoom, rack focus)
+    "cinematography", // Framing, composition, depth of field, focal length characteristics
+    "lighting", // Lighting setup, quality, direction, color temperature, mood
+    "audio_design", // Sound effects, ambient sounds, music (optional but enhances soundtrack)
+    "style", // Visual aesthetic, artistic references, color grading, overall look
   ],
 
   /**
@@ -353,10 +343,10 @@ export const CANONICAL_SCHEMA_KEYS = {
    * Use when model target is unknown or for broad compatibility
    */
   generic: [
-    'scene',    // Core concept and narrative - the essential story
-    'visuals',  // Key visual elements (subject, setting, camera work, composition, lighting, style)
-    'audio',    // Essential sound elements (dialogue, ambient sounds, music if relevant)
-    'style',    // Overall aesthetic, mood, color palette, artistic direction
+    "scene", // Core concept and narrative - the essential story
+    "visuals", // Key visual elements (subject, setting, camera work, composition, lighting, style)
+    "audio", // Essential sound elements (dialogue, ambient sounds, music if relevant)
+    "style", // Overall aesthetic, mood, color palette, artistic direction
   ],
 } as const;
 

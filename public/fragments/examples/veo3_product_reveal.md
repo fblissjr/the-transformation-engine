@@ -9,8 +9,6 @@ description: Example of Veo 3 product reveal with voiceover and dynamic camera
 
 **VEO 3 EXAMPLE: Tech Product Reveal**
 
-**Technical Specs:** Duration: 8s | Resolution: 720p | Aspect Ratio: 16:9 | Frame Rate: 24fps
-
 **Subject:**
 Sleek wireless earbuds, matte black finish with subtle metallic accents, sitting on a minimalist white pedestal. Product approximately 2 inches tall, case slightly open revealing the earbuds inside with soft LED glow indicators (small blue lights). High-end tech aesthetic, premium materials visible in close detail.
 

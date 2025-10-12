@@ -1,9 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { usePrompts } from '../context/PromptContext';
+import { useIntermediate } from '../context/IntermediateContext';
+import { useGeneration } from '../context/GenerationContext';
 import { CopyIcon, RestoreIcon } from './icons';
 import { LogEntry, PromptVersion } from '../types';
 import { VersionTree } from './VersionTree';
 import { generateConversionPrompt } from '../services/promptService';
+import { parsePromptToIntermediate } from '../services/migrations/promptToIntermediate';
+import IntermediateEditor from './intermediate/IntermediateEditor';
 
 interface RightPanelProps {
   logs: LogEntry[];
@@ -12,7 +16,7 @@ interface RightPanelProps {
   onClearLogs: () => void;
 }
 
-type Tab = 'structured' | 'normalized' | 'history' | 'debug';
+type Tab = 'structured' | 'normalized' | 'history' | 'debug' | 'intermediate';
 
 const RightPanel: React.FC<RightPanelProps> = ({ 
   logs,
@@ -34,12 +38,15 @@ const RightPanel: React.FC<RightPanelProps> = ({
     restoreVersion,
   } = usePrompts();
 
+  const { loadIntermediate, createNew } = useIntermediate();
+  const { generatedIntermediate } = useGeneration();
   const [activeTab, setActiveTab] = useState<Tab>('structured');
   const [editedStructuredOutput, setEditedStructuredOutput] = useState('');
   const [editedNormalizedOutput, setEditedNormalizedOutput] = useState('');
   const [showTransformInput, setShowTransformInput] = useState(false);
   const [customTransform, setCustomTransform] = useState('');
   const [useTreeView, setUseTreeView] = useState(true); // Toggle for tree view
+  const [showIntermediateEditor, setShowIntermediateEditor] = useState(false);
 
   // Sync edited outputs only when activePrompt changes or when new content is generated
   useEffect(() => {
@@ -160,6 +167,27 @@ const RightPanel: React.FC<RightPanelProps> = ({
             label="History"
             isActive={activeTab === 'history'}
             onClick={() => setActiveTab('history')}
+          />
+          <TabButton
+            label="Intermediate"
+            isActive={activeTab === 'intermediate'}
+            onClick={async () => {
+              setActiveTab('intermediate');
+              if (activePrompt) {
+                try {
+                  // Parse existing prompt to intermediate
+                  const intermediate = parsePromptToIntermediate(activePrompt);
+                  // Create it in the context
+                  const { createIntermediate } = await import('../services/db/intermediateService');
+                  await createIntermediate(intermediate);
+                  // Load it in the editor
+                  await loadIntermediate(intermediate.id);
+                  setShowIntermediateEditor(true);
+                } catch (error) {
+                  console.error('Failed to load intermediate:', error);
+                }
+              }
+            }}
           />
           <TabButton
             label="Debug"
@@ -461,6 +489,51 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 </div>
               )}
             </div>
+          </div>
+        )}
+        {activeTab === 'intermediate' && (
+          <div className="flex flex-col h-full">
+            {generatedIntermediate ? (
+              <div className="flex-1 overflow-auto bg-gray-900/50 border border-gray-800 rounded-lg p-4">
+                <div className="mb-4 pb-4 border-b border-gray-800">
+                  <h3 className="text-sm font-semibold text-gray-300 mb-2">Intermediate Representation</h3>
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <div><span className="text-gray-400">Format:</span> {generatedIntermediate.structure.format || 'structured'}</div>
+                    <div><span className="text-gray-400">Created:</span> {new Date(generatedIntermediate.created).toLocaleString()}</div>
+                    {generatedIntermediate.title && (
+                      <div><span className="text-gray-400">Title:</span> {generatedIntermediate.title}</div>
+                    )}
+                  </div>
+                </div>
+
+                {generatedIntermediate.structure.format === 'markdown' ? (
+                  <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">
+                    {generatedIntermediate.structure.content}
+                  </pre>
+                ) : (
+                  <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
+                    {JSON.stringify(generatedIntermediate.structure, null, 2)}
+                  </pre>
+                )}
+              </div>
+            ) : showIntermediateEditor ? (
+              <div className="h-full overflow-hidden bg-gray-950 rounded-lg">
+                <IntermediateEditor
+                  onSave={() => {
+                    setShowIntermediateEditor(false);
+                    setActiveTab('structured');
+                  }}
+                  onCancel={() => {
+                    setShowIntermediateEditor(false);
+                    setActiveTab('structured');
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <p>Generate with Intermediate Mode enabled to see the semantic representation</p>
+              </div>
+            )}
           </div>
         )}
         {activeTab === 'debug' && (

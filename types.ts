@@ -177,3 +177,7 @@ export interface ExportedConfig {
   outputFormats: OutputFormat[];
   customSliders?: CustomSlider[];
 }
+
+// ==================== Intermediate Representation ====================
+// Export all intermediate types for multi-model portability
+export * from './types/intermediate';

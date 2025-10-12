@@ -1,20 +1,22 @@
 # The Transformation Engine
 
 <p align="center">
-  <img src="assets/logo_256x256.png" alt="The Transformation Engine" width="256">
+  <img src="assets/logo_256_256.png" alt="The Transformation Engine" width="256">
 </p>
 
 LLM-powered structured prompts and transformations and other random wackiness for video generation models
 
 ## Features
 
-- **Generate**: Natural language → structured prompts (YAML, JSON, XML, Markdown)
+- **Intermediate-First Generation**: Create model-agnostic semantic prompts, instantly export to Sora 2, Veo 3, or Generic formats
+- **Generate**: Natural language → structured output (YAML, JSON, XML, Markdown, Natural Language)
 - **Transform**: Convert between formats with mix options (reverse, compress, expand, technical, custom)
 - **Mix**: Blend multiple prompts into hybrids
 - **Library**: Local prompt management with search, favorites, versions
 - **Media**: Image/video conditioning via vision API
-- **Transparency**: Preview and edit all prompts before sending, customize system prompts
+- **Transparency**: Preview and edit all prompts before sending, customize system prompts, view intermediate representations
 - **Settings**: Model parameters, API key management, cache control
+- **Privacy**: 100% client-side, encrypted API key storage, network monitoring, audit logs
 
 ## Screenshots
 
@@ -75,9 +77,11 @@ Get API key: [Google AI Studio](https://aistudio.google.com/app/apikey)
 
 ## Storage
 
-- **Prompts/versions/media**: IndexedDB (browser-local)
+- **Prompts/intermediates/versions/media**: IndexedDB (browser-local, DB v7)
 - **API key**: Encrypted storage (AES-GCM, configurable TTL, default 7 days)
 - **Cache & custom system prompts**: localStorage (models list, API responses, edited prompts)
+
+**Intermediate Architecture**: Prompts stored as model-agnostic Markdown, transformed on-demand to any format (zero extra API calls)
 
 Data only sent to Google Gemini API when you explicitly trigger generation/transformation.
 
@@ -85,7 +89,7 @@ Data only sent to Google Gemini API when you explicitly trigger generation/trans
 
 - React 19 + TypeScript + Vite + Tailwind v4
 - IndexedDB (idb library)
-- Gemini API (gemini-2.5-pro default)
+- Gemini API (more providers such as local ones later)
 
 ## Requirements
 

@@ -8,7 +8,7 @@ const VERSIONS_STORE_NAME = 'versions';
 const CONFIG_STORE_NAME = 'promptConfigs';
 const SETTINGS_STORE_NAME = 'appSettings';
 const MEDIA_STORE_NAME = 'media';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 let db: IDBPDatabase;
 
@@ -49,6 +49,22 @@ export async function initDB() {
           keyPath: 'id',
         });
         mediaStore.createIndex('uploadedAt', 'uploadedAt');
+      }
+      if (oldVersion < 7) {
+        // Create intermediates object store (Phase 9.1 - Intermediate Representation)
+        const intermediatesStore = db.createObjectStore('intermediates', { keyPath: 'id' });
+        intermediatesStore.createIndex('created', 'created', { unique: false });
+        intermediatesStore.createIndex('modified', 'modified', { unique: false });
+        intermediatesStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
+        intermediatesStore.createIndex('title', 'title', { unique: false });
+
+        // Trigger migration AFTER transaction completes
+        tx.oncomplete = () => {
+          // Import and run migration asynchronously
+          import('../migrations/v7Migration').then(({ migrateAllPromptsToIntermediates }) => {
+            migrateAllPromptsToIntermediates().catch(console.error);
+          });
+        };
       }
     },
   });

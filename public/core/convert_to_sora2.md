@@ -15,13 +15,9 @@ Analyze the input prompt and convert it to be optimized for Sora 2, which uses a
 @include[fragments/rules/obscuring_figures_full.md]
 
 **Input Prompt to Convert:**
-```
 {{structuredOutput}}
-```
 
 **Target Output Structure (YAML format):**
-```yaml
-technical_specs: "10s duration, 1920x1080, 16:9"
 temporal_progression: |
   [Describe how scene evolves from start to finish with specific visual progressions]
 visual_description: |
@@ -32,9 +28,10 @@ cinematography: |
   [Framing, composition, depth of field, focal length characteristics]
 lighting: |
   [Lighting setup, quality, direction, color temperature, mood]
+audio_design: |
+  [Sound effects, ambient sounds, music (optional but enhances soundtrack)]
 style: |
   [Visual aesthetic, artistic references, color grading, overall look]
-```
 
 @include[fragments/instructions/sora2_comprehensive_detail.md]
 
@@ -47,4 +44,4 @@ style: |
 - Maintain the 10-second duration constraint
 
 **Final Output:**
-Provide ONLY the converted YAML prompt. No commentary or explanations.
+Provide ONLY the converted YAML prompt. No commentary, explanations, or code fences. Output raw YAML only.

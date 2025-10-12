@@ -17,13 +17,9 @@ Analyze the input prompt and convert it to be optimized for Veo 3, which excels 
 @include[fragments/instructions/veo3_nine_elements.md]
 
 **Input Prompt to Convert:**
-```
 {{structuredOutput}}
-```
 
 **Target Output Structure (YAML format):**
-```yaml
-veo3_specs: "8s duration, 720p @ 24fps, native audio"
 subject: |
   [Detailed character/subject description: appearance, clothing, expressions, age, build - 30-50 words for consistency]
 context: |
@@ -44,7 +40,6 @@ background_setting: |
   [Detailed environment: architecture, props, textures, depth elements]
 composition: |
   [Framing, focal points, visual hierarchy, rule of thirds, leading lines]
-```
 
 @include[fragments/instructions/veo3_audio_integration.md]
 
@@ -62,4 +57,4 @@ composition: |
 @include[fragments/examples/veo3_coffee_shop.md]
 
 **Final Output:**
-Provide ONLY the converted YAML prompt. No commentary or explanations.
+Provide ONLY the converted YAML prompt. No commentary, explanations, or code fences. Output raw YAML only.

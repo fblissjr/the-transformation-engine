@@ -11,7 +11,6 @@ subject_type: object
 
 **Example Prompt (Product Showcase)**:
 
-```yaml
 temporal_progression: |
   [00:00-00:02] Static shot establishing the product - a sleek wireless headphone set - resting on a minimalist wooden surface. Soft directional light from left creates gentle shadows. Product positioned in perfect thirds composition.
 
@@ -30,5 +29,4 @@ environment: "Studio product photography setup but rendered naturalistically. Wo
 
 audio_design: "Quiet studio ambience with subtle room tone. Soft mechanical sound of precision camera movement (smooth gimbal). Very subtle texture of headphones' materials - faint leather/foam compression. Minimal but present - emphasizing premium quality and craftsmanship. No music, letting product speak through visual elegance."
 
-style: "High-end commercial product videography. Clean, professional, sophisticated. Color grading with slightly elevated blacks for modern look. Crisp detail on product while maintaining organic feel through wooden surface texture. Subtle vignette at frame edges guides attention to center. Premium feel through careful lighting and precise camera movement."
-```
+style: "High-end commercial product videography. Clean, professional, sophisticated. Color grading with slightly elevated blacks for modern look. Crisp detail on product while maintaining organic feel through wooden surface texture. Subtle vignette at frame edges guides attention to center. Premium feel through careful lighting and precise

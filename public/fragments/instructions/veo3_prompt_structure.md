@@ -156,9 +156,3 @@ Google DeepMind's official documentation specifies 6 essential elements for effe
 **Ambiance:** Late afternoon golden hour light filtering between buildings creating dappled shadows on cobblestones, warm color palette emphasizing amber tones, peaceful contemplative mood, gentle breeze suggested by swaying string lights, quiet intimate atmosphere of hidden urban space.
 
 **Audio:** Footsteps on cobblestones (rhythmic, measured pace), distant urban ambiance (muffled traffic, faint voices), camera shutter click (vintage mechanical sound), subtle ambient street sounds (wind, distant music), no dialogue.
-
----
-
-## PRO TIP: USE GEMINI TO EXPAND
-
-Official recommendation from Google DeepMind: Start with simple description, then use Gemini (LLM) to expand using this 6-element framework before generating video. This workflow yields more consistent, higher-quality outputs.

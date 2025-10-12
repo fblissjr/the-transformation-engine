@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-10-11 | **Status**: Privacy & Multi-Tenant Ready | Model-Optimized (Sora 2 + Veo 3) | Modular Fragments LIVE | Version Control Branching LIVE
+> **Last Updated**: 2025-10-12 | **Status**: Privacy & Multi-Tenant Ready | Model-Optimized (Sora 2 + Veo 3) | Modular Fragments LIVE | Version Control Branching LIVE | **Intermediate Architecture LIVE (Phase 9 Complete)**
 
 ---
 
@@ -47,8 +47,9 @@ ApiKeyProvider
 **Common Bug**: If MediaProvider wraps ActivePromptProvider, you'll get "useActivePrompt must be used within an ActivePromptProvider" error. MediaProvider MUST be inside ActivePromptProvider.
 
 ### Storage
-- **IndexedDB** (via idb library) - DB v6
-  - `prompts` - Prompt library
+- **IndexedDB** (via idb library) - DB v7
+  - `prompts` - Prompt library (legacy YAML storage)
+  - `intermediates` - Model-agnostic semantic prompts (NEW in v7)
   - `versions` - Version history
   - `promptConfigs` - System prompts
   - `appSettings` - User settings
@@ -115,6 +116,8 @@ ApiKeyProvider
 
 ### Prompt Generation
 - Natural language input → structured output
+- **Intermediate-first architecture**: Generate model-agnostic semantic structure, transform to any format
+- **Instant format switching**: Change export model (Sora 2/Veo 3/Generic) without regenerating
 - Multi-modal support (image/video conditioning)
 - Dynamic schema keys with presets (Video Scene, Music, Art Direction)
 - **Model-specific optimization**: Sora 2 (OpenAI) and Veo 3 (Google) presets
@@ -122,6 +125,7 @@ ApiKeyProvider
 - Mix options (Reverse, Compress, Expand, Technical, Custom)
 - Multiple output formats (YAML, JSON, XML, Markdown)
 - **Modular fragment system**: Reusable prompt components with @include directives
+- **Legacy mode**: Optional direct YAML generation (backward compatible)
 
 ### Output Transformation
 - Flexible transformation engine (not just normalization)
@@ -207,30 +211,86 @@ ApiKeyProvider
 - [x] Removed legacy /public/prompts/ directory (consolidated to /core/ and /fragments/)
 
 **Phase 6 (Research-Based Schema Alignment)**:
-- [x] Detailed loading status indicators for all Gemini API operations (CenterPanel, RightPanel)
-- [x] Progress bars with animated status messages (generate, mix, transform, schema inference, media description)
-- [x] Model conversion system with fragment-based templates (Sora 2 ↔ Veo 3 ↔ Generic)
-- [x] Character counter with color-coded warnings (green/yellow/red based on model limits)
-- [x] Auto-condense button for prompts exceeding Sora 2's 2500 character limit
-- [x] Smart model detection from schema keys (audio-first vs visual-first indicators)
-- [x] Optimized schema key presets (removed redundant technical_specs/veo3_specs)
-- [x] CSP update to allow blob: URLs for video/audio media (media-src directive)
-- [x] Fragment loader supports optional YAML frontmatter (graceful degradation)
-- [x] Removed legacy /public/prompts/ directory (consolidated to /core/ and /fragments/)
+- [x] Research analysis: 3 Sora 2 docs + Veo 3 official docs
+- [x] Created `CANONICAL_SCHEMA_KEYS` in constants.ts with research citations
+- [x] Created `sora2_best_practices.md` with good/bad examples
+- [x] Created `veo3_best_practices.md` with good/bad examples
+- [x] Created `sora2_remix_prompting.md` for surgical edits with temporal targeting
+- [x] Research findings: Sora 2 Docs describe future features (storyboard/blending, UIs not in Sora 2 product)
+- [x] Actual Sora 2 UI confirmed: Single text input + remix/edit with temporal targeting
+- [x] Template detection UI with prominent gradient section showing active model
+- [x] Auto-detection from schema keys with manual override toggle
+- [x] Updated all UI presets to use canonical keys (7 for Sora 2, 10 for Veo 3)
 
-### Recent Bug Fixes (Phase 3-5)
-- **Context provider order**: Fixed MediaProvider wrapping ActivePromptProvider causing "useActivePrompt must be used within ActivePromptProvider" error. Correct order: PromptLibraryProvider → ActivePromptProvider → MediaProvider → GenerationProvider
-- **IndexedDB boolean query**: Fixed `getDefaultPromptConfig()` using `getAllFromIndex()` with boolean value (invalid IDBValidKey). Changed to `getAll()` + `find()` filter
-- **Models dropdown disappearing**: Fixed useEffect dependency array to include `availableModels.length`, ensuring models reload from cache when state clears
-- **Textarea losing focus on edit**: Split useEffect to prevent re-sync during typing in RightPanel
-- **System prompts not being used**: Updated promptService to check localStorage for custom prompts before using defaults
-- **Fragment composition integration**: Fixed GenerationContext to use V2 async functions (generatePrimaryPromptV2, generateMixPromptV2, generateNormalizePromptV2, generateSchemaInferencePromptV2)
-- **Fragment loading paths**: Corrected fetch paths from `/prompts/core/` and `/prompts/fragments/` to `/core/` and `/fragments/` (Vite serves public directory at root)
-- **Missing context exports**: Added `setStructuredOutput` and `setNormalizedOutput` to backward-compatible `usePrompts()` hook
-- **Video uploads blocked by CSP**: Added `media-src 'self' blob:` to CSP in index.html and netlify.toml
-- **Conversion templates frontmatter error**: Fixed generateConversionPrompt to use direct fetch() instead of fragmentLoader.loadFragment()
-- **Fragment loader frontmatter requirement**: Made YAML frontmatter optional in parseFragment() for backward compatibility
-- **Model detection after key removal**: Updated detectTargetModel to use semantic key analysis (audio-first vs visual-first) instead of technical_specs/veo3_specs
+**Phase 7 (Audio Capability Correction)**:
+- [x] Corrected Sora 2 audio assumption: Native video+audio generation (not visual-only)
+- [x] Updated constants.ts: PRIMARY_GENERATION_PROMPT and CANONICAL_SCHEMA_KEYS comments
+- [x] Updated sora2_best_practices.md: Changed "NO Audio" to "Optional but Recommended"
+- [x] Updated sora2_comprehensive_detail.md: Audio guidance corrected
+- [x] Updated CenterPanel.tsx: UI labels changed to "Video+Audio" from "Visual-only"
+- [x] Updated CLAUDE.md: Sora 2 section reflects native audio generation
+- [x] Added audio_design to all 3 Sora 2 examples (beach_walk, camera_push, interior_product)
+- [x] Key distinction: Sora 2 audio automatic (optional descriptions), Veo 3 audio required (explicit control)
+
+**Phase 8 (Remove Redundant Technical Specs)**:
+- [x] Removed `technical_specs` from CANONICAL_SCHEMA_KEYS.sora2 (UI-controlled, not prompt parameters)
+- [x] Removed `veo3_specs` from CANONICAL_SCHEMA_KEYS.veo3 (UI-controlled, not prompt parameters)
+- [x] Rationale: Duration/resolution/aspect ratio are UI settings, not text prompt parameters
+- [x] Character savings: ~50 characters per prompt (critical for 2500 char limit on Sora 2)
+- [x] Updated sora2_best_practices.md: Removed "Technical Specifications" section
+- [x] Removed technical_specs from all 3 Sora 2 examples
+- [x] Archived sora2_technical_specs.md fragment (obsolete)
+- [x] Updated CenterPanel.tsx: All Sora 2 presets (3) and Veo 3 presets (3) now exclude specs
+- [x] Sora 2 canonical keys (7): temporal_progression, visual_description, camera_movement, cinematography, lighting, audio_design, style
+- [x] Veo 3 canonical keys (9): subject, context, action, style, camera_motion, audio_elements, lighting_mood, background_setting, composition
+
+**Phase 9 (Intermediate Representation Architecture)** - COMPLETE:
+- [x] **Phase 9.1: Database Schema**
+  - [x] Created IntermediatePrompt TypeScript interfaces (`/types/intermediate.ts`)
+  - [x] Added intermediates object store to IndexedDB (DB v7)
+  - [x] Created intermediateService.ts with 12 CRUD operations
+  - [x] Built migration system (`/services/migrations/v7Migration.ts`)
+  - [x] Auto-migration parses existing YAML prompts into intermediate structure
+  - [x] Test script validates migration (15 checks, all passing)
+- [x] **Phase 9.2: Transformer System**
+  - [x] Built sora2Transformer (intermediate → Sora 2 YAML, 2500 char limit)
+  - [x] Built veo3Transformer (intermediate → Veo 3 YAML, audio required)
+  - [x] Built genericTransformer (intermediate → generic format)
+  - [x] Created transformer registry with auto-detection
+  - [x] LRU cache system (50 entries, timestamp-based invalidation)
+  - [x] Validation checks for all transformers
+  - [x] **Markdown intermediate format** - LLM-friendly, forgiving structure
+  - [x] **markdownParser.ts** - Parses markdown sections (## Visual, ## Audio, etc.) into typed objects
+  - [x] All transformers updated to handle both markdown and legacy JSON formats
+- [x] **Phase 9.3: UI for Intermediate Editing**
+  - [x] Built IntermediateEditor with tabs (Timeline/Visual/Audio/Camera)
+  - [x] Created 7 sub-components (Metadata, Temporal, Visual, Audio, Camera editors)
+  - [x] Built FormatExportPanel with live YAML preview
+  - [x] Added model selector dropdown (Sora 2, Veo 3, Generic)
+  - [x] Character counter with color-coded warnings
+  - [x] Copy to clipboard and "Export & Save" to library
+  - [x] IntermediateContext for state management
+  - [x] Reverse migration service (YAML → Intermediate)
+  - [x] Integrated into CenterPanel ("Create from Intermediate" button)
+  - [x] **RightPanel Intermediate Tab** - Displays generated intermediate markdown with metadata
+- [x] **Phase 9.4: Generation Pipeline Update**
+  - [x] Created primary_intermediate.md system prompt (Markdown output format)
+  - [x] Added generateIntermediate() to promptService
+  - [x] Updated GenerationContext with intermediate mode (default: ON)
+  - [x] Added toggle: "Generate as Intermediate (recommended)"
+  - [x] Auto-detect target model (audio-rich → Veo 3, temporal → Sora 2)
+  - [x] Model selector dropdown with instant format switching
+  - [x] "Save to Library" button creates Prompt with current format
+  - [x] Legacy mode preserved (toggle OFF for direct YAML generation)
+  - [x] **Fragment loader fixes**: Absolute path support (/core/ and /fragments/)
+  - [x] **@include parameter parsing**: Extracts variables from @include directives
+  - [x] **Single API call generation**: No duplicate input, clean composition
+  - [x] TypeScript compiles cleanly, build passes, end-to-end tested
+- **Problem Solved**: Format lock-in eliminated - create once, export to any model
+- **Architecture**: Three-stage pipeline (Sources → Markdown Intermediate → Target Formats)
+- **Key Benefit**: Zero extra API calls for format conversion, instant switching, LLM-friendly format
+- **Backward Compatibility**: Legacy YAML mode available, both stores coexist
+- **Documentation**: See `/internal/PHASE9_*.md` files for specifications
 
 ### Missing Features (Per Spec)
 - [ ] Sharing protocol (URL generation, `/share` route)
@@ -457,19 +517,19 @@ return "generic";
 - **Architecture**: Diffusion-transformer with spacetime patches (4D: height × width × time)
 - **Inference**: Entire video generated simultaneously (not frame-by-frame)
 - **Training**: Fine-tuned on comprehensive image-to-text captions (300-500 words)
-- **Audio**: Visual-only model, NO audio generation
+- **Audio**: Native video+audio generation (sound effects, music, dialogue generated automatically; explicit audio descriptions optional but can enhance soundtrack)
 - **Optimal Prompts**: 300-500 words with embedded temporal progression (0-3s, 3-7s, 7-10s)
 - **API Limit**: 2500 characters (hard limit, prompts truncated)
-- **Technical Specs**: 10s duration, 1920x1080 resolution, 16:9 aspect ratio
+- **Technical Specs**: Fixed UI parameters (10s duration, 1920x1080 resolution, aspect ratio toggle) - NOT prompt parameters
 - **Remix Feature**: Supports temporal targeting ("At 3 seconds, change X", "From 2-5 seconds, transform Y")
 
 **Implementation**:
-- 4 Sora 2-specific fragments (technical specs, temporal progression, camera detail, comprehensive detail)
-- 3 few-shot examples with keyword-based selection
+- 3 Sora 2-specific fragments (temporal progression, camera detail, comprehensive detail)
+- 3 few-shot examples with keyword-based selection (all include audio_design)
 - 1 best practices guide (sora2_best_practices.md) with good/bad examples
 - 1 remix prompting guide (sora2_remix_prompting.md) with 6 patterns
 - UI presets: Cinematic, Social Media, Product Demo (all use canonical keys)
-- Canonical schema keys (7 keys aligned with Sora doc 1)
+- Canonical schema keys (7 keys): temporal_progression, visual_description, camera_movement, cinematography, lighting, audio_design, style
 
 ### Veo 3 (Google)
 **Research Sources**:
@@ -489,11 +549,11 @@ return "generic";
 - **Optimal Prompts**: 200-400 words with narrative arc, **ALWAYS include audio elements**
 
 **Implementation**:
-- 5 Veo 3-specific fragments (technical specs, 9 elements, audio integration, character consistency, cinematic language)
+- 4 Veo 3-specific fragments (9 elements, audio integration, character consistency, cinematic language)
 - 8 few-shot examples (4 narrative + 4 audio-focused)
 - 1 best practices guide (veo3_best_practices.md) with good/bad examples
 - UI presets: Narrative Scene, Cinematic Landscape, Product Demo (all use canonical keys)
-- Canonical schema keys (10 keys aligned with official 6-element framework + research)
+- Canonical schema keys (9 keys): subject, context, action, style, camera_motion, audio_elements, lighting_mood, background_setting, composition
 
 ### MODEL_PRESETS System (constants.ts)
 ```typescript
@@ -508,7 +568,7 @@ return "generic";
 ### Comparison: Sora 2 vs Veo 3
 | Feature | Sora 2 | Veo 3 |
 |---------|--------|-------|
-| **Audio** | None (visual only) | Native (dialogue/ambient/music) |
+| **Audio** | Native video+audio (automatic) | Native audio-first (V2A, explicit) |
 | **Duration** | 10 seconds | 8 seconds |
 | **Resolution** | Up to 1080p | Up to 4K (default 720p) |
 | **Prompt Style** | Temporal progression, spacetime | Narrative-driven, 9 elements |
@@ -579,7 +639,7 @@ return "generic";
 - **Build**: Vite 6.3.6
 - **Styling**: Tailwind CSS v4
 - **Storage**: IndexedDB (idb library)
-- **API**: Google Gemini 1.5 Flash
+- **API**: Google Gemini (Default 2.5 Flash)
 - **Testing**: Vitest (setup, minimal coverage currently)
 
 ---
@@ -669,3 +729,4 @@ Documentation:
 **For optimization roadmap**: See [TODO.md](./TODO.md)
 **For Phase 1 details**: See [PLAN.md](./PLAN.md)
 - Always read @CLAUDE.md to get up to speed when you lack context. Ask yourself beforehand if you lack context to any request from me. Be concise in your edits and documentation. Aim for simplicity and extensibility. This is a hobbyist project, not a commercial one.
+- We should never commit anything from @internal/

@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "test:auto": "node scripts/automated-tests.js",
+    "test:all": "npm run test:auto && npm run build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

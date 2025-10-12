@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePrompts } from '../context/PromptContext';
 import { useApiKey } from '../context/ApiKeyContext';
+import { useGeneration } from '../context/GenerationContext';
 import { SparklesIcon, WandIcon, EditIcon } from './icons';
+import IntermediateEditor from './intermediate/IntermediateEditor';
 import * as dbService from '../services/dbService';
 import * as geminiService from '../services/geminiService';
 import * as configService from '../services/configService';
 import * as promptService from '../services/promptService';
+import { transformToModel } from '../services/transformers';
 import { MediaReference, MixOption, Prompt } from '../types';
 import { GEMINI_MODEL_NAME, BUILT_IN_MIX_OPTIONS, DEFAULT_MODEL_SETTINGS } from '../constants';
 
@@ -70,6 +73,13 @@ const CenterPanel: React.FC = () => {
     addPrompt,
   } = usePrompts();
   const { apiKey } = useApiKey();
+  const {
+    useIntermediateMode,
+    setUseIntermediateMode,
+    generatedIntermediate,
+    selectedExportModel,
+    setSelectedExportModel,
+  } = useGeneration();
 
   // Load blob URLs for media references
   const mediaBlobUrls = useMediaBlobUrls(mediaReferences);
@@ -85,6 +95,7 @@ const CenterPanel: React.FC = () => {
   const [editedUserPrompt, setEditedUserPrompt] = useState<string | null>(null);
   const [isEditingPrompts, setIsEditingPrompts] = useState(false);
   const [templateOverride, setTemplateOverride] = useState<'auto' | 'generic'>('auto');
+  const [showIntermediateEditor, setShowIntermediateEditor] = useState(false);
   const configFileInputRef = useRef<HTMLInputElement>(null);
 
   // Detect which template will be used based on schema keys
@@ -464,6 +475,121 @@ const CenterPanel: React.FC = () => {
           </div>
         </div>
 
+        {/* Primary Action Buttons - Prominent Section */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
+          {/* Phase 9.4: Intermediate Mode Toggle */}
+          <div className="mb-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useIntermediateMode}
+                onChange={(e) => setUseIntermediateMode(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-600 text-amber-500 focus:ring-amber-500 focus:ring-offset-gray-900"
+              />
+              <span className="text-sm font-medium text-gray-200">
+                Generate as Intermediate (recommended)
+              </span>
+            </label>
+            {useIntermediateMode && (
+              <p className="text-xs text-gray-400 mt-2">
+                Creates model-agnostic representation. Transform to any format instantly without regenerating.
+              </p>
+            )}
+          </div>
+
+          {/* Phase 9.4: Model Selector (shown after generation in intermediate mode) */}
+          {useIntermediateMode && generatedIntermediate && (
+            <div className="mb-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Export Format:
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={selectedExportModel}
+                  onChange={(e) => {
+                    const newModel = e.target.value as 'sora2' | 'veo3' | 'generic';
+                    setSelectedExportModel(newModel);
+                    // Re-transform intermediate to new format
+                    const transformed = transformToModel(generatedIntermediate, newModel);
+                    setStructuredOutput(transformed);
+                  }}
+                  className="flex-1 bg-gray-900 border border-gray-600 text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                >
+                  <option value="sora2">Sora 2 (OpenAI)</option>
+                  <option value="veo3">Veo 3 (Google)</option>
+                  <option value="generic">Generic</option>
+                </select>
+                <button
+                  onClick={async () => {
+                    // Save intermediate as prompt with current format
+                    const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
+                      title: generatedIntermediate.title,
+                      naturalLanguageInput: generatedIntermediate.sources.text || '',
+                      structuredOutput: structuredOutput,
+                      normalizedOutput: '',
+                      settingsSnapshot: JSON.stringify(settings),
+                      tags: '[]',
+                      isFavorite: false,
+                    };
+                    const savedPrompt = await addPrompt(newPromptData);
+                    selectPrompt(savedPrompt);
+                    alert('Saved to library!');
+                  }}
+                  className="bg-green-600 hover:bg-green-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors whitespace-nowrap"
+                >
+                  Save to Library
+                </button>
+              </div>
+            </div>
+          )}
+
+          {(isLoading || isDescribing) && (
+            <div className="mb-3">
+              <div className="w-full bg-gray-700 rounded-full h-1.5 mb-1">
+                <div
+                  className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              {(loadingMessage || describingMessage) && (
+                <p className="text-xs text-gray-400 text-center animate-pulse">
+                  {loadingMessage || describingMessage}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleGenerate}
+              disabled={isLoading || !naturalLanguageInput}
+              className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:from-amber-500 hover:to-orange-500 hover:shadow-amber-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <SparklesIcon className="w-4 h-4" />
+                  <span>Generate Prompt</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setShowIntermediateEditor(true)}
+              className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+            >
+              <EditIcon className="w-4 h-4" />
+              <span>Create from Intermediate</span>
+            </button>
+          </div>
+        </div>
+
         {/* Template Selection - Prominent Section */}
         <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-2 border-purple-500/50 rounded-lg p-4">
           <div className="flex items-start justify-between gap-4">
@@ -521,29 +647,32 @@ const CenterPanel: React.FC = () => {
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Format Selector */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-              </svg>
-              Output Format
-            </h3>
-            <div className="space-y-2">
-              <select
-                value={settings.format}
-                onChange={e => setSettings(s => ({...s, format: e.target.value}))}
-                className="w-full bg-gray-800 text-white text-sm border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="Standard YAML">YAML</option>
-                <option value="Standard XML">XML</option>
-                <option value="JSON">JSON</option>
-                <option value="Markdown">Markdown</option>
-                <option value="Emoji Script">Emoji Script</option>
-                <option value="Reversed YAML-like in XML">Reversed YAML/XML</option>
-              </select>
+          {/* Format Selector - Only shown in legacy mode */}
+          {!useIntermediateMode && (
+            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+                Final Output Format
+              </h3>
+              <div className="space-y-2">
+                <select
+                  value={settings.format}
+                  onChange={e => setSettings(s => ({...s, format: e.target.value}))}
+                  className="w-full bg-gray-800 text-white text-sm border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="Standard YAML">YAML</option>
+                  <option value="Markdown">Markdown</option>
+                  <option value="Natural Language">Natural Language</option>
+                  <option value="Standard XML">XML</option>
+                  <option value="JSON">JSON</option>
+                  <option value="Reversed YAML-like in XML">Reversed YAML/XML</option>
+                  <option value="Emoji Script">Emoji Script</option>
+                </select>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Mix Options */}
           <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
@@ -894,45 +1023,19 @@ const CenterPanel: React.FC = () => {
             </div>
           )}
         </div>
-
-        <div className="flex-1">
-          {(isLoading || isDescribing) && (
-            <div className="mb-2">
-              <div className="w-full bg-gray-700 rounded-full h-1.5 mb-1">
-                <div
-                  className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              {(loadingMessage || describingMessage) && (
-                <p className="text-xs text-gray-400 text-center animate-pulse">
-                  {loadingMessage || describingMessage}
-                </p>
-              )}
-            </div>
-          )}
-          <button
-            onClick={handleGenerate}
-            disabled={isLoading || !naturalLanguageInput}
-            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-lg hover:from-amber-500 hover:to-orange-500 hover:shadow-amber-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
-          >
-            {isLoading ? (
-              <>
-                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Generating...</span>
-              </>
-            ) : (
-              <>
-                <SparklesIcon className="w-4 h-4" />
-                <span>Generate Prompt</span>
-              </>
-            )}
-          </button>
-        </div>
       </div>
+
+      {/* Intermediate Editor Modal */}
+      {showIntermediateEditor && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-5xl h-[90vh] bg-gray-950 rounded-lg shadow-2xl overflow-hidden">
+            <IntermediateEditor
+              onSave={() => setShowIntermediateEditor(false)}
+              onCancel={() => setShowIntermediateEditor(false)}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 };

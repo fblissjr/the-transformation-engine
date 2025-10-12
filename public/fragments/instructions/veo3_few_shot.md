@@ -13,7 +13,6 @@ Below are examples of optimal Veo 3 prompts demonstrating the 9 elements framewo
 {{fewShotExamples}}
 
 **Key Patterns to Notice:**
-- Technical specs always specified upfront
 - All 9 elements addressed (subject, context, action, style, camera motion, audio, lighting/mood, background, composition)
 - Audio elements ALWAYS included with specific layering (dialogue, ambient, effects)
 - Character descriptions detailed enough for consistency (30-50 words minimum)

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ApiKeyProvider, useApiKey } from './context/ApiKeyContext';
 import { PromptProvider, usePrompts } from './context/PromptContext';
+import { IntermediateProvider } from './context/IntermediateContext';
 import ApiKeyModal from './components/ApiKeyModal';
 import LeftPanel from './components/LeftPanel';
 import CenterPanel from './components/CenterPanel';
@@ -28,24 +29,37 @@ const App: React.FC = () => {
   return (
     <ApiKeyProvider>
       <PromptProvider>
-        {route === '/share' ? <SharePage /> : <Main />}
+        <IntermediateProvider>
+          {route === '/share' ? <SharePage /> : <Main />}
+        </IntermediateProvider>
       </PromptProvider>
     </ApiKeyProvider>
   );
 };
 
 const Main: React.FC = () => {
-  const { isApiKeySet, isModalOpen, openModal, closeModal } = useApiKey();
+  const { apiKey, isApiKeySet, isModalOpen, openModal, closeModal } = useApiKey();
   const { error } = usePrompts();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoggingEnabled, setIsLoggingEnabled] = useState(false);
 
   useEffect(() => {
+    // Only check if we should show modal after apiKey has been loaded from storage
+    // apiKey === null means loading complete but no key found
+    // This prevents modal from flashing during HMR when key exists
+    if (apiKey !== null) return; // Key is set, don't check
+
     const hasSkipped = sessionStorage.getItem('apiKeySkipped');
     if (!isApiKeySet && !hasSkipped) {
-      openModal();
+      // Small delay to allow HMR restoration to complete
+      const timer = setTimeout(() => {
+        if (!isApiKeySet && !sessionStorage.getItem('apiKeySkipped')) {
+          openModal();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isApiKeySet, openModal]);
+  }, [apiKey, isApiKeySet, openModal]);
 
   useEffect(() => {
     const listener = (newLogs: LogEntry[]) => setLogs(newLogs);

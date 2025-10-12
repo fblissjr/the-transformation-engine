@@ -9,8 +9,6 @@ description: Example of Veo 3 narrative scene with dialogue and 9 elements frame
 
 **VEO 3 EXAMPLE: Coffee Shop Reunion**
 
-**Technical Specs:** Duration: 8s | Resolution: 720p | Aspect Ratio: 16:9 | Frame Rate: 24fps
-
 **Subject:**
 Woman in her early 30s, shoulder-length wavy dark brown hair tucked behind one ear, warm brown eyes, wearing a charcoal turtleneck sweater and simple gold necklace. Slight smile lines around her eyes. Sitting across from her is a man in his mid-30s with short sandy hair, dark-framed glasses, navy blue button-down shirt, looking both nervous and hopeful.
 
