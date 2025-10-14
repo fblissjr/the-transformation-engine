@@ -5,7 +5,7 @@ import type {
 } from "../types/conversation";
 import type { TaskId } from "../types/providers";
 
-const DB_NAME = "the-transformation-engine";
+const DB_NAME = "TransformationEngineDB";
 const DB_VERSION = 8;
 
 export class ConversationService {

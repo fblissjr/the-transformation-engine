@@ -8,13 +8,15 @@ const VERSIONS_STORE_NAME = 'versions';
 const CONFIG_STORE_NAME = 'promptConfigs';
 const SETTINGS_STORE_NAME = 'appSettings';
 const MEDIA_STORE_NAME = 'media';
-const DB_VERSION = 7;
+const DB_VERSION = 8;
 
 let db: IDBPDatabase;
 
 export async function initDB() {
+  console.log(`[IndexedDB] Opening ${DB_NAME} at version ${DB_VERSION}...`);
   db = await openDB(DB_NAME, DB_VERSION, {
     upgrade(db, oldVersion, newVersion, tx) {
+      console.log(`[IndexedDB] Upgrading from v${oldVersion} to v${newVersion}`);
       if (oldVersion < 1) {
         const store = db.createObjectStore(PROMPTS_STORE_NAME, {
           keyPath: 'id',
@@ -66,8 +68,56 @@ export async function initDB() {
           });
         };
       }
+      if (oldVersion < 8) {
+        console.log('[IndexedDB] Running v8 migration - creating multi-provider stores...');
+        // Phase 10: Multi-provider stores
+        if (!db.objectStoreNames.contains("providers")) {
+          const providerStore = db.createObjectStore("providers", { keyPath: "id" });
+          providerStore.createIndex("type", "type", { unique: false });
+          providerStore.createIndex("enabled", "enabled", { unique: false });
+          console.log('[IndexedDB] Created providers store');
+        }
+
+        if (!db.objectStoreNames.contains("providerKeys")) {
+          const keyStore = db.createObjectStore("providerKeys", { keyPath: "id" });
+          keyStore.createIndex("providerId", "providerId", { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains("taskAssignments")) {
+          db.createObjectStore("taskAssignments", { keyPath: "taskId" });
+        }
+
+        if (!db.objectStoreNames.contains("conversations")) {
+          const convStore = db.createObjectStore("conversations", { keyPath: "id" });
+          convStore.createIndex("taskId", "taskId", { unique: false });
+          convStore.createIndex("promptId", "promptId", { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains("conversationTurns")) {
+          const turnStore = db.createObjectStore("conversationTurns", { keyPath: "id" });
+          turnStore.createIndex("conversationId", "conversationId", { unique: false });
+          turnStore.createIndex("parentTurnId", "parentTurnId", { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains("tokenUsage")) {
+          const usageStore = db.createObjectStore("tokenUsage", { keyPath: "id" });
+          usageStore.createIndex("providerId", "providerId", { unique: false });
+          usageStore.createIndex("taskId", "taskId", { unique: false });
+          usageStore.createIndex("timestamp", "timestamp", { unique: false });
+        }
+
+        // Trigger v8 data migration AFTER transaction completes
+        tx.oncomplete = () => {
+          console.log('[IndexedDB] v8 stores created, triggering data migration...');
+          import('./migrations/v8Migration').then(({ migrateV8Data }) => {
+            migrateV8Data().catch(console.error);
+          });
+        };
+      }
     },
   });
+  console.log(`[IndexedDB] Database initialized at version ${db.version}`);
+  return db;
 }
 
 export async function addPrompt(promptData: Omit<Prompt, 'id' | 'createdAt'>): Promise<Prompt> {

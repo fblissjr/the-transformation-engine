@@ -58,7 +58,7 @@ interface GenerationContextType {
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
 
 export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const { apiKey, openModal } = useApiKey();
+  const { apiKey } = useApiKey();
   const {
     naturalLanguageInput,
     settings,
@@ -98,8 +98,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       return;
     }
     if (!apiKey) {
-      setError("Please set your Gemini API key to generate prompts.");
-      openModal();
+      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
     setIsLoading(true);
@@ -245,8 +244,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       return;
     }
     if (!apiKey) {
-      setError("Please set your Gemini API key to transform prompts.");
-      openModal();
+      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
 
@@ -318,8 +316,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       return;
     }
     if (!apiKey) {
-      setError("Please set your Gemini API key to mix prompts.");
-      openModal();
+      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
     const guidance = prompt(STRINGS.MIX_PROMPTS_GUIDANCE_PROMPT, STRINGS.MIX_PROMPTS_GUIDANCE_DEFAULT);
@@ -427,8 +424,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       return;
     }
     if (!apiKey) {
-      setError("Please set your Gemini API key to infer a schema.");
-      openModal();
+      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
     setIsLoading(true);
@@ -481,8 +477,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     }
 
     if (!apiKey) {
-      setError('Please set your API key to refine prompts.');
-      openModal();
+      setError('No provider configured. Please configure a provider in Settings → Providers tab.');
       return;
     }
 

@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { ApiKeyProvider, useApiKey } from './context/ApiKeyContext';
+import { ApiKeyProvider } from './context/ApiKeyContext';
 import { PromptProvider, usePrompts } from './context/PromptContext';
 import { IntermediateProvider } from './context/IntermediateContext';
 import { ProviderProvider } from './context/ProviderContext';
-import ApiKeyModal from './components/ApiKeyModal';
 import LeftPanel from './components/LeftPanel';
 import CenterPanel from './components/CenterPanel';
 import RightPanel from './components/RightPanel';
@@ -13,28 +12,9 @@ import { LogEntry } from './types';
 import { STRINGS } from './constants';
 import SharePage from './components/SharePage';
 import './services/networkMonitor'; // Initialize network monitor
-import { ensureV8Migration } from './services/db/migrations/v8Migration';
 
 const App: React.FC = () => {
   const [route, setRoute] = useState(window.location.pathname);
-  const [isMigrationComplete, setIsMigrationComplete] = useState(false);
-
-  // Run database migration on app startup
-  useEffect(() => {
-    const runMigration = async () => {
-      try {
-        await ensureV8Migration();
-        console.log('Database migration complete');
-        setIsMigrationComplete(true);
-      } catch (error) {
-        console.error('Database migration failed:', error);
-        // Still allow app to load (migration may have partially succeeded)
-        setIsMigrationComplete(true);
-      }
-    };
-
-    runMigration();
-  }, []);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -45,18 +25,6 @@ const App: React.FC = () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);
-
-  // Show loading screen while migration runs
-  if (!isMigrationComplete) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="text-center">
-          <div className="text-xl mb-4">Initializing...</div>
-          <div className="text-sm text-gray-400">Running database migration</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <ApiKeyProvider>
@@ -72,30 +40,11 @@ const App: React.FC = () => {
 };
 
 const Main: React.FC = () => {
-  const { apiKey, isApiKeySet, isModalOpen, openModal, closeModal } = useApiKey();
   const { error } = usePrompts();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoggingEnabled, setIsLoggingEnabled] = useState(false);
   const [showLeftPanel, setShowLeftPanel] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(false);
-
-  useEffect(() => {
-    // Only check if we should show modal after apiKey has been loaded from storage
-    // apiKey === null means loading complete but no key found
-    // This prevents modal from flashing during HMR when key exists
-    if (apiKey !== null) return; // Key is set, don't check
-
-    const hasSkipped = sessionStorage.getItem('apiKeySkipped');
-    if (!isApiKeySet && !hasSkipped) {
-      // Small delay to allow HMR restoration to complete
-      const timer = setTimeout(() => {
-        if (!isApiKeySet && !sessionStorage.getItem('apiKeySkipped')) {
-          openModal();
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [apiKey, isApiKeySet, openModal]);
 
   useEffect(() => {
     const listener = (newLogs: LogEntry[]) => setLogs(newLogs);
@@ -111,7 +60,6 @@ const Main: React.FC = () => {
 
   return (
     <>
-      {isModalOpen && <ApiKeyModal onClose={closeModal} />}
       <div className="flex h-screen w-full bg-gray-950 font-sans relative overflow-hidden">
         {/* Mobile Menu Button */}
         <button

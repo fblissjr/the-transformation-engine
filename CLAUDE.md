@@ -375,6 +375,8 @@ ApiKeyProvider
 - `netlify.toml` - Netlify deployment config with CSP headers
 - `index.html` - CSP meta tags
 
+**Note**: API Key modal has been removed. Users configure providers in Settings → Providers tab.
+
 ### Modular Prompt System (V2 Fragment-Based)
 **How It Works:**
 1. Templates in `/public/core/` use `@include[path/to/fragment.md]` directives

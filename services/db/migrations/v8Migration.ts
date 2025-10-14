@@ -3,7 +3,7 @@ import type { Provider, ProviderKey, TaskAssignment, TaskId } from "../../../typ
 import { TASK_IDS, TASK_METADATA } from "../../../types/providers";
 import { encryptData } from "../../encryptedStorage";
 
-const DB_NAME = "the-transformation-engine";
+const DB_NAME = "TransformationEngineDB";
 
 /**
  * Migrate from v7 to v8
@@ -123,18 +123,20 @@ export async function migrateV8Data(): Promise<void> {
 
   // 4. Set global default provider
   await db.put("appSettings", {
-    key: "globalDefaultProvider",
-    value: {
-      providerId: "provider_gemini_default",
-      modelId: "gemini-2.0-flash-exp", // Default model
-    },
+    id: "globalDefaultProvider",
+    providerId: "provider_gemini_default",
+    modelId: "gemini-2.0-flash-exp", // Default model
   });
   console.log("Set global default provider");
 
   // 5. Create default task assignments for all tasks
-  const taskIds = Object.keys(TASK_IDS) as TaskId[];
+  const taskIds = Object.values(TASK_IDS) as TaskId[];
   for (const taskId of taskIds) {
     const metadata = TASK_METADATA[taskId];
+    if (!metadata) {
+      console.warn(`No metadata found for task ${taskId}, skipping`);
+      continue;
+    }
     const assignment: TaskAssignment = {
       taskId,
       providerId: "provider_gemini_default",

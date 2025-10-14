@@ -21,7 +21,7 @@ interface MediaContextType {
 const MediaContext = createContext<MediaContextType | undefined>(undefined);
 
 export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const { apiKey, openModal } = useApiKey();
+  const { apiKey } = useApiKey();
   const { settings } = useActivePrompt();
   const [mediaReferences, setMediaReferences] = useState<MediaReference[]>([]);
   const [isDescribing, setIsDescribing] = useState(false);
@@ -60,8 +60,7 @@ export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => 
       throw new Error("No media to describe.");
     }
     if (!apiKey) {
-      openModal();
-      throw new Error("Please set your Gemini API key.");
+      throw new Error("No provider configured. Please configure a provider in Settings → Providers tab.");
     }
 
     setIsDescribing(true);

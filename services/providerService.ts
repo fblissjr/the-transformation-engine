@@ -2,7 +2,7 @@ import { openDB, type IDBPDatabase } from "idb";
 import type { Provider, ProviderKey, ProviderType } from "../types/providers";
 import { encryptData, decryptData } from "./encryptedStorage";
 
-const DB_NAME = "the-transformation-engine";
+const DB_NAME = "TransformationEngineDB";
 const DB_VERSION = 8;
 
 export class ProviderService {
@@ -11,21 +11,63 @@ export class ProviderService {
   constructor() {
     this.dbPromise = openDB(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion) {
-        // Create providers store if it doesn't exist
-        if (!db.objectStoreNames.contains("providers")) {
-          const providerStore = db.createObjectStore("providers", {
-            keyPath: "id",
-          });
-          providerStore.createIndex("type", "type", { unique: false });
-          providerStore.createIndex("enabled", "enabled", { unique: false });
-        }
+        // V8 migration - create all multi-provider stores
+        if (oldVersion < 8) {
+          // Create providers store if it doesn't exist
+          if (!db.objectStoreNames.contains("providers")) {
+            const providerStore = db.createObjectStore("providers", {
+              keyPath: "id",
+            });
+            providerStore.createIndex("type", "type", { unique: false });
+            providerStore.createIndex("enabled", "enabled", { unique: false });
+          }
 
-        // Create provider keys store if it doesn't exist
-        if (!db.objectStoreNames.contains("providerKeys")) {
-          const keyStore = db.createObjectStore("providerKeys", {
-            keyPath: "id",
-          });
-          keyStore.createIndex("providerId", "providerId", { unique: false });
+          // Create provider keys store if it doesn't exist
+          if (!db.objectStoreNames.contains("providerKeys")) {
+            const keyStore = db.createObjectStore("providerKeys", {
+              keyPath: "id",
+            });
+            keyStore.createIndex("providerId", "providerId", { unique: false });
+          }
+
+          // Create task assignments store if it doesn't exist
+          if (!db.objectStoreNames.contains("taskAssignments")) {
+            db.createObjectStore("taskAssignments", { keyPath: "taskId" });
+          }
+
+          // Create conversations store if it doesn't exist
+          if (!db.objectStoreNames.contains("conversations")) {
+            const convStore = db.createObjectStore("conversations", {
+              keyPath: "id",
+            });
+            convStore.createIndex("taskId", "taskId", { unique: false });
+            convStore.createIndex("promptId", "promptId", { unique: false });
+          }
+
+          // Create conversation turns store if it doesn't exist
+          if (!db.objectStoreNames.contains("conversationTurns")) {
+            const turnStore = db.createObjectStore("conversationTurns", {
+              keyPath: "id",
+            });
+            turnStore.createIndex("conversationId", "conversationId", {
+              unique: false,
+            });
+            turnStore.createIndex("parentTurnId", "parentTurnId", {
+              unique: false,
+            });
+          }
+
+          // Create token usage store if it doesn't exist
+          if (!db.objectStoreNames.contains("tokenUsage")) {
+            const usageStore = db.createObjectStore("tokenUsage", {
+              keyPath: "id",
+            });
+            usageStore.createIndex("providerId", "providerId", {
+              unique: false,
+            });
+            usageStore.createIndex("taskId", "taskId", { unique: false });
+            usageStore.createIndex("timestamp", "timestamp", { unique: false });
+          }
         }
       },
     });

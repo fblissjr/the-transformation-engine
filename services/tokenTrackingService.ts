@@ -1,7 +1,7 @@
 import { openDB, type IDBPDatabase } from "idb";
 import type { TokenUsage, TaskId } from "../types/providers";
 
-const DB_NAME = "the-transformation-engine";
+const DB_NAME = "TransformationEngineDB";
 const DB_VERSION = 8;
 
 export class TokenTrackingService {
