@@ -28,13 +28,13 @@ const App: React.FC = () => {
 
   return (
     <ApiKeyProvider>
-      <ProviderProvider>
-        <PromptProvider>
+      <PromptProvider>
+        <ProviderProvider>
           <IntermediateProvider>
             {route === '/share' ? <SharePage /> : <Main />}
           </IntermediateProvider>
-        </PromptProvider>
-      </ProviderProvider>
+        </ProviderProvider>
+      </PromptProvider>
     </ApiKeyProvider>
   );
 };

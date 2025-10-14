@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useMemo, useCallback, useEffect } from 'react';
 import { encryptedStorage } from '../services/encryptedStorage';
+import { providerService } from '../services/providerService';
 
 interface ApiKeyContextType {
   apiKey: string | null;
@@ -27,8 +28,17 @@ export const ApiKeyProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     const loadApiKey = async () => {
       try {
-        // Check encrypted storage for user-provided key
-        const storedKey = await encryptedStorage.get(STORAGE_KEY);
+        // First check old encrypted storage for backward compatibility
+        let storedKey = await encryptedStorage.get(STORAGE_KEY);
+
+        // If not found, check new provider system for Gemini provider
+        if (!storedKey) {
+          const geminiProvider = await providerService.getProvider('provider_gemini_default');
+          if (geminiProvider) {
+            storedKey = await providerService.getFirstValidKey(geminiProvider.id);
+          }
+        }
+
         if (storedKey) {
           setApiKeyState(storedKey);
         }

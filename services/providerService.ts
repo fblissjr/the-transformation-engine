@@ -194,12 +194,21 @@ export class ProviderService {
         return { success: false, error: "No valid API key found" };
       }
 
+      // Build URL and headers based on provider type
+      let url: string;
+      const headers: Record<string, string> = {};
+
+      if (provider.type === "gemini") {
+        // Gemini uses query parameter authentication
+        url = `${provider.baseUrl}/models?key=${apiKey}`;
+      } else {
+        // OpenRouter, OpenAI, etc. use Bearer token
+        url = `${provider.baseUrl}/models`;
+        headers.Authorization = `Bearer ${apiKey}`;
+      }
+
       // Try to fetch models list as a connection test
-      const response = await fetch(`${provider.baseUrl}/models`, {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
-      });
+      const response = await fetch(url, { headers });
 
       if (!response.ok) {
         return {
@@ -209,7 +218,8 @@ export class ProviderService {
       }
 
       const data = await response.json();
-      const modelCount = data.data?.length || 0;
+      // Gemini returns { models: [...] }, OpenRouter returns { data: [...] }
+      const modelCount = data.models?.length || data.data?.length || 0;
 
       return { success: true, modelCount };
     } catch (error) {

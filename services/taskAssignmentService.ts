@@ -58,7 +58,11 @@ export class TaskAssignmentService {
   } | null> {
     const db = await this.getDb();
     const setting = await db.get("appSettings", "globalDefaultProvider");
-    return setting?.value || null;
+    if (!setting) return null;
+    return {
+      providerId: setting.providerId,
+      modelId: setting.modelId,
+    };
   }
 
   // Set global default provider/model
@@ -68,8 +72,9 @@ export class TaskAssignmentService {
   ): Promise<void> {
     const db = await this.getDb();
     await db.put("appSettings", {
-      key: "globalDefaultProvider",
-      value: { providerId, modelId },
+      id: "globalDefaultProvider",
+      providerId,
+      modelId,
     });
   }
 
