@@ -9,7 +9,6 @@ description: Example of Veo 3 dialogue-heavy scene with quotation mark formattin
 
 **VEO 3 EXAMPLE: Job Interview Tension**
 
-
 **Subject:**
 Two characters in professional office setting. Woman (interviewer) in her late 40s, sharp features, silver-rimmed glasses, navy blazer, dark hair pulled back in tight bun, expression neutral but evaluating. Man (candidate) in his late 20s, nervous energy, charcoal suit slightly too large, fidgeting with resume folder, brown hair slightly disheveled, attempting composed expression but eyes betray anxiety.
 

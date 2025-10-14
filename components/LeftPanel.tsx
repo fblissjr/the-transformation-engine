@@ -166,7 +166,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
   }, [prompts, selectedPromptIds]);
 
   return (
-    <aside className="w-1/4 max-w-[350px] h-full bg-gray-900 border-r border-gray-800 flex flex-col">
+    <aside className="w-full h-full bg-gray-900 border-r border-gray-800 flex flex-col">
         {isShareModalOpen && selectedPromptForShare && (
             <ShareModal prompt={selectedPromptForShare} onClose={() => setIsShareModalOpen(false)} />
         )}
@@ -181,18 +181,18 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
           isOpen={isPrivacyDashboardOpen}
           onClose={() => setIsPrivacyDashboardOpen(false)}
         />
-      <div className="p-4 border-b border-gray-800 flex items-center gap-3 shrink-0">
+      <div className="p-3 sm:p-4 border-b border-gray-800 flex items-center gap-3 shrink-0">
         <LogoIcon />
         <div>
-          <h1 className="text-lg font-bold text-white">The Transformation Engine</h1>
+          <h1 className="text-base sm:text-lg font-bold text-white">The Transformation Engine</h1>
           <p className="text-xs text-gray-400">Your Local Prompt IDE</p>
         </div>
       </div>
-      <div className="p-4 border-b border-gray-800 flex items-center gap-2 shrink-0">
+      <div className="p-3 sm:p-4 border-b border-gray-800 flex items-center gap-2 shrink-0">
         {getHeaderButton()}
       </div>
 
-      <div className="p-4 shrink-0">
+      <div className="p-3 sm:p-4 shrink-0">
         <input
           type="text"
           placeholder="Search prompts..."
@@ -204,7 +204,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
 
       {/* Multi-action toolbar - shows when items are selected */}
       {selectedPromptIds.length > 0 && (
-        <div className="px-4 pb-3 shrink-0">
+        <div className="px-3 sm:px-4 pb-3 shrink-0">
           {deleteConfirmIds.length > 0 ? (
             <div className="bg-red-900/30 border border-red-600 rounded-md p-3 flex flex-col gap-2">
               <p className="text-red-400 text-sm font-medium">

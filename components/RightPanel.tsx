@@ -151,16 +151,16 @@ const RightPanel: React.FC<RightPanelProps> = ({
   };
 
   return (
-    <aside className="w-1/4 max-w-[450px] h-full bg-gray-900 border-l border-gray-800 flex flex-col p-4 gap-4">
+    <aside className="w-full h-full bg-gray-900 border-l border-gray-800 flex flex-col p-3 sm:p-4 gap-3 sm:gap-4">
       <div>
-        <div className="flex border-b border-gray-800">
+        <div className="flex flex-wrap border-b border-gray-800 overflow-x-auto">
           <TabButton
-            label="Structured Prompt"
+            label="Structured"
             isActive={activeTab === 'structured'}
             onClick={() => setActiveTab('structured')}
           />
           <TabButton
-            label="Plain Language"
+            label="Plain"
             isActive={activeTab === 'normalized'}
             onClick={() => setActiveTab('normalized')}
           />
@@ -170,7 +170,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
             onClick={() => setActiveTab('history')}
           />
           <TabButton
-            label="Intermediate"
+            label="Interm."
             isActive={activeTab === 'intermediate'}
             onClick={async () => {
               setActiveTab('intermediate');
@@ -587,7 +587,7 @@ const TabButton: React.FC<{ label: string; isActive: boolean; onClick: () => voi
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-sm font-semibold transition-colors outline-none ${
+      className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors outline-none whitespace-nowrap ${
         isActive
           ? 'text-amber-400 border-b-2 border-amber-400'
           : 'text-gray-400 hover:text-white border-b-2 border-transparent'

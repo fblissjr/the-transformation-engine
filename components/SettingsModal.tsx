@@ -3,6 +3,9 @@ import { useApiKey } from '../context/ApiKeyContext';
 import * as geminiService from '../services/geminiService';
 import { PromptSettings } from '../types';
 import { DEFAULT_MODEL_SETTINGS, PRIMARY_GENERATION_PROMPT, SYNESTHETIC_MIXER_PROMPT, NORMALIZER_PROMPT, SCHEMA_INFERENCE_PROMPT } from '../constants';
+import { ProvidersTab } from './settings/ProvidersTab';
+import { TaskAssignmentTab } from './settings/TaskAssignmentTab';
+import { TokenUsageTab } from './settings/TokenUsageTab';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -10,7 +13,7 @@ interface SettingsModalProps {
   onSettingsChange: (settings: PromptSettings) => void;
 }
 
-type Tab = 'api' | 'model' | 'prompts' | 'data';
+type Tab = 'providers' | 'tasks' | 'api' | 'model' | 'prompts' | 'tokens' | 'data';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onSettingsChange }) => {
   const { apiKey, setApiKey } = useApiKey();
@@ -164,14 +167,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onSett
         <h2 className="text-xl font-bold text-white mb-4 shrink-0">Settings</h2>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-800 mb-4 shrink-0">
+        <div className="flex flex-wrap border-b border-gray-800 mb-4 shrink-0 gap-y-2">
+          <TabButton label="Providers" isActive={activeTab === 'providers'} onClick={() => setActiveTab('providers')} />
+          <TabButton label="Tasks" isActive={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
           <TabButton label="API Key" isActive={activeTab === 'api'} onClick={() => setActiveTab('api')} />
           <TabButton label="Model" isActive={activeTab === 'model'} onClick={() => setActiveTab('model')} />
           <TabButton label="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
+          <TabButton label="Tokens" isActive={activeTab === 'tokens'} onClick={() => setActiveTab('tokens')} />
           <TabButton label="Data" isActive={activeTab === 'data'} onClick={() => setActiveTab('data')} />
         </div>
 
         <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+          {/* Providers Tab */}
+          {activeTab === 'providers' && <ProvidersTab />}
+
+          {/* Task Assignment Tab */}
+          {activeTab === 'tasks' && <TaskAssignmentTab />}
+
+          {/* Token Usage Tab */}
+          {activeTab === 'tokens' && <TokenUsageTab />}
+
           {/* API Key Tab */}
           {activeTab === 'api' && (
             <div className="space-y-4">

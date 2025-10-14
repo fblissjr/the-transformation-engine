@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ApiKeyProvider, useApiKey } from './context/ApiKeyContext';
 import { PromptProvider, usePrompts } from './context/PromptContext';
 import { IntermediateProvider } from './context/IntermediateContext';
+import { ProviderProvider } from './context/ProviderContext';
 import ApiKeyModal from './components/ApiKeyModal';
 import LeftPanel from './components/LeftPanel';
 import CenterPanel from './components/CenterPanel';
@@ -12,9 +13,28 @@ import { LogEntry } from './types';
 import { STRINGS } from './constants';
 import SharePage from './components/SharePage';
 import './services/networkMonitor'; // Initialize network monitor
+import { ensureV8Migration } from './services/db/migrations/v8Migration';
 
 const App: React.FC = () => {
   const [route, setRoute] = useState(window.location.pathname);
+  const [isMigrationComplete, setIsMigrationComplete] = useState(false);
+
+  // Run database migration on app startup
+  useEffect(() => {
+    const runMigration = async () => {
+      try {
+        await ensureV8Migration();
+        console.log('Database migration complete');
+        setIsMigrationComplete(true);
+      } catch (error) {
+        console.error('Database migration failed:', error);
+        // Still allow app to load (migration may have partially succeeded)
+        setIsMigrationComplete(true);
+      }
+    };
+
+    runMigration();
+  }, []);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -26,13 +46,27 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Show loading screen while migration runs
+  if (!isMigrationComplete) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div className="text-center">
+          <div className="text-xl mb-4">Initializing...</div>
+          <div className="text-sm text-gray-400">Running database migration</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ApiKeyProvider>
-      <PromptProvider>
-        <IntermediateProvider>
-          {route === '/share' ? <SharePage /> : <Main />}
-        </IntermediateProvider>
-      </PromptProvider>
+      <ProviderProvider>
+        <PromptProvider>
+          <IntermediateProvider>
+            {route === '/share' ? <SharePage /> : <Main />}
+          </IntermediateProvider>
+        </PromptProvider>
+      </ProviderProvider>
     </ApiKeyProvider>
   );
 };
@@ -42,6 +76,8 @@ const Main: React.FC = () => {
   const { error } = usePrompts();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoggingEnabled, setIsLoggingEnabled] = useState(false);
+  const [showLeftPanel, setShowLeftPanel] = useState(false);
+  const [showRightPanel, setShowRightPanel] = useState(false);
 
   useEffect(() => {
     // Only check if we should show modal after apiKey has been loaded from storage
@@ -76,15 +112,74 @@ const Main: React.FC = () => {
   return (
     <>
       {isModalOpen && <ApiKeyModal onClose={closeModal} />}
-      <div className="flex h-screen w-full bg-gray-950 font-sans">
-        <LeftPanel />
-        <CenterPanel />
-        <RightPanel
-          logs={logs}
-          isLoggingEnabled={isLoggingEnabled}
-          setIsLoggingEnabled={setIsLoggingEnabled}
-          onClearLogs={handleClearLogs}
-        />
+      <div className="flex h-screen w-full bg-gray-950 font-sans relative overflow-hidden">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setShowLeftPanel(!showLeftPanel)}
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg shadow-lg transition-colors"
+          aria-label="Toggle menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        {/* Mobile Output Button */}
+        <button
+          onClick={() => setShowRightPanel(!showRightPanel)}
+          className="lg:hidden fixed top-4 right-4 z-50 p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg shadow-lg transition-colors"
+          aria-label="Toggle output"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </button>
+
+        {/* Left Panel - Drawer on mobile */}
+        <div className={`
+          fixed lg:relative inset-y-0 left-0 z-40
+          w-full sm:w-80 lg:w-1/4 lg:max-w-[350px]
+          transform transition-transform duration-300 ease-in-out
+          ${showLeftPanel ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
+          <LeftPanel />
+        </div>
+
+        {/* Overlay for mobile */}
+        {showLeftPanel && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 z-30"
+            onClick={() => setShowLeftPanel(false)}
+          />
+        )}
+
+        {/* Center Panel - Always visible, adjusts width */}
+        <div className="flex-1 min-w-0">
+          <CenterPanel />
+        </div>
+
+        {/* Right Panel - Drawer on mobile */}
+        <div className={`
+          fixed lg:relative inset-y-0 right-0 z-40
+          w-full sm:w-96 lg:w-1/4 lg:max-w-[450px]
+          transform transition-transform duration-300 ease-in-out
+          ${showRightPanel ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        `}>
+          <RightPanel
+            logs={logs}
+            isLoggingEnabled={isLoggingEnabled}
+            setIsLoggingEnabled={setIsLoggingEnabled}
+            onClearLogs={handleClearLogs}
+          />
+        </div>
+
+        {/* Overlay for mobile right panel */}
+        {showRightPanel && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 z-30"
+            onClick={() => setShowRightPanel(false)}
+          />
+        )}
       </div>
       {error && (
         <div className="fixed bottom-4 right-4 bg-red-800/90 backdrop-blur-sm border border-red-700 text-white p-4 rounded-lg shadow-2xl z-50 flex items-start gap-3 max-w-md">

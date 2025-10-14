@@ -60,6 +60,11 @@ const CenterPanel: React.FC = () => {
   const [showIntermediateEditor, setShowIntermediateEditor] = useState(false);
   const configFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Collapsible sections state
+  const [showMixOptions, setShowMixOptions] = useState(false);
+  const [showSchemaDesigner, setShowSchemaDesigner] = useState(false);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+
   // Detect which template will be used based on schema keys
   const detectTemplateModel = (): 'sora2' | 'veo3' | 'generic' => {
     if (templateOverride === 'generic') return 'generic';
@@ -333,10 +338,10 @@ const CenterPanel: React.FC = () => {
 
   return (
     <main className="flex-1 h-full flex flex-col bg-gray-950">
-      <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto">
+      <div className="flex-1 p-2 sm:p-4 flex flex-col gap-3 sm:gap-4 overflow-y-auto pt-16 lg:pt-4">
         {/* Main Prompt Input */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
             <label htmlFor="main-input" className="text-sm font-semibold text-white flex items-center gap-2">
               <SparklesIcon className="w-4 h-4 text-amber-500" />
               Your Creative Idea
@@ -521,11 +526,11 @@ const CenterPanel: React.FC = () => {
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={handleGenerate}
               disabled={isLoading || !naturalLanguageInput}
-              className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:from-amber-500 hover:to-orange-500 hover:shadow-amber-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-3 px-4 sm:px-6 rounded-lg shadow-lg hover:from-amber-500 hover:to-orange-500 hover:shadow-amber-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
             >
               {isLoading ? (
                 <>
@@ -544,10 +549,11 @@ const CenterPanel: React.FC = () => {
             </button>
             <button
               onClick={() => setShowIntermediateEditor(true)}
-              className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+              className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:flex-none"
             >
               <EditIcon className="w-4 h-4" />
-              <span>Create from Intermediate</span>
+              <span className="hidden sm:inline">Create from Intermediate</span>
+              <span className="sm:hidden">Intermediate</span>
             </button>
           </div>
         </div>
@@ -607,8 +613,8 @@ const CenterPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Two Column Layout - Stack on mobile */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
           {/* Format Selector - Only shown in legacy mode */}
           {!useIntermediateMode && (
             <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
@@ -636,15 +642,30 @@ const CenterPanel: React.FC = () => {
             </div>
           )}
 
-          {/* Mix Options */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+          {/* Mix Options - Collapsible */}
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setShowMixOptions(!showMixOptions)}
+              className="w-full p-3 sm:p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                <h3 className="text-sm font-semibold text-white">Mix Options</h3>
+                <span className="text-xs text-gray-500">(Transform output)</span>
+              </div>
+              <svg
+                className={`w-4 h-4 text-gray-400 transition-transform ${showMixOptions ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-              Mix Options
-            </h3>
-            <p className="text-xs text-gray-500 mb-3">Apply transformations to the output</p>
+            </button>
+            {showMixOptions && (
+              <div className="p-3 sm:p-4 pt-0 border-t border-gray-800">
             <div className="space-y-2">
               {settings.mixOptions?.map(option => (
                 <div key={option.id} className="flex items-center justify-between gap-2">
@@ -711,6 +732,8 @@ const CenterPanel: React.FC = () => {
                 </button>
               )}
             </div>
+              </div>
+            )}
           </div>
 
           {/* Model Selector */}
@@ -742,18 +765,34 @@ const CenterPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Schema Designer */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
+        {/* Schema Designer - Collapsible */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setShowSchemaDesigner(!showSchemaDesigner)}
+            className="w-full p-3 sm:p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+          >
             <div>
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Structure Fields
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">Define what sections the output should contain</p>
+                <h3 className="text-sm font-semibold text-white">Structure Fields</h3>
+                <span className="text-xs text-gray-500 hidden sm:inline">(Define output sections)</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5 sm:hidden">Define output sections</p>
             </div>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform ${showSchemaDesigner ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {showSchemaDesigner && (
+            <div className="p-3 sm:p-4 pt-0 border-t border-gray-800">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => inferSchema('additional')}
@@ -776,18 +815,20 @@ const CenterPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Presets */}
-          <div className="flex gap-2 mb-3">
-            <span className="text-xs text-gray-400 self-center">Quick:</span>
-            {PRESETS.map(preset => (
-              <button
-                key={preset.name}
-                onClick={() => applyPreset(preset.keys)}
-                className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white px-2 py-1 rounded transition-colors"
-              >
-                {preset.name}
-              </button>
-            ))}
+          {/* Presets - Wrap on mobile */}
+          <div className="mb-3">
+            <span className="text-xs text-gray-400 block mb-2">Quick Presets:</span>
+            <div className="flex flex-wrap gap-2">
+              {PRESETS.map(preset => (
+                <button
+                  key={preset.name}
+                  onClick={() => applyPreset(preset.keys)}
+                  className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white px-2 py-1 rounded transition-colors"
+                >
+                  {preset.name}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Sora 2 Tip */}
@@ -832,41 +873,68 @@ const CenterPanel: React.FC = () => {
               <span className="text-gray-500">Example:</span> {settings.schemaKeys[0]}: <span className="text-gray-300">"Your content here..."</span>
             </div>
           )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Bottom Bar with Generate */}
-      <div className="p-4 border-t border-gray-800 bg-gray-900/80 backdrop-blur-sm flex items-center gap-3 shrink-0">
-        {/* Export/Import Config */}
-        <div className="flex items-center gap-2">
+      {/* Bottom Bar - Collapsible Advanced Section */}
+      <div className="border-t border-gray-800 bg-gray-900/80 backdrop-blur-sm shrink-0">
+        {/* Export/Import Config - Collapsible */}
+        <div className="bg-gray-900/50 border-b border-gray-800">
           <button
-            onClick={handleExportConfig}
-            title="Export configuration"
-            className="flex items-center gap-2 text-gray-400 hover:text-white font-medium py-2 px-3 rounded-md hover:bg-gray-800 transition-colors text-sm"
+            onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+            className="w-full p-3 sm:p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              </svg>
+              <span className="text-sm font-medium text-gray-300">Advanced Settings</span>
+              <span className="text-xs text-gray-500">(Export/Import, Preview)</span>
+            </div>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform ${showAdvancedSettings ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
-            Export
           </button>
-          <input
-            ref={configFileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportConfig}
-            className="hidden"
-          />
-          <button
-            onClick={() => configFileInputRef.current?.click()}
-            title="Import configuration"
-            className="flex items-center gap-2 text-gray-400 hover:text-white font-medium py-2 px-3 rounded-md hover:bg-gray-800 transition-colors text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L9 8m4-4v12" />
-            </svg>
-            Import
-          </button>
-        </div>
+          {showAdvancedSettings && (
+            <div className="p-3 sm:p-4 pt-0 border-t border-gray-800 space-y-3">
+              {/* Export/Import Config */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-gray-400 mr-2">Configuration:</span>
+                <button
+                  onClick={handleExportConfig}
+                  title="Export configuration"
+                  className="flex items-center gap-2 text-gray-400 hover:text-white font-medium py-2 px-3 rounded-md hover:bg-gray-800 transition-colors text-xs"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export
+                </button>
+                <input
+                  ref={configFileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportConfig}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => configFileInputRef.current?.click()}
+                  title="Import configuration"
+                  className="flex items-center gap-2 text-gray-400 hover:text-white font-medium py-2 px-3 rounded-md hover:bg-gray-800 transition-colors text-xs"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L9 8m4-4v12" />
+                  </svg>
+                  Import
+                </button>
+              </div>
 
         {/* Prompt Preview Section */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
@@ -982,6 +1050,9 @@ const CenterPanel: React.FC = () => {
                   : 'This is what will be sent to the API. Click "Edit Prompts" to modify before sending, or edit system prompts in Settings &gt; System Prompts to change defaults.'
                 }
               </div>
+            </div>
+          )}
+        </div>
             </div>
           )}
         </div>

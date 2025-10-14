@@ -5,6 +5,8 @@ import * as geminiService from '../services/geminiService';
 import * as dbService from '../services/dbService';
 import { useApiKey } from './ApiKeyContext';
 import { useActivePrompt } from './ActivePromptContext';
+// TODO: Migrate to taskRouter once multimodal support is added to IProvider interface
+// Currently media description still uses geminiService.describeMedia() directly
 
 interface MediaContextType {
   mediaReferences: MediaReference[];

@@ -1,14 +1,14 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-10-12 | **Status**: Privacy & Multi-Tenant Ready | Model-Optimized (Sora 2 + Veo 3) | Modular Fragments LIVE | Version Control Branching LIVE | **Intermediate Architecture LIVE (Phase 9 Complete)**
+> **Last Updated**: 2025-10-14 | **Status**: Multi-Provider Architecture (Phase 10 In Progress) | Privacy & Multi-Tenant Ready | Model-Optimized (Sora 2 + Veo 3) | Modular Fragments LIVE | Version Control Branching LIVE | **Intermediate Architecture LIVE (Phase 9 Complete)**
 
 ---
 
 ## What This Is
 
-A **local-first, client-side web application** for engineering multi-modal prompts for text-to-video AI models (8-10 second clips with audio). Built with React + TypeScript + Vite, using IndexedDB for storage and Gemini API for generation.
+A **local-first, client-side web application** for engineering multi-modal prompts for text-to-video AI models (8-10 second clips with audio). Built with React + TypeScript + Vite, using IndexedDB for storage and **multi-provider LLM support** (OpenRouter, OpenAI, Gemini, local servers).
 
-**Key Philosophy**: Privacy-first, no backend, no accounts. Everything runs in the browser.
+**Key Philosophy**: Privacy-first, no backend, no accounts, modular LLM providers. Everything runs in the browser.
 
 ---
 
@@ -20,7 +20,7 @@ npm run dev    # Development server
 npm run build  # Production build
 ```
 
-**Requirements**: Gemini API key (enter in-app, stored encrypted)
+**Requirements**: API key for at least one provider (OpenRouter, OpenAI, Gemini, or local server) - enter in Settings, stored encrypted
 
 ---
 
@@ -30,30 +30,38 @@ npm run build  # Production build
 **CRITICAL: Context Provider Order**
 ```tsx
 ApiKeyProvider
-  → PromptProvider (composite wrapper)
-    → PromptLibraryProvider (independent)
-    → ActivePromptProvider (independent)
-    → MediaProvider (depends on ActivePromptContext)
-    → GenerationProvider (depends on all above)
+  → ProviderProvider (NEW - multi-provider management)
+    → PromptProvider (composite wrapper)
+      → PromptLibraryProvider (independent)
+      → ActivePromptProvider (independent)
+      → MediaProvider (depends on ActivePromptContext)
+      → GenerationProvider (depends on all above)
 ```
 
+- **ProviderContext** - Multi-provider management (add/test/delete providers, API keys)
 - **PromptLibraryContext** - Prompt CRUD, search, favorites
 - **ActivePromptContext** - Current prompt, settings, versions
 - **MediaContext** - Image/video uploads, vision API (uses `useActivePrompt()`)
-- **GenerationContext** - LLM calls, loading states
+- **GenerationContext** - LLM calls, loading states, streaming support, multi-turn conversations
 
 *Backward-compatible `usePrompts()` hook available*
 
 **Common Bug**: If MediaProvider wraps ActivePromptProvider, you'll get "useActivePrompt must be used within an ActivePromptProvider" error. MediaProvider MUST be inside ActivePromptProvider.
 
 ### Storage
-- **IndexedDB** (via idb library) - DB v7
+- **IndexedDB** (via idb library) - **DB v8** (NEW)
   - `prompts` - Prompt library (legacy YAML storage)
-  - `intermediates` - Model-agnostic semantic prompts (NEW in v7)
+  - `intermediates` - Model-agnostic semantic prompts (v7)
   - `versions` - Version history
   - `promptConfigs` - System prompts
   - `appSettings` - User settings
   - `media` - Blob storage for images/videos
+  - **`providers`** - Provider configurations (NEW in v8)
+  - **`providerKeys`** - Encrypted API keys per provider (NEW in v8)
+  - **`taskAssignments`** - Task-to-provider/model mappings (NEW in v8)
+  - **`conversations`** - Multi-turn conversation tracking (NEW in v8)
+  - **`conversationTurns`** - Individual conversation turns (NEW in v8)
+  - **`tokenUsage`** - Token usage logs per task/provider (NEW in v8)
 - **localStorage**
   - `gemini_models_cache` - Models list (24hr TTL)
   - `custom_primary_prompt` - Custom Primary system prompt
@@ -70,7 +78,7 @@ ApiKeyProvider
 ### Privacy & Security Architecture
 
 **100% Client-Side Guarantee**:
-- All API calls: Browser → Google Gemini (direct, no proxy)
+- All API calls: Browser → Provider APIs (OpenRouter, OpenAI, Gemini, local servers - direct, no proxy)
 - All data storage: Browser IndexedDB (never uploaded)
 - All processing: Client-side JavaScript (no server backend)
 - Host sees: Only static file requests (HTML/JS/CSS)
@@ -292,8 +300,50 @@ ApiKeyProvider
 - **Backward Compatibility**: Legacy YAML mode available, both stores coexist
 - **Documentation**: See `/internal/PHASE9_*.md` files for specifications
 
+**Phase 10 (Multi-Provider Architecture)** - IN PROGRESS:
+- [x] **Phase 10.1: Types & Provider Abstraction**
+  - [x] Created `types/providers.ts` with IProvider interface, Model, TaskAssignment, Provider types
+  - [x] Created `types/conversation.ts` for multi-turn conversation tracking
+  - [x] Built OpenRouterProvider with streaming support (100+ models)
+  - [x] Created providerRegistry for instance management
+- [x] **Phase 10.2: Core Services**
+  - [x] providerService.ts - Provider CRUD, encrypted API key management
+  - [x] taskAssignmentService.ts - Task-to-provider/model routing
+  - [x] conversationService.ts - Multi-turn conversation tracking
+  - [x] tokenTrackingService.ts - Session-based usage tracking
+  - [x] taskRouter.ts - Core orchestration with streaming callbacks
+  - [x] v8Migration.ts - Auto-migrate Gemini key to v8 schema
+- [x] **Phase 10.3: React Integration**
+  - [x] ProviderContext.tsx - Provider management hooks
+  - [x] Extended GenerationContext with streaming state, multi-turn, session tokens
+  - [x] Added StreamingState interface with tok/s metrics
+- [x] **Phase 10.4: UI Components**
+  - [x] StreamingProgress.tsx - Live token streaming UI with tok/s display
+  - [x] ModelPicker.tsx - Searchable dropdown for 100+ models
+  - [x] ProvidersTab.tsx - Add/test/delete providers UI
+  - [x] TaskAssignmentTab.tsx - Per-task model assignment with sampler settings
+  - [x] TokenUsageTab.tsx - Session dashboard with provider/task breakdown
+  - [x] IntermediateEditor.tsx - Edit markdown intermediate, re-export
+- [x] **Phase 10.5: Integration**
+  - [x] Integrated 3 new tabs into SettingsModal (Providers, Tasks, Tokens)
+  - [x] Added encryption helpers (encryptData/decryptData) to encryptedStorage.ts
+  - [x] Fixed TypeScript compilation errors (path resolution, type casting)
+  - [x] Build successful, ready for testing
+- [ ] **Phase 10.6: Migration & Testing** (TODO)
+  - [ ] Migrate GeminiProvider to implement IProvider
+  - [ ] Add OpenAI provider implementation
+  - [ ] Add local server (heylookitsanllm) provider
+  - [ ] End-to-end testing with OpenRouter
+  - [ ] Test streaming, multi-turn, token tracking
+- **Problem Solved**: Provider lock-in eliminated - use any LLM for any task
+- **Architecture**: Task-level granularity with per-task model assignment
+- **Key Benefit**: Mix providers (Gemini generates, GPT rewrites), streaming support, token tracking
+- **Backward Compatibility**: Existing Gemini workflow preserved, v7→v8 auto-migration
+- **Documentation**: See `/internal/MULTI_PROVIDER_*.md` files for specifications
+
 ### Missing Features (Per Spec)
 - [ ] Sharing protocol (URL generation, `/share` route)
+- [ ] Full taskRouter integration (currently stub implementations in GenerationContext)
 
 ---
 
@@ -305,13 +355,18 @@ ApiKeyProvider
   - `LeftPanel.tsx` - Prompt library, search, Import/Export, Privacy button
   - `CenterPanel.tsx` - Input, settings, generation controls
   - `RightPanel.tsx` - Output, versions, transformations
-  - `SettingsModal.tsx` - API Key, Model Settings, System Prompts, Data & Cache
+  - `SettingsModal.tsx` - 7 tabs: Providers, Tasks, API Key, Model, System Prompts, Tokens, Data & Cache
   - `PrivacyDashboard.tsx` - Network monitoring, audit logs, privacy verification
-- `context/` - Split contexts (4 files)
+- `context/` - Split contexts (5 files)
   - `ApiKeyContext.tsx` - Encrypted key storage with TTL
-- `services/` - DB, API, prompt generation, config management
+  - `ProviderContext.tsx` - Multi-provider management (NEW)
+- `services/` - DB, API, prompt generation, config management, multi-provider
   - `encryptedStorage.ts` - AES-GCM encryption for sensitive data
   - `networkMonitor.ts` - Fetch interception and audit logging
+  - `providerService.ts` - Provider CRUD, encrypted API keys (NEW)
+  - `taskAssignmentService.ts` - Task routing (NEW)
+  - `taskRouter.ts` - Core orchestration (NEW)
+  - `providers/openrouterProvider.ts` - OpenRouter implementation (NEW)
 
 ### Configuration
 - `constants.ts` - System prompts, defaults, MODEL_PRESETS
@@ -579,29 +634,31 @@ return "generic";
 
 ## Next Steps
 
-### Phase 4 (Version Control Branching - HIGH PRIORITY)
-**Goal**: Implement git-inspired branching system for prompt experimentation
-- Add parentVersionId and branchName to VersionNode structure
-- Build simple tree view showing version relationships
-- Basic branch creation UI
-- Connect fragments to version system (track which fragments were used in each version)
-- See internal/JOINT_ARCHITECTURE_PROPOSAL.md for full spec
+### Phase 10.6 (Complete Multi-Provider Integration - IMMEDIATE)
+**Goal**: Finish migrating to full multi-provider architecture
+- Migrate GeminiProvider to implement IProvider interface
+- Add OpenAI provider implementation
+- Add local server (heylookitsanllm) provider
+- Wire taskRouter into GenerationContext (replace stubs)
+- End-to-end testing (OpenRouter, streaming, multi-turn, token tracking)
 
-**Estimated**: 3-5 days (simplified, incremental approach for hobbyist project)
+**Estimated**: 4-6 hours (hobbyist project pace)
 
-### Phase 5 (Additional Models)
+### Phase 11 (Additional Models & Providers)
 - Add Wan Video (Alibaba) optimization (fragments + presets)
 - Research and implement other emerging models
+- Add Anthropic Claude provider
+- Add Groq provider for fast inference
 
-### Phase 6 (Performance & Scalability - TODO.md - Issues #3, #6, #7)
+### Phase 12 (Performance & Scalability - TODO.md - Issues #3, #6, #7)
 - Implement pagination (unbounded data loading)
 - Optimize search with IndexedDB indexing
 - Migrate version service to IndexedDB
 
-### Phase 7 (Sharing Protocol - TODO.md - Issue #5)
+### Phase 13 (Sharing Protocol - TODO.md - Issue #5)
 - Implement sharing protocol (per spec)
 
-### Phase 8 (Quality & Polish - TODO.md - Issues #8, #9, #10)
+### Phase 14 (Quality & Polish - TODO.md - Issues #8, #9, #10)
 - Add input validation (Zod)
 - Improve error handling (Error Boundaries)
 - Write automated tests (target 70% coverage)
@@ -652,13 +709,14 @@ the-transformation-engine/
 │   ├── LeftPanel.tsx   # Prompt library
 │   ├── CenterPanel.tsx # Input & controls (6 Sora 2 + 3 Veo 3 presets)
 │   ├── RightPanel.tsx  # Output & history
-│   └── SettingsModal.tsx # Settings UI (4 tabs)
+│   └── SettingsModal.tsx # Settings UI (7 tabs)
 ├── context/            # React contexts (split)
 │   ├── PromptContext.tsx (composition)
 │   ├── PromptLibraryContext.tsx
 │   ├── ActivePromptContext.tsx
-│   ├── GenerationContext.tsx
-│   └── MediaContext.tsx
+│   ├── GenerationContext.tsx (with streaming, multi-turn)
+│   ├── MediaContext.tsx
+│   └── ProviderContext.tsx (NEW - multi-provider)
 ├── services/           # Business logic
 │   ├── dbService.ts
 │   ├── geminiService.ts
@@ -667,7 +725,17 @@ the-transformation-engine/
 │   ├── fewShotService.ts     # Intelligent example selection
 │   ├── configService.ts      # Export/import config
 │   ├── apiCache.ts
-│   └── db/indexedDbService.ts
+│   ├── providerService.ts    # Provider CRUD (NEW)
+│   ├── taskAssignmentService.ts  # Task routing (NEW)
+│   ├── taskRouter.ts         # Orchestration (NEW)
+│   ├── conversationService.ts    # Multi-turn (NEW)
+│   ├── tokenTrackingService.ts   # Usage tracking (NEW)
+│   ├── providers/
+│   │   └── openrouterProvider.ts # OpenRouter impl (NEW)
+│   └── db/
+│       ├── indexedDbService.ts
+│       └── migrations/
+│           └── v8Migration.ts    # v7→v8 migration (NEW)
 ├── public/
 │   ├── core/                 # Main prompt templates
 │   │   ├── primary.md

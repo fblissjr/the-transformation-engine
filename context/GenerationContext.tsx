@@ -20,6 +20,15 @@ import { useApiKey } from './ApiKeyContext';
 import { useActivePrompt } from './ActivePromptContext';
 import { useMedia } from './MediaContext';
 import { usePromptLibrary } from './PromptLibraryContext';
+import { taskRouter } from '../services/taskRouter';
+import { TASK_IDS } from '../types/providers';
+
+export interface StreamingState {
+  accumulatedContent: string;
+  currentTokenCount: number;
+  tokensPerSecond: number;
+  startTime: number;
+}
 
 interface GenerationContextType {
   isLoading: boolean;
@@ -37,6 +46,13 @@ interface GenerationContextType {
   generatedIntermediate: any | null;
   selectedExportModel: 'sora2' | 'veo3' | 'generic';
   setSelectedExportModel: (model: 'sora2' | 'veo3' | 'generic') => void;
+  // Multi-provider features
+  streamingState: StreamingState | null;
+  enableStreaming: boolean;
+  setEnableStreaming: (value: boolean) => void;
+  currentConversation: any[] | null;
+  refineLastOutput: (refinementInstruction: string) => Promise<void>;
+  sessionTokens: { input: number; output: number; total: number };
 }
 
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
@@ -69,6 +85,12 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   const [useIntermediateMode, setUseIntermediateMode] = useState(true); // Default to intermediate mode
   const [generatedIntermediate, setGeneratedIntermediate] = useState<any | null>(null);
   const [selectedExportModel, setSelectedExportModel] = useState<'sora2' | 'veo3' | 'generic'>('sora2');
+
+  // Multi-provider features (Phase 5+)
+  const [streamingState, setStreamingState] = useState<StreamingState | null>(null);
+  const [enableStreaming, setEnableStreaming] = useState(false);
+  const [currentConversation, setCurrentConversation] = useState<any[] | null>(null);
+  const [sessionTokens, setSessionTokens] = useState({ input: 0, output: 0, total: 0 });
 
   const generate = async () => {
     if (!naturalLanguageInput.trim()) {
@@ -139,12 +161,27 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         // Capture which fragments were used in this generation
         const fragmentsUsed = fragmentLoader.getLoadedFragments();
 
-        setLoadingMessage('Sending request to Gemini AI...');
+        setLoadingMessage('Sending request to AI provider...');
         setProgress(40);
-        const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-        const apiStartTime = Date.now();
-        const structuredRes = await geminiService.generateContent(apiKey, generationFullPrompt, modelSettings);
-        const apiLatencyMs = Date.now() - apiStartTime;
+
+        // Use taskRouter for multi-provider support
+        const turn = await taskRouter.executeTask(
+          TASK_IDS.PRIMARY_GENERATION,
+          naturalLanguageInput,
+          generationFullPrompt,
+          {
+            enableStreaming,
+            onToken: enableStreaming ? (token) => {
+              // Update streaming state
+            } : undefined,
+            onProgress: enableStreaming ? (state) => {
+              setStreamingState(state);
+            } : undefined,
+          }
+        );
+
+        const structuredRes = turn.response;
+        const apiLatencyMs = turn.latencyMs;
 
         setLoadingMessage('Saving prompt to library...');
         setProgress(80);
@@ -182,6 +219,13 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
 
         selectPrompt(savedPrompt);
+
+        // Update session token tracking
+        setSessionTokens(prev => ({
+          input: prev.input + turn.usage.promptTokens,
+          output: prev.output + turn.usage.completionTokens,
+          total: prev.total + turn.usage.totalTokens,
+        }));
 
         setLoadingMessage('Complete!');
         setProgress(100);
@@ -223,9 +267,29 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         transformPrompt = await generateNormalizePromptV2(structuredOutput, 'English');
       }
 
-      setLoadingMessage('Sending transformation request to Gemini AI...');
-      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-      const result = await geminiService.generateContent(apiKey, transformPrompt, modelSettings);
+      setLoadingMessage('Sending transformation request to AI provider...');
+
+      // Use taskRouter for multi-provider support
+      const turn = await taskRouter.executeTask(
+        TASK_IDS.NORMALIZE,
+        transformPrompt,
+        '', // No system prompt needed for normalization
+        {
+          enableStreaming,
+          onProgress: enableStreaming ? (state) => {
+            setStreamingState(state);
+          } : undefined,
+        }
+      );
+
+      const result = turn.response;
+
+      // Update session token tracking
+      setSessionTokens(prev => ({
+        input: prev.input + turn.usage.promptTokens,
+        output: prev.output + turn.usage.completionTokens,
+        total: prev.total + turn.usage.totalTokens,
+      }));
 
       setLoadingMessage('Updating prompt...');
       setNormalizedOutput(result);
@@ -281,12 +345,24 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       // Capture fragments used in mix
       const fragmentsUsed = fragmentLoader.getLoadedFragments();
 
-      setLoadingMessage('Sending mix request to Gemini AI...');
+      setLoadingMessage('Sending mix request to AI provider...');
       setProgress(60);
-      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-      const apiStartTime = Date.now();
-      const structuredRes = await geminiService.generateContent(apiKey, mixFullPrompt, modelSettings);
-      const apiLatencyMs = Date.now() - apiStartTime;
+
+      // Use taskRouter for multi-provider support
+      const turn = await taskRouter.executeTask(
+        TASK_IDS.MIX_PROMPTS,
+        guidance,
+        mixFullPrompt,
+        {
+          enableStreaming,
+          onProgress: enableStreaming ? (state) => {
+            setStreamingState(state);
+          } : undefined,
+        }
+      );
+
+      const structuredRes = turn.response;
+      const apiLatencyMs = turn.latencyMs;
 
       setLoadingMessage('Saving mixed prompt...');
       setProgress(85);
@@ -327,6 +403,13 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       selectPrompt(savedPrompt);
       clearSelection();
 
+      // Update session token tracking
+      setSessionTokens(prev => ({
+        input: prev.input + turn.usage.promptTokens,
+        output: prev.output + turn.usage.completionTokens,
+        total: prev.total + turn.usage.totalTokens,
+      }));
+
       setLoadingMessage('Complete!');
       setProgress(100);
       setTimeout(() => setLoadingMessage(''), 500);
@@ -358,6 +441,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
       setLoadingMessage('Requesting AI schema inference...');
       setProgress(50);
+      // TODO: Migrate to taskRouter once JSON mode is added to IProvider interface
       const jsonResponse = await geminiService.generateJsonContent(apiKey, inferencePrompt);
 
       setLoadingMessage('Processing schema keys...');
@@ -389,6 +473,65 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     setActivePrompt(updatedPrompt);
   };
 
+  // Multi-provider: Refine last output
+  const refineLastOutput = async (refinementInstruction: string) => {
+    if (!currentConversation || currentConversation.length === 0) {
+      setError('No conversation to refine. Please generate a prompt first.');
+      return;
+    }
+
+    if (!apiKey) {
+      setError('Please set your API key to refine prompts.');
+      openModal();
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setProgress(0);
+
+    try {
+      const lastTurn = currentConversation[currentConversation.length - 1];
+
+      setLoadingMessage('Refining previous output...');
+      setProgress(50);
+
+      // Use taskRouter to refine
+      const refinedTurn = await taskRouter.refineTurn(
+        lastTurn.id,
+        refinementInstruction,
+        {
+          enableStreaming,
+          onProgress: enableStreaming ? (state) => {
+            setStreamingState(state);
+          } : undefined,
+        }
+      );
+
+      // Update conversation state
+      setCurrentConversation([...currentConversation, refinedTurn]);
+
+      // Update structured output
+      setStructuredOutput(refinedTurn.response);
+
+      // Update session token tracking
+      setSessionTokens(prev => ({
+        input: prev.input + refinedTurn.usage.promptTokens,
+        output: prev.output + refinedTurn.usage.completionTokens,
+        total: prev.total + refinedTurn.usage.totalTokens,
+      }));
+
+      setLoadingMessage('Complete!');
+      setProgress(100);
+      setTimeout(() => setLoadingMessage(''), 500);
+    } catch (e: any) {
+      setError(`An error occurred during refinement: ${e.message}`);
+    } finally {
+      setIsLoading(false);
+      setProgress(0);
+    }
+  };
+
   const value = {
     isLoading,
     isNormalizing,
@@ -405,6 +548,13 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     generatedIntermediate,
     selectedExportModel,
     setSelectedExportModel,
+    // Multi-provider features
+    streamingState,
+    enableStreaming,
+    setEnableStreaming,
+    currentConversation,
+    refineLastOutput,
+    sessionTokens,
   };
 
   return <GenerationContext.Provider value={value}>{children}</GenerationContext.Provider>;

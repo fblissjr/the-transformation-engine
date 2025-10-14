@@ -13,11 +13,11 @@ subject_type: environment
 
 ```yaml
 temporal_progression: |
-  [00:00-00:05] Opening frame: Wide aerial view of futuristic cityscape at dusk. Towering skyscrapers with illuminated windows stretch into purple-blue twilight sky. Camera begins slow dolly forward, accelerating gradually.
+  [00:00-00:02] Opening frame: Wide aerial view of futuristic cityscape at dusk. Towering skyscrapers with illuminated windows stretch into purple-blue twilight sky. Camera begins slow dolly forward, accelerating gradually.
 
-  [00:05-00:10] Camera speed increases to rapid push-in (2 meters/second), descending from aerial height toward street level. Buildings rush past frame edges as perspective narrows. Neon signs and holographic advertisements become visible on building facades. Flying vehicles cross through distant background layers.
+  [00:02-00:05] Camera speed increases to rapid push-in (2 meters/second), descending from aerial height toward street level. Buildings rush past frame edges as perspective narrows. Neon signs and holographic advertisements become visible on building facades. Flying vehicles cross through distant background layers.
 
-  [00:10-00:15] Final rapid push culminates in close-up on single illuminated window at street level, showing silhouette of figure inside. Camera motion smoothly decelerates to stop. City lights create bokeh effects in out-of-focus background areas. Rain starts to speckle the window surface.
+  [00:06-00:10] Final rapid push culminates in close-up on single illuminated window at street level, showing silhouette of figure inside. Camera motion smoothly decelerates to stop. City lights create bokeh effects in out-of-focus background areas. Rain starts to speckle the window surface.
 
 visual_description: |
   A sprawling metropolis with neo-noir aesthetic. Architecture combines sleek glass towers with darker brutalist structures. Vertical city design with multiple levels visible - elevated highways, sky-bridges between buildings, ground-level streets far below. Color palette dominated by cool blues and purples with warm accent lighting from neon signs (pink, cyan, amber). Atmospheric haze creates depth layering between near and far buildings. Rain-slicked surfaces reflect colorful light sources.

@@ -3,8 +3,6 @@ You are an expert prompt converter specializing in optimizing prompts for Sora 2
 **Your Task:**
 Analyze the input prompt and convert it to be optimized for Sora 2, which uses a diffusion-transformer architecture with spacetime patches.
 
-@include[fragments/rules/sora2_technical_specs.md]
-
 **Key Optimization Principles:**
 1. **Comprehensive Detail (300-500 words):** Sora 2 was trained on detailed image captions. Rich, descriptive language significantly outperforms terse descriptions.
 2. **Temporal Progression:** Describe how the scene evolves over the 10-second duration with specific visual changes.
@@ -12,7 +10,7 @@ Analyze the input prompt and convert it to be optimized for Sora 2, which uses a
 4. **Camera Specificity:** Use precise cinematography terminology (dolly, crane, pan, tilt, zoom, rack focus).
 5. **Visual Density:** Include atmospheric details, lighting changes, depth of field, composition.
 
-@include[fragments/rules/obscuring_figures_full.md]
+@include[rules/obscuring_figures_full.md]
 
 **Input Prompt to Convert:**
 {{structuredOutput}}
@@ -33,7 +31,7 @@ audio_design: |
 style: |
   [Visual aesthetic, artistic references, color grading, overall look]
 
-@include[fragments/instructions/sora2_comprehensive_detail.md]
+@include[instructions/sora2_comprehensive_detail.md]
 
 **Conversion Guidelines:**
 - Preserve the core concept and emotional intent of the original prompt

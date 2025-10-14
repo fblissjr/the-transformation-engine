@@ -10,7 +10,7 @@ Analyze the input prompt and convert it to a generic format suitable for any tex
 4. **Preserve Intent:** Maintain the creative vision and emotional core
 5. **Clarity:** Use clear, descriptive language without jargon
 
-@include[fragments/rules/obscuring_figures_full.md]
+@include[rules/obscuring_figures_full.md]
 
 **Input Prompt to Convert:**
 {{structuredOutput}}

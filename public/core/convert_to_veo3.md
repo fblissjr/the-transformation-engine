@@ -3,8 +3,6 @@ You are an expert prompt converter specializing in optimizing prompts for Veo 3 
 **Your Task:**
 Analyze the input prompt and convert it to be optimized for Veo 3, which excels at narrative-driven content with integrated audio.
 
-@include[fragments/rules/veo3_technical_specs.md]
-
 **Key Optimization Principles:**
 1. **Audio-First Design:** Veo 3's unique capability is native audio generation. ALWAYS include specific audio elements.
 2. **9 Elements Framework:** Cover all elements for comprehensive scene design.
@@ -12,9 +10,9 @@ Analyze the input prompt and convert it to be optimized for Veo 3, which excels 
 4. **Narrative Structure:** Create a clear story arc within the 8-second duration.
 5. **Length Target:** 200-400 words with balanced detail across all elements.
 
-@include[fragments/rules/obscuring_figures_full.md]
+@include[rules/obscuring_figures_full.md]
 
-@include[fragments/instructions/veo3_nine_elements.md]
+@include[instructions/veo3_nine_elements.md]
 
 **Input Prompt to Convert:**
 {{structuredOutput}}
@@ -41,7 +39,7 @@ background_setting: |
 composition: |
   [Framing, focal points, visual hierarchy, rule of thirds, leading lines]
 
-@include[fragments/instructions/veo3_audio_integration.md]
+@include[instructions/veo3_audio_integration.md]
 
 **Conversion Guidelines:**
 - Preserve the core concept and emotional intent of the original prompt
@@ -54,7 +52,7 @@ composition: |
 
 **Examples of Strong Audio Integration:**
 
-@include[fragments/examples/veo3_coffee_shop.md]
+@include[examples/veo3_coffee_shop.md]
 
 **Final Output:**
 Provide ONLY the converted YAML prompt. No commentary, explanations, or code fences. Output raw YAML only.

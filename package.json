@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:auto": "node scripts/automated-tests.js",
+    "test:multi-provider": "tsx scripts/test-multi-provider.ts",
     "test:all": "npm run test:auto && npm run build"
   },
   "dependencies": {
