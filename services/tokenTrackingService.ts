@@ -1,23 +1,23 @@
-import { openDB, type IDBPDatabase } from "idb";
+import type { IDBPDatabase } from "idb";
 import type { TokenUsage, TaskId } from "../types/providers";
-
-const DB_NAME = "TransformationEngineDB";
-const DB_VERSION = 8;
+import { getDB } from "./db/indexedDbService";
 
 export class TokenTrackingService {
-  private dbPromise: Promise<IDBPDatabase>;
   private sessionStartTime: number;
 
   constructor() {
-    this.dbPromise = openDB(DB_NAME, DB_VERSION);
     this.sessionStartTime = Date.now();
+  }
+
+  private async getDb(): Promise<IDBPDatabase> {
+    return getDB();
   }
 
   // Record token usage
   async recordUsage(
     usage: Omit<TokenUsage, "id" | "timestamp">
   ): Promise<TokenUsage> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const record: TokenUsage = {
       ...usage,
       id: `usage_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -30,20 +30,20 @@ export class TokenTrackingService {
 
   // Get session usage (since app loaded or session reset)
   async getSessionUsage(): Promise<TokenUsage[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const all = await db.getAll("tokenUsage");
     return all.filter((u) => u.timestamp >= this.sessionStartTime);
   }
 
   // Get usage by provider
   async getUsageByProvider(providerId: string): Promise<TokenUsage[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     return db.getAllFromIndex("tokenUsage", "providerId", providerId);
   }
 
   // Get usage by task
   async getUsageByTask(taskId: TaskId): Promise<TokenUsage[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     return db.getAllFromIndex("tokenUsage", "taskId", taskId);
   }
 
@@ -191,7 +191,7 @@ export class TokenTrackingService {
 
   // Clear all usage data (destructive!)
   async clearAllUsageData(): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const all = await db.getAll("tokenUsage");
 
     for (const usage of all) {
@@ -206,7 +206,7 @@ export class TokenTrackingService {
     startTime: number,
     endTime: number
   ): Promise<TokenUsage[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const all = await db.getAll("tokenUsage");
     return all.filter(
       (u) => u.timestamp >= startTime && u.timestamp <= endTime

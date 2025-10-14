@@ -11,8 +11,20 @@ const MEDIA_STORE_NAME = 'media';
 const DB_VERSION = 8;
 
 let db: IDBPDatabase;
+let dbPromise: Promise<IDBPDatabase> | null = null;
+
+// Export a function to get the shared DB instance
+export async function getDB(): Promise<IDBPDatabase> {
+  if (!dbPromise) {
+    dbPromise = initDB();
+  }
+  return dbPromise;
+}
 
 export async function initDB() {
+  if (db) {
+    return db;
+  }
   console.log(`[IndexedDB] Opening ${DB_NAME} at version ${DB_VERSION}...`);
   db = await openDB(DB_NAME, DB_VERSION, {
     upgrade(db, oldVersion, newVersion, tx) {

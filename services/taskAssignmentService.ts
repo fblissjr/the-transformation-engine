@@ -1,34 +1,30 @@
-import { openDB, type IDBPDatabase } from "idb";
+import type { IDBPDatabase } from "idb";
 import type { TaskAssignment, TaskId } from "../types/providers";
 import { TASK_METADATA } from "../types/providers";
-
-const DB_NAME = "TransformationEngineDB";
-const DB_VERSION = 8;
+import { getDB } from "./db/indexedDbService";
 
 export class TaskAssignmentService {
-  private dbPromise: Promise<IDBPDatabase>;
-
-  constructor() {
-    this.dbPromise = openDB(DB_NAME, DB_VERSION);
+  private async getDb(): Promise<IDBPDatabase> {
+    return getDB();
   }
 
   // Get task assignment for a specific task
   async getTaskAssignment(taskId: TaskId): Promise<TaskAssignment | null> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const assignment = await db.get("taskAssignments", taskId);
     return assignment || null;
   }
 
   // Set/update task assignment
   async setTaskAssignment(assignment: TaskAssignment): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     assignment.updatedAt = Date.now();
     await db.put("taskAssignments", assignment);
   }
 
   // Get all task assignments
   async getAllTaskAssignments(): Promise<TaskAssignment[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     return db.getAll("taskAssignments");
   }
 
@@ -60,7 +56,7 @@ export class TaskAssignmentService {
     providerId: string;
     modelId: string;
   } | null> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const setting = await db.get("appSettings", "globalDefaultProvider");
     return setting?.value || null;
   }
@@ -70,7 +66,7 @@ export class TaskAssignmentService {
     providerId: string,
     modelId: string
   ): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     await db.put("appSettings", {
       key: "globalDefaultProvider",
       value: { providerId, modelId },
@@ -147,7 +143,7 @@ export class TaskAssignmentService {
     modelId: string,
     enableStreaming: boolean = false
   ): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const taskIds = Object.keys(TASK_METADATA) as TaskId[];
 
     for (const taskId of taskIds) {

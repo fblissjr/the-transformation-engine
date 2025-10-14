@@ -1,76 +1,11 @@
-import { openDB, type IDBPDatabase } from "idb";
+import type { IDBPDatabase } from "idb";
 import type { Provider, ProviderKey, ProviderType } from "../types/providers";
 import { encryptData, decryptData } from "./encryptedStorage";
-
-const DB_NAME = "TransformationEngineDB";
-const DB_VERSION = 8;
+import { getDB } from "./db/indexedDbService";
 
 export class ProviderService {
-  private dbPromise: Promise<IDBPDatabase>;
-
-  constructor() {
-    this.dbPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
-        // V8 migration - create all multi-provider stores
-        if (oldVersion < 8) {
-          // Create providers store if it doesn't exist
-          if (!db.objectStoreNames.contains("providers")) {
-            const providerStore = db.createObjectStore("providers", {
-              keyPath: "id",
-            });
-            providerStore.createIndex("type", "type", { unique: false });
-            providerStore.createIndex("enabled", "enabled", { unique: false });
-          }
-
-          // Create provider keys store if it doesn't exist
-          if (!db.objectStoreNames.contains("providerKeys")) {
-            const keyStore = db.createObjectStore("providerKeys", {
-              keyPath: "id",
-            });
-            keyStore.createIndex("providerId", "providerId", { unique: false });
-          }
-
-          // Create task assignments store if it doesn't exist
-          if (!db.objectStoreNames.contains("taskAssignments")) {
-            db.createObjectStore("taskAssignments", { keyPath: "taskId" });
-          }
-
-          // Create conversations store if it doesn't exist
-          if (!db.objectStoreNames.contains("conversations")) {
-            const convStore = db.createObjectStore("conversations", {
-              keyPath: "id",
-            });
-            convStore.createIndex("taskId", "taskId", { unique: false });
-            convStore.createIndex("promptId", "promptId", { unique: false });
-          }
-
-          // Create conversation turns store if it doesn't exist
-          if (!db.objectStoreNames.contains("conversationTurns")) {
-            const turnStore = db.createObjectStore("conversationTurns", {
-              keyPath: "id",
-            });
-            turnStore.createIndex("conversationId", "conversationId", {
-              unique: false,
-            });
-            turnStore.createIndex("parentTurnId", "parentTurnId", {
-              unique: false,
-            });
-          }
-
-          // Create token usage store if it doesn't exist
-          if (!db.objectStoreNames.contains("tokenUsage")) {
-            const usageStore = db.createObjectStore("tokenUsage", {
-              keyPath: "id",
-            });
-            usageStore.createIndex("providerId", "providerId", {
-              unique: false,
-            });
-            usageStore.createIndex("taskId", "taskId", { unique: false });
-            usageStore.createIndex("timestamp", "timestamp", { unique: false });
-          }
-        }
-      },
-    });
+  private async getDb(): Promise<IDBPDatabase> {
+    return getDB();
   }
 
   // Provider CRUD
@@ -79,7 +14,7 @@ export class ProviderService {
     type: ProviderType,
     baseUrl: string
   ): Promise<Provider> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const provider: Provider = {
       id: `provider_${type}_${Date.now()}`,
       name,
@@ -98,7 +33,7 @@ export class ProviderService {
     id: string,
     updates: Partial<Omit<Provider, "id" | "createdAt">>
   ): Promise<Provider> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const existing = await db.get("providers", id);
 
     if (!existing) {
@@ -116,7 +51,7 @@ export class ProviderService {
   }
 
   async deleteProvider(id: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
 
     // Delete all keys for this provider
     const keys = await this.getKeysForProvider(id);
@@ -128,17 +63,17 @@ export class ProviderService {
   }
 
   async getProvider(id: string): Promise<Provider | undefined> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     return db.get("providers", id);
   }
 
   async getAllProviders(): Promise<Provider[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     return db.getAll("providers");
   }
 
   async getEnabledProviders(): Promise<Provider[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const all = await db.getAll("providers");
     return all.filter((p) => p.enabled);
   }
@@ -150,7 +85,7 @@ export class ProviderService {
     label?: string,
     ttl: number = 7 * 24 * 60 * 60 * 1000 // 7 days default
   ): Promise<ProviderKey> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
 
     // Encrypt the API key
     const encryptedKey = await encryptData(apiKey);
@@ -170,12 +105,12 @@ export class ProviderService {
   }
 
   async deleteProviderKey(keyId: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     await db.delete("providerKeys", keyId);
   }
 
   async getProviderKey(keyId: string): Promise<string | null> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const key = await db.get("providerKeys", keyId);
 
     if (!key) return null;
@@ -191,7 +126,7 @@ export class ProviderService {
   }
 
   async getKeysForProvider(providerId: string): Promise<ProviderKey[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const allKeys = await db.getAllFromIndex("providerKeys", "providerId", providerId);
 
     // Filter out expired keys
@@ -216,7 +151,7 @@ export class ProviderService {
   }
 
   async updateKeyExpiration(keyId: string, ttl: number): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const key = await db.get("providerKeys", keyId);
 
     if (!key) {
@@ -231,7 +166,7 @@ export class ProviderService {
 
   // Utility
   async cleanupExpiredKeys(): Promise<number> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const allKeys = await db.getAll("providerKeys");
     const now = Date.now();
     const expiredKeys = allKeys.filter((key) => key.expiresAt <= now);

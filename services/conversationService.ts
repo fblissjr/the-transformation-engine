@@ -1,18 +1,14 @@
-import { openDB, type IDBPDatabase } from "idb";
+import type { IDBPDatabase } from "idb";
 import type {
   Conversation,
   ConversationTurn,
 } from "../types/conversation";
 import type { TaskId } from "../types/providers";
-
-const DB_NAME = "TransformationEngineDB";
-const DB_VERSION = 8;
+import { getDB } from "./db/indexedDbService";
 
 export class ConversationService {
-  private dbPromise: Promise<IDBPDatabase>;
-
-  constructor() {
-    this.dbPromise = openDB(DB_NAME, DB_VERSION);
+  private async getDb(): Promise<IDBPDatabase> {
+    return getDB();
   }
 
   // Create new conversation
@@ -20,7 +16,7 @@ export class ConversationService {
     taskId: TaskId,
     title?: string
   ): Promise<Conversation> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const conversation: Conversation = {
       id: `conv_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       taskId,
@@ -37,13 +33,13 @@ export class ConversationService {
 
   // Get conversation by ID
   async getConversation(id: string): Promise<Conversation | null> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     return (await db.get("conversations", id)) || null;
   }
 
   // Get conversation with all turns populated
   async getConversationWithTurns(id: string): Promise<Conversation | null> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const conversation = await db.get("conversations", id);
     if (!conversation) return null;
 
@@ -67,7 +63,7 @@ export class ConversationService {
     conversationId: string,
     turn: Omit<ConversationTurn, "id" | "turnNumber" | "timestamp">
   ): Promise<ConversationTurn> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const conversation = await this.getConversationWithTurns(conversationId);
 
     if (!conversation) {
@@ -95,7 +91,7 @@ export class ConversationService {
 
   // Get turn by ID
   async getTurn(turnId: string): Promise<ConversationTurn | null> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     return (await db.get("conversationTurns", turnId)) || null;
   }
 
@@ -104,7 +100,7 @@ export class ConversationService {
     turnId: string,
     updates: Partial<ConversationTurn>
   ): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const turn = await db.get("conversationTurns", turnId);
 
     if (!turn) {
@@ -117,7 +113,7 @@ export class ConversationService {
 
   // Delete conversation and all its turns
   async deleteConversation(id: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const turns = await db.getAllFromIndex(
       "conversationTurns",
       "conversationId",
@@ -135,14 +131,14 @@ export class ConversationService {
 
   // Get all conversations for a task
   async getConversationsForTask(taskId: TaskId): Promise<Conversation[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const all = await db.getAll("conversations");
     return all.filter((c) => c.taskId === taskId);
   }
 
   // Get recent conversations (across all tasks)
   async getRecentConversations(limit: number = 10): Promise<Conversation[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const all = await db.getAll("conversations");
 
     // Sort by updatedAt descending
@@ -153,7 +149,7 @@ export class ConversationService {
 
   // Update conversation title
   async updateConversationTitle(id: string, title: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const conversation = await db.get("conversations", id);
 
     if (!conversation) {
@@ -167,7 +163,7 @@ export class ConversationService {
 
   // Link conversation to prompt
   async linkToPrompt(conversationId: string, promptId: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const conversation = await db.get("conversations", conversationId);
 
     if (!conversation) {
@@ -183,7 +179,7 @@ export class ConversationService {
   async getConversationForPrompt(
     promptId: string
   ): Promise<Conversation | null> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const all = await db.getAll("conversations");
     return all.find((c) => c.promptId === promptId) || null;
   }
@@ -192,7 +188,7 @@ export class ConversationService {
   async getTurnsForConversation(
     conversationId: string
   ): Promise<ConversationTurn[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDb();
     const turns = await db.getAllFromIndex(
       "conversationTurns",
       "conversationId",
