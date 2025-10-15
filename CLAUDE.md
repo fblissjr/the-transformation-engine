@@ -329,8 +329,13 @@ ApiKeyProvider
   - [x] Added encryption helpers (encryptData/decryptData) to encryptedStorage.ts
   - [x] Fixed TypeScript compilation errors (path resolution, type casting)
   - [x] Build successful, ready for testing
-- [ ] **Phase 10.6: Migration & Testing** (TODO)
-  - [ ] Migrate GeminiProvider to implement IProvider
+- [x] **Phase 10.6: Gemini SDK Migration & Bug Fixes**
+  - [x] Migrated from `@google/generative-ai` to `@google/genai` (new official SDK)
+  - [x] Fixed response parsing: `response.candidates[0].content.parts[0].text`
+  - [x] Fixed request format: simple string `contents: prompt` instead of array structure
+  - [x] Fixed database version mismatch in intermediateService (v7→v8)
+  - [x] Gemini API fully functional with intermediate generation
+- [ ] **Phase 10.7: Additional Providers** (TODO)
   - [ ] Add OpenAI provider implementation
   - [ ] Add local server (heylookitsanllm) provider
   - [ ] End-to-end testing with OpenRouter
@@ -542,10 +547,13 @@ return "generic";
 ## API Integration
 
 ### Gemini API
-- Model: `gemini-2.5-pro` (configurable)
+- SDK: `@google/genai` v1.25.0 (migrated from `@google/generative-ai`)
+- Model: `gemini-2.5-flash-latest` (configurable)
 - Key from encrypted storage (user-provided, AES-GCM)
 - Direct browser → Google API calls
 - Cached responses (see `services/apiCache.ts`)
+- **Request format**: Simple string `contents: prompt` (SDK handles conversion)
+- **Response parsing**: `response.candidates[0].content.parts[0].text`
 
 ### Cache Strategy
 | Operation | TTL | Key Components | Storage |
@@ -783,6 +791,8 @@ Documentation:
 12. **Modular Fragments**: V2 system uses @include directives in templates, fully integrated into GenerationContext
 13. **Few-Shot Learning**: Intelligent keyword-based example selection for both Sora 2 and Veo 3
 14. **IndexedDB Queries**: Use `getAll()` + `find()` for boolean fields, not `getAllFromIndex()` with boolean values
+15. **Gemini SDK**: Use `@google/genai` (not `@google/generative-ai`), simple string format for `contents` parameter
+16. **Database Version**: All services must use shared `getDB()` from indexedDbService (no hardcoded versions)
 
 ---
 
