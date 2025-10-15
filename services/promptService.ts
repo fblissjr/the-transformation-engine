@@ -641,13 +641,6 @@ export async function generateIntermediate(
     naturalLanguageInput: input,
   });
 
-  // Debug: log what we're sending
-  console.log("=== INTERMEDIATE GENERATION DEBUG ===");
-  console.log("Input:", input);
-  console.log("System prompt length:", systemPrompt.length);
-  console.log("System prompt preview:", systemPrompt.substring(0, 300));
-  console.log("=====================================");
-
   // Call Gemini API (don't duplicate the input - it's already in systemPrompt)
   const response = await geminiService.generateContent(apiKey, systemPrompt, {
     modelName: options?.modelName || "gemini-2.5-flash-latest",
@@ -674,13 +667,6 @@ export async function generateIntermediate(
   // Basic validation: check if it looks like markdown with sections
   const hasSections = /^##\s+\w+/m.test(markdownContent);
   if (!hasSections) {
-    // Log the actual response for debugging
-    console.error("=== LLM Response Debug ===");
-    console.error("Raw response length:", response?.length || 0);
-    console.error("Raw response preview:", response?.substring(0, 500));
-    console.error("Markdown content length:", markdownContent.length);
-    console.error("Markdown content:", markdownContent.substring(0, 500));
-    console.error("========================");
     throw new Error(
       `Failed to parse intermediate structure from LLM response. Response did not contain valid Markdown sections (## Visual, ## Audio, etc.). Got: ${markdownContent.substring(0, 200) || '(empty response)'}`,
     );

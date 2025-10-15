@@ -4,17 +4,10 @@
 
 import { initDB } from './indexedDbService';
 import type { IntermediatePrompt } from '../../types/intermediate';
-import { openDB } from 'idb';
 
 // Initialize DB connection
-let dbInstance: any = null;
-
 async function getDB() {
-  if (!dbInstance) {
-    await initDB();
-    dbInstance = await openDB('TransformationEngineDB', 7);
-  }
-  return dbInstance;
+  return initDB();
 }
 
 // Create new intermediate

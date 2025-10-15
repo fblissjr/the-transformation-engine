@@ -75,12 +75,7 @@ export class GeminiProvider implements IProvider {
         temperature: request.temperature,
         topP: request.topP,
       },
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: prompt }],
-        },
-      ],
+      contents: prompt,
     });
 
     const latencyMs = Date.now() - startTime;
@@ -125,12 +120,7 @@ export class GeminiProvider implements IProvider {
           temperature: request.temperature,
           topP: request.topP,
         },
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: prompt }],
-          },
-        ],
+        contents: prompt,
       });
 
       let fullText = "";

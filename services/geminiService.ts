@@ -89,9 +89,6 @@ export async function generateContentWithMetadata(
     const ai = new GoogleGenAI({ apiKey });
     const modelName = modelSettings?.modelName || GEMINI_MODEL_NAME;
 
-    console.log('[GeminiService] Calling API with model:', modelName);
-    console.log('[GeminiService] Prompt length:', prompt.length);
-
     const response = await ai.models.generateContent({
       model: modelName,
       config: {
@@ -99,22 +96,11 @@ export async function generateContentWithMetadata(
         temperature: modelSettings?.temperature,
         topP: modelSettings?.topP,
       },
-      contents: prompt,  // Simple string format
+      contents: prompt,
     });
-
-    const candidate = response.candidates?.[0];
-    console.log('[GeminiService] Response object:', response);
-    console.log('[GeminiService] First candidate:', candidate);
-    console.log('[GeminiService] Finish reason:', candidate?.finishReason);
-    console.log('[GeminiService] Safety ratings:', candidate?.safetyRatings);
-    console.log('[GeminiService] Block reason:', (candidate as any)?.blockReason);
-    console.log('[GeminiService] Content:', candidate?.content);
-    console.log('[GeminiService] Parts:', candidate?.content?.parts);
 
     // Extract text from candidates array
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    console.log('[GeminiService] Extracted text length:', text.length);
-    console.log('[GeminiService] Extracted text preview:', text.substring(0, 200));
 
     // Extract usage metadata if available
     const tokensUsed = response.usageMetadata?.totalTokenCount;
@@ -200,6 +186,12 @@ export async function generateContentWithMedia(
     });
   }
 
+  // Build content with text + media
+  const content: any = {
+    role: 'user',
+    parts,
+  };
+
   const response = await ai.models.generateContent({
     model: modelName,
     config: {
@@ -207,12 +199,7 @@ export async function generateContentWithMedia(
       temperature: modelSettings?.temperature,
       topP: modelSettings?.topP,
     },
-    contents: [
-      {
-        role: 'user',
-        parts,
-      },
-    ],
+    contents: content,
   });
 
   return response.candidates?.[0]?.content?.parts?.[0]?.text || '';
