@@ -99,20 +99,17 @@ export async function generateContentWithMetadata(
         temperature: modelSettings?.temperature,
         topP: modelSettings?.topP,
       },
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: prompt }],
-        },
-      ],
+      contents: prompt,  // Simple string format
     });
 
+    const candidate = response.candidates?.[0];
     console.log('[GeminiService] Response object:', response);
-    console.log('[GeminiService] Candidates:', response.candidates);
-    console.log('[GeminiService] First candidate:', response.candidates?.[0]);
-    console.log('[GeminiService] Content:', response.candidates?.[0]?.content);
-    console.log('[GeminiService] Parts:', response.candidates?.[0]?.content?.parts);
-    console.log('[GeminiService] First part:', response.candidates?.[0]?.content?.parts?.[0]);
+    console.log('[GeminiService] First candidate:', candidate);
+    console.log('[GeminiService] Finish reason:', candidate?.finishReason);
+    console.log('[GeminiService] Safety ratings:', candidate?.safetyRatings);
+    console.log('[GeminiService] Block reason:', (candidate as any)?.blockReason);
+    console.log('[GeminiService] Content:', candidate?.content);
+    console.log('[GeminiService] Parts:', candidate?.content?.parts);
 
     // Extract text from candidates array
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -162,12 +159,7 @@ export async function generateJsonContent(
       temperature: modelSettings?.temperature,
       topP: modelSettings?.topP,
     },
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: prompt }],
-      },
-    ],
+    contents: prompt,
   });
 
   const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
