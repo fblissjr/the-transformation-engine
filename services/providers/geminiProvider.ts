@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import type {
   IProvider,
   ProviderType,
@@ -62,26 +62,29 @@ export class GeminiProvider implements IProvider {
   }
 
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
-    const genAI = new GoogleGenerativeAI(this.apiKey);
-    const model = genAI.getGenerativeModel({
-      model: request.model,
-      generationConfig: {
-        maxOutputTokens: request.maxTokens,
-        temperature: request.temperature,
-        topP: request.topP,
-      },
-    });
-
+    const ai = new GoogleGenAI({ apiKey: this.apiKey });
     const startTime = Date.now();
 
     // Convert messages to Gemini format
     const prompt = this.convertMessagesToPrompt(request.messages);
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const response = await ai.models.generateContent({
+      model: request.model,
+      config: {
+        maxOutputTokens: request.maxTokens,
+        temperature: request.temperature,
+        topP: request.topP,
+      },
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ],
+    });
 
     const latencyMs = Date.now() - startTime;
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     // Extract token usage
     const usage = {
@@ -111,35 +114,39 @@ export class GeminiProvider implements IProvider {
     onError: (error: Error) => void
   ): Promise<void> {
     try {
-      const genAI = new GoogleGenerativeAI(this.apiKey);
-      const model = genAI.getGenerativeModel({
+      const ai = new GoogleGenAI({ apiKey: this.apiKey });
+      const startTime = Date.now();
+      const prompt = this.convertMessagesToPrompt(request.messages);
+
+      const streamResponse = await ai.models.generateContentStream({
         model: request.model,
-        generationConfig: {
+        config: {
           maxOutputTokens: request.maxTokens,
           temperature: request.temperature,
           topP: request.topP,
         },
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }],
+          },
+        ],
       });
 
-      const startTime = Date.now();
-      const prompt = this.convertMessagesToPrompt(request.messages);
-
-      const result = await model.generateContentStream(prompt);
       let fullText = "";
 
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
+      for await (const chunk of streamResponse) {
+        const chunkText = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
         fullText += chunkText;
         onToken(chunkText);
       }
 
-      const finalResponse = await result.response;
       const latencyMs = Date.now() - startTime;
 
       const usage = {
-        promptTokens: finalResponse.usageMetadata?.promptTokenCount || 0,
-        completionTokens: finalResponse.usageMetadata?.candidatesTokenCount || 0,
-        totalTokens: finalResponse.usageMetadata?.totalTokenCount || 0,
+        promptTokens: 0, // Stream doesn't provide usage metadata in chunks
+        completionTokens: 0,
+        totalTokens: 0,
       };
 
       const response: GenerateResponse = {

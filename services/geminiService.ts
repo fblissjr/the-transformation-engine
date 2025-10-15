@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { GEMINI_MODEL_NAME } from '../constants';
 import { ModelSettings, MediaReference } from '../types';
 import { apiCache, APICache } from './apiCache';
@@ -85,32 +85,55 @@ export async function generateContentWithMetadata(
   }
 
   // Cache miss - call API
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const modelName = modelSettings?.modelName || GEMINI_MODEL_NAME;
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    generationConfig: {
-      maxOutputTokens: modelSettings?.maxTokens,
-      temperature: modelSettings?.temperature,
-      topP: modelSettings?.topP,
-    },
-  });
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const text = response.text();
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const modelName = modelSettings?.modelName || GEMINI_MODEL_NAME;
 
-  // Extract usage metadata if available
-  const usageMetadata = (response as any).usageMetadata;
-  const tokensUsed = usageMetadata?.totalTokenCount;
+    console.log('[GeminiService] Calling API with model:', modelName);
+    console.log('[GeminiService] Prompt length:', prompt.length);
 
-  // Cache the result (5 minutes TTL for generation)
-  apiCache.set(cacheKey, text, 300000);
+    const response = await ai.models.generateContent({
+      model: modelName,
+      config: {
+        maxOutputTokens: modelSettings?.maxTokens,
+        temperature: modelSettings?.temperature,
+        topP: modelSettings?.topP,
+      },
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ],
+    });
 
-  return {
-    text,
-    tokensUsed,
-    modelUsed: modelName,
-  };
+    console.log('[GeminiService] Response object:', response);
+    console.log('[GeminiService] Candidates:', response.candidates);
+    console.log('[GeminiService] First candidate:', response.candidates?.[0]);
+    console.log('[GeminiService] Content:', response.candidates?.[0]?.content);
+    console.log('[GeminiService] Parts:', response.candidates?.[0]?.content?.parts);
+    console.log('[GeminiService] First part:', response.candidates?.[0]?.content?.parts?.[0]);
+
+    // Extract text from candidates array
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('[GeminiService] Extracted text length:', text.length);
+    console.log('[GeminiService] Extracted text preview:', text.substring(0, 200));
+
+    // Extract usage metadata if available
+    const tokensUsed = response.usageMetadata?.totalTokenCount;
+
+    // Cache the result (5 minutes TTL for generation)
+    apiCache.set(cacheKey, text, 300000);
+
+    return {
+      text,
+      tokensUsed,
+      modelUsed: modelName,
+    };
+  } catch (error) {
+    console.error('[GeminiService] API call failed:', error);
+    throw error;
+  }
 }
 
 export async function generateJsonContent(
@@ -128,19 +151,26 @@ export async function generateJsonContent(
   }
 
   // Cache miss - call API
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: modelSettings?.modelName || GEMINI_MODEL_NAME,
-    generationConfig: {
+  const ai = new GoogleGenAI({ apiKey });
+  const modelName = modelSettings?.modelName || GEMINI_MODEL_NAME;
+
+  const response = await ai.models.generateContent({
+    model: modelName,
+    config: {
       responseMimeType: "application/json",
       maxOutputTokens: modelSettings?.maxTokens,
       temperature: modelSettings?.temperature,
       topP: modelSettings?.topP,
     },
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: prompt }],
+      },
+    ],
   });
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const text = response.text();
+
+  const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
   try {
     const parsed = JSON.parse(text);
@@ -161,15 +191,8 @@ export async function generateContentWithMedia(
   media: MediaReference[],
   modelSettings?: ModelSettings
 ): Promise<string> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: modelSettings?.modelName || GEMINI_MODEL_NAME,
-    generationConfig: {
-      maxOutputTokens: modelSettings?.maxTokens,
-      temperature: modelSettings?.temperature,
-      topP: modelSettings?.topP,
-    },
-  });
+  const ai = new GoogleGenAI({ apiKey });
+  const modelName = modelSettings?.modelName || GEMINI_MODEL_NAME;
 
   // Build multimodal parts
   const parts: any[] = [{ text: prompt }];
@@ -185,9 +208,22 @@ export async function generateContentWithMedia(
     });
   }
 
-  const result = await model.generateContent(parts);
-  const response = await result.response;
-  return response.text();
+  const response = await ai.models.generateContent({
+    model: modelName,
+    config: {
+      maxOutputTokens: modelSettings?.maxTokens,
+      temperature: modelSettings?.temperature,
+      topP: modelSettings?.topP,
+    },
+    contents: [
+      {
+        role: 'user',
+        parts,
+      },
+    ],
+  });
+
+  return response.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
 export async function describeMedia(

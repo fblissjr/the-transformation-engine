@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import type { Provider, Model } from '../types/providers';
 import { providerService } from '../services/providerService';
 import { ProviderRegistry } from '../services/providerRegistry';
+import { useApiKey } from './ApiKeyContext';
 
 interface ProviderContextType {
   providers: Provider[];
@@ -37,6 +38,7 @@ export const ProviderProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [error, setError] = useState<string | null>(null);
 
   const providerRegistry = new ProviderRegistry();
+  const { refreshApiKey } = useApiKey();
 
   // Load providers on mount
   useEffect(() => {
@@ -135,6 +137,9 @@ export const ProviderProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       // Clear cached instance (forces recreation with new key)
       providerRegistry.clearProvider(providerId);
+
+      // Refresh ApiKeyContext so generation can use the new key
+      await refreshApiKey();
     } catch (e: any) {
       setError(`Failed to add API key: ${e.message}`);
       throw e;

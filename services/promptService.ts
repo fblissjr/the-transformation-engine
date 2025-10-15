@@ -675,9 +675,14 @@ export async function generateIntermediate(
   const hasSections = /^##\s+\w+/m.test(markdownContent);
   if (!hasSections) {
     // Log the actual response for debugging
-    console.error("LLM Response did not contain markdown sections:", markdownContent.substring(0, 500));
+    console.error("=== LLM Response Debug ===");
+    console.error("Raw response length:", response?.length || 0);
+    console.error("Raw response preview:", response?.substring(0, 500));
+    console.error("Markdown content length:", markdownContent.length);
+    console.error("Markdown content:", markdownContent.substring(0, 500));
+    console.error("========================");
     throw new Error(
-      `Failed to parse intermediate structure from LLM response. Response did not contain valid Markdown sections (## Visual, ## Audio, etc.). Response preview: ${markdownContent.substring(0, 200)}...`,
+      `Failed to parse intermediate structure from LLM response. Response did not contain valid Markdown sections (## Visual, ## Audio, etc.). Got: ${markdownContent.substring(0, 200) || '(empty response)'}`,
     );
   }
 
