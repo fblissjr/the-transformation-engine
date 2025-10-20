@@ -171,6 +171,10 @@ export const STRINGS = {
 
 export const GEMINI_MODEL_NAME = "gemini-2.5-flash-latest";
 
+// Veo 3.1 Model Names (Google DeepMind)
+export const VEO_31_GENERATE = "veo-3.1-generate-preview";
+export const VEO_31_FAST_GENERATE = "veo-3.1-fast-generate-preview";
+
 export const BUILT_IN_FORMATS: OutputFormat[] = [
   { id: "yaml", name: "Standard YAML", isBuiltIn: true },
   { id: "markdown", name: "Markdown", isBuiltIn: true },
@@ -267,6 +271,22 @@ export const MODEL_PRESETS = {
       fps: "24fps",
     },
   },
+  veo31: {
+    name: "Veo 3.1 (Google - Latest)",
+    maxOutputTokens: 3072,
+    recommendedLength: "100-300 words (scene-type dependent)",
+    maxInputChars: 3000,
+    lengthGuidance:
+      "Veo 3.1 uses scene-type-optimized prompting. Dialogue scenes: 200-300 words with quoted dialogue and layered SFX. Cinematic scenes: 150-250 words with camera movement focus. Animation: 100-200 words with strong style keywords. ALWAYS include audio elements. May trigger REVISION_REQUEST for clarification.",
+    templateSuffix: "_veo31",
+    technicalSpecs: {
+      duration: "4s, 6s, or 8s (8s required for reference images/interpolation/extension)",
+      resolution: "720p (can be extended) or 1080p (cannot be extended, 16:9 only)",
+      aspect_ratio: "16:9 (landscape) or 9:16 (portrait)",
+      fps: "24fps",
+      newFeatures: "Reference images (up to 3), first/last frame interpolation, video extension (+7s up to 20x)",
+    },
+  },
   wan: {
     name: "Wan Video (Alibaba)",
     maxOutputTokens: 2048,
@@ -315,13 +335,15 @@ export const CANONICAL_SCHEMA_KEYS = {
   ],
 
   /**
-   * Sora 2 (OpenAI): Comprehensive single-prompt approach
+   * Sora 2 (OpenAI): Comprehensive single-prompt approach (LEGACY)
    *
    * Training: Fine-tuned on 300-500 word detailed captions
    * Architecture: Diffusion-transformer with spacetime patches
    * Duration: Typically 10 seconds
    * Audio: Native video+audio generation (sound effects, music, dialogue synchronized automatically)
    *        Audio descriptions are OPTIONAL but can guide soundtrack generation
+   *
+   * NOTE: This is the legacy schema. For GPT-5 Stage-1 methodology, use sora2_gpt5 instead.
    */
   sora2: [
     // NOTE: technical_specs (duration/resolution/aspect ratio) removed - these are UI-controlled, not prompt parameters
@@ -333,6 +355,36 @@ export const CANONICAL_SCHEMA_KEYS = {
     "lighting", // Lighting setup, quality, direction, color temperature, mood
     "audio_design", // Sound effects, ambient sounds, music (optional but enhances soundtrack)
     "style", // Visual aesthetic, artistic references, color grading, overall look
+  ],
+
+  /**
+   * Sora 2 GPT-5 (OpenAI): Stage-1 Planning Methodology (RECOMMENDED)
+   *
+   * Source: GPT-5 Stage-1 system prompt analysis (internal/sora/gpt5 stage 1 and stage 2/)
+   * Methodology: Two-stage architecture (Stage-1 planning → Stage-2 compilation)
+   *
+   * Key Requirements:
+   * - Imperial units ONLY (ft, ft/s) - NEVER use meters/m/s
+   * - Timecoded temporal progression: [MM:SS-MM:SS] format embedded in beats
+   * - Motivated lighting: Every light source must be justified by scene environment
+   * - Precise camera specifications: movement type + distance + speed + lens + aperture + angle/height + focus strategy
+   * - Lighting ratios: 2:1, 3:1, etc. with Kelvin temperature (2800K-6500K)
+   * - Deliverables: single-prompt (default), storyboard (per-frame), or remix/blend (sources + curves)
+   *
+   * See fragments: sora2_gpt5_temporal_progression.md, sora2_gpt5_camera_specifications.md,
+   *                sora2_gpt5_lighting_motivation.md, sora2_gpt5_storyboard_template.md, sora2_gpt5_remix_template.md
+   */
+  sora2_gpt5: [
+    // NOTE: Technical attributes (orientation, aspect ratio, resolution, duration) NEVER in output - UI-controlled
+    "temporal_beats", // Timecoded progression with [MM:SS-MM:SS] ranges: [0:00-0:03], [0:03-0:07], [0:07-0:10] for 10s clips
+    "visual_environment", // Foreground/midground/background layering, composition, color/texture, atmosphere
+    "camera_specifications", // Movement type (dolly/truck/arc/crane/pedestal) + distance (ft) + speed (ft/s) + lens (mm) + aperture (f-stop) + angle/height + focus strategy
+    "lighting_motivation", // Motivated sources with direction/quality + key/fill ratios (2:1, 3:1) + Kelvin temps (2800K-6500K) + grading/aesthetic
+    "cinematography", // Framing transitions, angle/height changes, DOF control, composition rules (rule of thirds, leading lines)
+    "audio_design", // Optional: ambience, foley, accents, music notes (minimal, scene-appropriate)
+    "style_grading", // Visual aesthetic, color grading keywords, overall look/mood
+    "storyboard_notes", // Optional: PRESERVE/CHANGE continuity directives for multi-frame sequences
+    "remix_plan", // Optional: Sources + curve type (Transition/Mix/Sample) + weights + alignment strategy + timestamped edits
   ],
 
   /**

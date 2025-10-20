@@ -4,6 +4,7 @@ import { useApiKey } from '../context/ApiKeyContext';
 import { useGeneration } from '../context/GenerationContext';
 import { SparklesIcon, WandIcon, EditIcon } from './icons';
 import IntermediateEditor from './intermediate/IntermediateEditor';
+import { ConversationThread } from './ConversationThread';
 import * as geminiService from '../services/geminiService';
 import * as configService from '../services/configService';
 import * as promptService from '../services/promptService';
@@ -41,6 +42,11 @@ const CenterPanel: React.FC = () => {
     generatedIntermediate,
     selectedExportModel,
     setSelectedExportModel,
+    // Phase 11.3: Revision request flow
+    revisionRequest,
+    conversationHistory,
+    answerRevisionRequest,
+    clearRevisionRequest,
   } = useGeneration();
 
   // Load blob URLs for media references
@@ -441,6 +447,19 @@ const CenterPanel: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Phase 11.3: Conversation Thread for REVISION_REQUEST (Veo 3.1 scene-type detection) */}
+        {revisionRequest && (
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
+            <ConversationThread
+              revisionRequest={revisionRequest}
+              conversationHistory={conversationHistory}
+              onSubmitAnswers={answerRevisionRequest}
+              onCancel={clearRevisionRequest}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
 
         {/* Primary Action Buttons - Prominent Section */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">

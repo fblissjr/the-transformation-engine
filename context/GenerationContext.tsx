@@ -22,12 +22,25 @@ import { useMedia } from './MediaContext';
 import { usePromptLibrary } from './PromptLibraryContext';
 import { taskRouter } from '../services/taskRouter';
 import { TASK_IDS } from '../types/providers';
+import { parseRevisionRequest, formatAnswersForPrompt } from '../services/revisionRequestParser';
 
 export interface StreamingState {
   accumulatedContent: string;
   currentTokenCount: number;
   tokensPerSecond: number;
   startTime: number;
+}
+
+export interface RevisionRequest {
+  questions: string[];
+  originalInput: string;
+  rawResponse: string;
+}
+
+export interface ConversationTurn {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
 }
 
 interface GenerationContextType {
@@ -48,6 +61,11 @@ interface GenerationContextType {
   setSelectedExportModel: (model: 'sora2' | 'veo3' | 'generic') => void;
   // Multi-provider features
   streamingState: StreamingState | null;
+  // Phase 11.3: Revision request flow (Veo 3.1 scene-type detection)
+  revisionRequest: RevisionRequest | null;
+  conversationHistory: ConversationTurn[];
+  answerRevisionRequest: (answers: string) => Promise<void>;
+  clearRevisionRequest: () => void;
   enableStreaming: boolean;
   setEnableStreaming: (value: boolean) => void;
   currentConversation: any[] | null;
@@ -86,11 +104,14 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   const [generatedIntermediate, setGeneratedIntermediate] = useState<any | null>(null);
   const [selectedExportModel, setSelectedExportModel] = useState<'sora2' | 'veo3' | 'generic'>('sora2');
 
-  // Multi-provider features (Phase 5+)
+  // Multi-provider features (Phase 10+)
   const [streamingState, setStreamingState] = useState<StreamingState | null>(null);
   const [enableStreaming, setEnableStreaming] = useState(false);
   const [currentConversation, setCurrentConversation] = useState<any[] | null>(null);
   const [sessionTokens, setSessionTokens] = useState({ input: 0, output: 0, total: 0 });
+  // Phase 11.3: Revision request flow (Veo 3.1 scene-type detection)
+  const [revisionRequest, setRevisionRequest] = useState<RevisionRequest | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<ConversationTurn[]>([]);
 
   const generate = async () => {
     if (!naturalLanguageInput.trim()) {
@@ -181,6 +202,26 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
         const structuredRes = turn.response;
         const apiLatencyMs = turn.latencyMs;
+
+        // Phase 11.3: Check for REVISION_REQUEST (Veo 3.1 scene-type detection)
+        const revisionCheck = parseRevisionRequest(structuredRes);
+        if (revisionCheck.isRevisionRequest) {
+          setLoadingMessage('Clarification needed...');
+          setProgress(100);
+          setRevisionRequest({
+            questions: revisionCheck.questions,
+            originalInput: naturalLanguageInput,
+            rawResponse: revisionCheck.rawResponse,
+          });
+          // Add assistant's question to conversation history
+          setConversationHistory([
+            { role: 'user', content: naturalLanguageInput, timestamp: Date.now() },
+            { role: 'assistant', content: structuredRes, timestamp: Date.now() },
+          ]);
+          setIsLoading(false);
+          setLoadingMessage('');
+          return; // Stop generation, wait for user's answers
+        }
 
         setLoadingMessage('Saving prompt to library...');
         setProgress(80);
@@ -527,6 +568,101 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     }
   };
 
+  // Phase 11.3: Answer revision request (Veo 3.1 scene-type detection)
+  const answerRevisionRequest = async (answers: string) => {
+    if (!revisionRequest) {
+      setError('No revision request to answer.');
+      return;
+    }
+
+    if (!apiKey) {
+      setError('No provider configured. Please configure a provider in Settings → Providers tab.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setProgress(0);
+
+    try {
+      setLoadingMessage('Processing your answers...');
+      setProgress(20);
+
+      // Format user's answers with context
+      const answersBlock = formatAnswersForPrompt(revisionRequest.questions, answers);
+      const enhancedInput = `${revisionRequest.originalInput}\n\n${answersBlock}`;
+
+      // Add user's answers to conversation history
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user', content: answers, timestamp: Date.now() },
+      ]);
+
+      setLoadingMessage('Composing prompt template...');
+      setProgress(40);
+
+      // Regenerate with enhanced context
+      const generationFullPrompt = await generatePrimaryPromptV2(enhancedInput, settings);
+
+      setLoadingMessage('Sending request to AI provider...');
+      setProgress(60);
+
+      // Use taskRouter for multi-provider support
+      const turn = await taskRouter.executeTask(
+        TASK_IDS.PRIMARY_GENERATION,
+        enhancedInput,
+        generationFullPrompt,
+        {
+          enableStreaming,
+          onProgress: enableStreaming ? (state) => {
+            setStreamingState(state);
+          } : undefined,
+        }
+      );
+
+      const structuredRes = turn.response;
+
+      // Add assistant's final response to conversation history
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'assistant', content: structuredRes, timestamp: Date.now() },
+      ]);
+
+      // Clear revision request (we got the answer)
+      setRevisionRequest(null);
+
+      setLoadingMessage('Saving prompt to library...');
+      setProgress(80);
+      setStructuredOutput(structuredRes);
+
+      // Save to library
+      const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
+        title: revisionRequest.originalInput.substring(0, 40) + '...',
+        naturalLanguageInput: enhancedInput,
+        structuredOutput: structuredRes,
+        normalizedOutput: '',
+        settingsSnapshot: JSON.stringify(settings),
+        tags: '[]',
+        isFavorite: false,
+      };
+      await addPrompt(newPromptData);
+
+      setLoadingMessage('Complete!');
+      setProgress(100);
+      setTimeout(() => setLoadingMessage(''), 500);
+    } catch (e: any) {
+      setError(`An error occurred: ${e.message}`);
+    } finally {
+      setIsLoading(false);
+      setProgress(0);
+    }
+  };
+
+  const clearRevisionRequest = () => {
+    setRevisionRequest(null);
+    setConversationHistory([]);
+  };
+
   const value = {
     isLoading,
     isNormalizing,
@@ -550,6 +686,11 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     currentConversation,
     refineLastOutput,
     sessionTokens,
+    // Phase 11.3: Revision request flow
+    revisionRequest,
+    conversationHistory,
+    answerRevisionRequest,
+    clearRevisionRequest,
   };
 
   return <GenerationContext.Provider value={value}>{children}</GenerationContext.Provider>;
