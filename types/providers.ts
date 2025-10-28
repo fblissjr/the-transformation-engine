@@ -54,6 +54,7 @@ export interface GenerateRequest {
   maxTokens?: number;
   topP?: number;
   stream?: boolean;
+  responseFormat?: 'json' | 'text'; // JSON mode for structured outputs
 }
 
 export interface GenerateResponse {
@@ -90,10 +91,14 @@ export interface IProvider {
     onError: (error: Error) => void
   ): Promise<void>;
 
+  // Optional JSON mode (for structured outputs like schema inference)
+  generateJson?(request: GenerateRequest): Promise<any>;
+
   // Capabilities
   readonly supportsVision: boolean;
   readonly supportsVideo: boolean;
   readonly supportsStreaming: boolean;
+  readonly supportsJsonMode: boolean;
 }
 
 export interface TaskAssignment {

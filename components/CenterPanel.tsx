@@ -8,6 +8,8 @@ import { ConversationThread } from './ConversationThread';
 import * as geminiService from '../services/geminiService';
 import * as configService from '../services/configService';
 import * as promptService from '../services/promptService';
+import { taskRouter } from '../services/taskRouter';
+import { TASK_IDS } from '../types/providers';
 import { transformToModel } from '../services/transformers';
 import { useMediaBlobUrls } from '../hooks/useMediaBlobUrls';
 import { MediaReference, MixOption, Prompt } from '../types';
@@ -58,6 +60,8 @@ const CenterPanel: React.FC = () => {
   const [showAddCustomMixOption, setShowAddCustomMixOption] = useState(false);
   const [customMixOptionName, setCustomMixOptionName] = useState('');
   const [customMixOptionInstruction, setCustomMixOptionInstruction] = useState('');
+  const [editingMixOptionId, setEditingMixOptionId] = useState<string | null>(null);
+  const [viewingMixOptionId, setViewingMixOptionId] = useState<string | null>(null);
   const [showPromptPreview, setShowPromptPreview] = useState(false);
   const [editedSystemPrompt, setEditedSystemPrompt] = useState<string | null>(null);
   const [editedUserPrompt, setEditedUserPrompt] = useState<string | null>(null);
@@ -228,6 +232,35 @@ const CenterPanel: React.FC = () => {
     }));
   };
 
+  const startEditingMixOption = (option: MixOption) => {
+    setEditingMixOptionId(option.id);
+    setCustomMixOptionName(option.name);
+    setCustomMixOptionInstruction(option.instruction);
+    setShowAddCustomMixOption(false);
+  };
+
+  const updateMixOption = () => {
+    if (editingMixOptionId && customMixOptionName && customMixOptionInstruction) {
+      setSettings(prev => ({
+        ...prev,
+        mixOptions: prev.mixOptions.map(opt =>
+          opt.id === editingMixOptionId
+            ? { ...opt, name: customMixOptionName, instruction: customMixOptionInstruction }
+            : opt
+        )
+      }));
+      setEditingMixOptionId(null);
+      setCustomMixOptionName('');
+      setCustomMixOptionInstruction('');
+    }
+  };
+
+  const cancelEditingMixOption = () => {
+    setEditingMixOptionId(null);
+    setCustomMixOptionName('');
+    setCustomMixOptionInstruction('');
+  };
+
   // Export/Import handlers
   const handleExportConfig = () => {
     try {
@@ -273,15 +306,17 @@ const CenterPanel: React.FC = () => {
 
   // Handle generation with optional custom prompts
   const handleGenerate = async () => {
-    // If there are no edited prompts, use the regular generate function
+    // If there are no edited prompts, use the regular generate function from context
     if (!editedSystemPrompt && !editedUserPrompt) {
       await generate();
       return;
     }
 
     // Custom generation with edited prompts
+    // NOTE: This is a power-user feature that bypasses the normal generation flow
+    // It allows direct manipulation of system and user prompts
     if (!apiKey) {
-      alert('Please set your Gemini API key to generate prompts.');
+      alert('Please configure a provider in Settings → Providers tab.');
       return;
     }
 
@@ -289,10 +324,15 @@ const CenterPanel: React.FC = () => {
     const systemPrompt = editedSystemPrompt || promptService.generatePrimaryPrompt(naturalLanguageInput, settings);
 
     try {
-      // Call API with custom prompts - combine system + user
-      const combinedPrompt = `${systemPrompt}\n\n**User Input:**\n${userInput}`;
-      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-      const result = await geminiService.generateContent(apiKey, combinedPrompt, modelSettings);
+      // Use taskRouter for multi-provider support (even in custom prompt mode)
+      const turn = await taskRouter.executeTask(
+        TASK_IDS.PRIMARY_GENERATION,
+        userInput,
+        systemPrompt,
+        {}
+      );
+
+      const result = turn.response;
 
       // Set the output and save to DB
       setStructuredOutput(result);
@@ -687,28 +727,90 @@ const CenterPanel: React.FC = () => {
               <div className="p-3 sm:p-4 pt-0 border-t border-gray-800">
             <div className="space-y-2">
               {settings.mixOptions?.map(option => (
-                <div key={option.id} className="flex items-center justify-between gap-2">
-                  <label className="flex items-center gap-2 flex-1 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={option.isEnabled}
-                      onChange={() => toggleMixOption(option.id)}
-                      className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-yellow-500 focus:ring-yellow-500 focus:ring-offset-gray-900"
-                    />
-                    <span className="text-sm text-white">{option.name}</span>
-                  </label>
-                  {!option.isBuiltIn && (
-                    <button
-                      onClick={() => removeCustomMixOption(option.id)}
-                      className="text-xs text-red-400 hover:text-red-300"
-                    >
-                      Remove
-                    </button>
+                <div key={option.id}>
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="flex items-center gap-2 flex-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={option.isEnabled}
+                        onChange={() => toggleMixOption(option.id)}
+                        className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-yellow-500 focus:ring-yellow-500 focus:ring-offset-gray-900"
+                      />
+                      <span className="text-sm text-white">{option.name}</span>
+                      {option.isBuiltIn && (
+                        <span className="text-xs text-gray-500">(built-in)</span>
+                      )}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setViewingMixOptionId(viewingMixOptionId === option.id ? null : option.id)}
+                        className="text-xs text-blue-400 hover:text-blue-300"
+                        title="View instruction"
+                      >
+                        {viewingMixOptionId === option.id ? 'Hide' : 'View'}
+                      </button>
+                      {!option.isBuiltIn && (
+                        <>
+                          <button
+                            onClick={() => startEditingMixOption(option)}
+                            className="text-xs text-yellow-400 hover:text-yellow-300"
+                            title="Edit option"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => removeCustomMixOption(option.id)}
+                            className="text-xs text-red-400 hover:text-red-300"
+                            title="Delete option"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {viewingMixOptionId === option.id && (
+                    <div className="mt-2 ml-6 p-2 bg-gray-800/50 rounded border border-gray-700">
+                      <p className="text-xs text-gray-300">{option.instruction}</p>
+                    </div>
                   )}
                 </div>
               ))}
-              {showAddCustomMixOption ? (
+              {editingMixOptionId ? (
+                <div className="mt-3 p-3 bg-gray-800/50 rounded border border-yellow-600 space-y-2">
+                  <div className="text-xs text-yellow-400 font-medium mb-2">Editing Mix Option</div>
+                  <input
+                    type="text"
+                    value={customMixOptionName}
+                    onChange={e => setCustomMixOptionName(e.target.value)}
+                    placeholder="Option name"
+                    className="w-full bg-gray-800 text-white text-xs border border-gray-700 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                  />
+                  <textarea
+                    value={customMixOptionInstruction}
+                    onChange={e => setCustomMixOptionInstruction(e.target.value)}
+                    placeholder="Instruction to LLM"
+                    rows={3}
+                    className="w-full bg-gray-800 text-white text-xs border border-gray-700 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={updateMixOption}
+                      className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-gray-900 text-xs font-medium px-3 py-1.5 rounded transition"
+                    >
+                      Update
+                    </button>
+                    <button
+                      onClick={cancelEditingMixOption}
+                      className="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium px-3 py-1.5 rounded transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : showAddCustomMixOption ? (
                 <div className="mt-3 p-3 bg-gray-800/50 rounded border border-gray-700 space-y-2">
+                  <div className="text-xs text-gray-400 font-medium mb-2">Add Custom Mix Option</div>
                   <input
                     type="text"
                     value={customMixOptionName}
@@ -720,7 +822,7 @@ const CenterPanel: React.FC = () => {
                     value={customMixOptionInstruction}
                     onChange={e => setCustomMixOptionInstruction(e.target.value)}
                     placeholder="Instruction to LLM (e.g., 'Use poetic and metaphorical language')"
-                    rows={2}
+                    rows={3}
                     className="w-full bg-gray-800 text-white text-xs border border-gray-700 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-yellow-500"
                   />
                   <div className="flex gap-2">

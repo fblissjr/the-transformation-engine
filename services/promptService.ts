@@ -8,7 +8,8 @@ import {
 } from "../constants";
 import { fragmentLoader } from "./fragmentLoader";
 import { selectFewShotExamples, shouldUseFewShot } from "./fewShotService";
-import * as geminiService from "./geminiService";
+import { taskRouter } from "./taskRouter";
+import { TASK_IDS } from "../types/providers";
 
 const getFormatGuidance = (format: string): string => {
   const formatLower = format.toLowerCase();
@@ -641,11 +642,15 @@ export async function generateIntermediate(
     naturalLanguageInput: input,
   });
 
-  // Call Gemini API (don't duplicate the input - it's already in systemPrompt)
-  const response = await geminiService.generateContent(apiKey, systemPrompt, {
-    modelName: options?.modelName || "gemini-2.5-flash-latest",
-    temperature: options?.temperature ?? 0.7,
-  });
+  // Use taskRouter for multi-provider support
+  const turn = await taskRouter.executeTask(
+    TASK_IDS.INTERMEDIATE_GENERATION,
+    input,
+    systemPrompt,
+    {}
+  );
+
+  const response = turn.response;
 
   // Parse Markdown response - much more forgiving than JSON!
   let markdownContent = response.trim();

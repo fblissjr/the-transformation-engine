@@ -15,6 +15,7 @@ export class GeminiProvider implements IProvider {
   readonly supportsVision: boolean = true;
   readonly supportsVideo: boolean = true;
   readonly supportsStreaming: boolean = true;
+  readonly supportsJsonMode: boolean = true;
 
   private apiKey: string;
   private baseUrl: string;
@@ -155,6 +156,30 @@ export class GeminiProvider implements IProvider {
       onComplete(response);
     } catch (error) {
       onError(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  async generateJson(request: GenerateRequest): Promise<any> {
+    const ai = new GoogleGenAI({ apiKey: this.apiKey });
+    const prompt = this.convertMessagesToPrompt(request.messages);
+
+    const response = await ai.models.generateContent({
+      model: request.model,
+      config: {
+        maxOutputTokens: request.maxTokens,
+        temperature: request.temperature,
+        topP: request.topP,
+        responseMimeType: "application/json",
+      },
+      contents: prompt,
+    });
+
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      throw new Error(`Failed to parse JSON response: ${text}`);
     }
   }
 

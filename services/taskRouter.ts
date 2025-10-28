@@ -238,6 +238,67 @@ export class TaskRouter {
   }
 
   /**
+   * Execute a task with JSON mode (for structured outputs like schema inference)
+   */
+  async executeTaskJson(
+    taskId: TaskId,
+    userPrompt: string,
+    systemPrompt: string
+  ): Promise<any> {
+    try {
+      // 1. Get task assignment
+      const assignment = await taskAssignmentService.getOrCreateAssignment(
+        taskId
+      );
+
+      // 2. Get provider instance
+      const provider = await this.providerRegistry.getProvider(
+        assignment.providerId
+      );
+
+      if (!provider) {
+        throw new Error(`Provider ${assignment.providerId} not found`);
+      }
+
+      // 3. Check if provider supports JSON mode
+      if (!provider.supportsJsonMode || !provider.generateJson) {
+        throw new Error(
+          `Provider ${assignment.providerId} does not support JSON mode`
+        );
+      }
+
+      // 4. Build GenerateRequest
+      const request: GenerateRequest = {
+        model: assignment.modelId,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: assignment.temperature,
+        maxTokens: assignment.maxTokens,
+        topP: assignment.topP,
+        responseFormat: "json",
+      };
+
+      // 5. Execute generation with JSON mode
+      const jsonResponse = await provider.generateJson(request);
+
+      // 6. Track token usage (estimate for JSON mode)
+      await tokenTrackingService.recordUsage({
+        taskId,
+        providerId: assignment.providerId,
+        modelId: assignment.modelId,
+        inputTokens: Math.ceil((systemPrompt.length + userPrompt.length) / 4),
+        outputTokens: Math.ceil(JSON.stringify(jsonResponse).length / 4),
+      });
+
+      return jsonResponse;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Refine an existing turn (creates new turn with parentTurnId)
    */
   async refineTurn(

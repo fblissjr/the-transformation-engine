@@ -2,7 +2,6 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { Prompt, GenerationMetadata } from '../types';
 import { STRINGS } from '../constants';
-import * as geminiService from '../services/geminiService';
 import {
   generatePrimaryPromptV2,
   generateNormalizePromptV2,
@@ -478,8 +477,13 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
       setLoadingMessage('Requesting AI schema inference...');
       setProgress(50);
-      // TODO: Migrate to taskRouter once JSON mode is added to IProvider interface
-      const jsonResponse = await geminiService.generateJsonContent(apiKey, inferencePrompt);
+
+      // Use taskRouter with JSON mode
+      const jsonResponse = await taskRouter.executeTaskJson(
+        TASK_IDS.SCHEMA_INFERENCE,
+        naturalLanguageInput,
+        inferencePrompt
+      );
 
       setLoadingMessage('Processing schema keys...');
       setProgress(75);

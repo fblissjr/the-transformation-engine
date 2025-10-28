@@ -14,6 +14,7 @@ export class OpenRouterProvider implements IProvider {
   readonly supportsVision: boolean = true;
   readonly supportsVideo: boolean = false;
   readonly supportsStreaming: boolean = true;
+  readonly supportsJsonMode: boolean = true;
 
   private apiKey: string;
   private baseUrl: string = "https://openrouter.ai/api/v1";
@@ -214,6 +215,40 @@ export class OpenRouterProvider implements IProvider {
         return "length";
       default:
         return "error";
+    }
+  }
+
+  async generateJson(request: GenerateRequest): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: request.model,
+        messages: request.messages,
+        temperature: request.temperature ?? 0.7,
+        max_tokens: request.maxTokens ?? 4096,
+        top_p: request.topP ?? 1.0,
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(
+        error.error?.message || `API request failed: ${response.statusText}`
+      );
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content || "";
+
+    try {
+      return JSON.parse(content);
+    } catch (error) {
+      throw new Error(`Failed to parse JSON response: ${content}`);
     }
   }
 
