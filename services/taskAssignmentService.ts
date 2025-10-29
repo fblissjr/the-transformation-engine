@@ -86,6 +86,8 @@ export class TaskAssignmentService {
       // No assignment exists, create default
       const globalDefault = await this.getGlobalDefault();
 
+      console.log(`[TaskAssignment] No assignment for ${taskId}, using global default:`, globalDefault);
+
       if (globalDefault) {
         assignment = await this.createDefaultAssignment(
           taskId,
@@ -98,6 +100,11 @@ export class TaskAssignmentService {
           "No task assignment or global default found. Please configure providers."
         );
       }
+    } else {
+      console.log(`[TaskAssignment] Found existing assignment for ${taskId}:`, {
+        providerId: assignment.providerId,
+        modelId: assignment.modelId,
+      });
     }
 
     return assignment;

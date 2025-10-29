@@ -5,6 +5,7 @@ import { useGeneration } from '../context/GenerationContext';
 import { SparklesIcon, WandIcon, EditIcon } from './icons';
 import IntermediateEditor from './intermediate/IntermediateEditor';
 import { ConversationThread } from './ConversationThread';
+import { ModelInfoDisplay } from './ModelInfoDisplay';
 import * as geminiService from '../services/geminiService';
 import * as configService from '../services/configService';
 import * as promptService from '../services/promptService';
@@ -44,6 +45,7 @@ const CenterPanel: React.FC = () => {
     generatedIntermediate,
     selectedExportModel,
     setSelectedExportModel,
+    cancelGeneration,
     // Phase 11.3: Revision request flow
     revisionRequest,
     conversationHistory,
@@ -586,26 +588,26 @@ const CenterPanel: React.FC = () => {
           )}
 
           <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              onClick={handleGenerate}
-              disabled={isLoading || !naturalLanguageInput}
-              className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-3 px-4 sm:px-6 rounded-lg shadow-lg hover:from-amber-500 hover:to-orange-500 hover:shadow-amber-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Generating...</span>
-                </>
-              ) : (
-                <>
-                  <SparklesIcon className="w-4 h-4" />
-                  <span>Generate Prompt</span>
-                </>
-              )}
-            </button>
+            {isLoading ? (
+              <button
+                onClick={cancelGeneration}
+                className="flex-1 bg-red-600 text-white font-bold py-3 px-4 sm:px-6 rounded-lg shadow-lg hover:bg-red-500 transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span>Cancel Request</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleGenerate}
+                disabled={!naturalLanguageInput}
+                className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-3 px-4 sm:px-6 rounded-lg shadow-lg hover:from-amber-500 hover:to-orange-500 hover:shadow-amber-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              >
+                <SparklesIcon className="w-4 h-4" />
+                <span>Generate Prompt</span>
+              </button>
+            )}
             <button
               onClick={() => setShowIntermediateEditor(true)}
               className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:flex-none"
@@ -857,33 +859,8 @@ const CenterPanel: React.FC = () => {
             )}
           </div>
 
-          {/* Model Selector */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              AI Model
-            </h3>
-            <select
-              value={settings.modelName || GEMINI_MODEL_NAME}
-              onChange={e => setSettings(s => ({...s, modelName: e.target.value}))}
-              disabled={isLoadingModels}
-              className="w-full bg-gray-800 text-white text-sm border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {isLoadingModels ? (
-                <option>Loading models...</option>
-              ) : availableModels.length > 0 ? (
-                availableModels.map(model => (
-                  <option key={model.name} value={model.name}>
-                    {model.displayName}
-                  </option>
-                ))
-              ) : (
-                <option value={GEMINI_MODEL_NAME}>gemini-2.5-pro (default)</option>
-              )}
-            </select>
-          </div>
+          {/* Model & Sampler Info - Read-only display */}
+          <ModelInfoDisplay />
         </div>
 
         {/* Schema Designer - Collapsible */}

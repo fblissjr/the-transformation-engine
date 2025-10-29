@@ -57,6 +57,12 @@ export class TaskRouter {
         taskId
       );
 
+      console.log(`[TaskRouter] Task ${taskId}:`, {
+        providerId: assignment.providerId,
+        modelId: assignment.modelId,
+        temperature: assignment.temperature,
+      });
+
       // 2. Get provider instance
       const provider = await this.providerRegistry.getProvider(
         assignment.providerId

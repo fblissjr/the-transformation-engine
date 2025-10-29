@@ -4,7 +4,6 @@ import { useApiKey } from '../context/ApiKeyContext';
 import { LogoIcon, PlusIcon, ImportIcon, ExportIcon, SettingsIcon, MixIcon, TrashIcon, StarIconFilled, StarIconOutline, CopyIcon, ShareIcon } from './icons';
 import * as dbService from '../services/dbService';
 import ShareModal from './ShareModal';
-import SettingsModal from './SettingsModal';
 import { PrivacyDashboard } from './PrivacyDashboard';
 import { Prompt } from '../types';
 
@@ -36,7 +35,6 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isPrivacyDashboardOpen, setIsPrivacyDashboardOpen] = useState(false);
   const [deleteConfirmIds, setDeleteConfirmIds] = useState<string[]>([]);
 
@@ -169,13 +167,6 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
     <aside className="w-full h-full bg-gray-900 border-r border-gray-800 flex flex-col">
         {isShareModalOpen && selectedPromptForShare && (
             <ShareModal prompt={selectedPromptForShare} onClose={() => setIsShareModalOpen(false)} />
-        )}
-        {isSettingsModalOpen && (
-            <SettingsModal
-              onClose={() => setIsSettingsModalOpen(false)}
-              settings={settings}
-              onSettingsChange={setSettings}
-            />
         )}
         <PrivacyDashboard
           isOpen={isPrivacyDashboardOpen}
@@ -375,7 +366,10 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
           Privacy
         </button>
         <button
-          onClick={() => setIsSettingsModalOpen(true)}
+          onClick={() => {
+            window.history.pushState({}, '', '/settings');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }}
           className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-medium py-2.5 px-3 rounded transition-colors text-sm"
         >
           <SettingsIcon />

@@ -24,22 +24,38 @@ export const TaskAssignmentTab: React.FC = () => {
     const defaultSettings = await taskAssignmentService.getGlobalDefault();
     setGlobalDefault(defaultSettings);
 
+    // Pre-load models for the current provider
+    if (defaultSettings?.providerId) {
+      await loadModelsForProvider(defaultSettings.providerId);
+    }
+
     const assignments = await taskAssignmentService.getAllTaskAssignments();
     const assignmentMap: Record<string, any> = {};
     assignments.forEach((a) => {
       assignmentMap[a.taskId] = a;
     });
     setTaskAssignments(assignmentMap);
+
+    // Pre-load models for all assigned providers
+    const providerIds = new Set<string>();
+    assignments.forEach((a) => {
+      if (a.providerId) {
+        providerIds.add(a.providerId);
+      }
+    });
+    await Promise.all([...providerIds].map(id => loadModelsForProvider(id)));
   };
 
   const loadModelsForProvider = async (providerId: string) => {
-    if (models[providerId]) return; // Already loaded
+    if (models[providerId]) return models[providerId]; // Already loaded
 
     try {
       const providerModels = await fetchModels(providerId);
-      setModels({ ...models, [providerId]: providerModels });
+      setModels(prev => ({ ...prev, [providerId]: providerModels }));
+      return providerModels;
     } catch (error) {
       console.error(`Failed to load models for provider ${providerId}:`, error);
+      return [];
     }
   };
 
@@ -106,10 +122,14 @@ export const TaskAssignmentTab: React.FC = () => {
             <label className="block text-sm mb-1">Provider</label>
             <select
               value={globalDefault?.providerId || ''}
-              onChange={(e) => {
-                const modelList = models[e.target.value];
+              onChange={async (e) => {
+                const providerId = e.target.value;
+                // Load models first
+                const modelList = await loadModelsForProvider(providerId);
                 const firstModel = modelList?.[0]?.id || '';
-                handleGlobalDefaultChange(e.target.value, firstModel);
+                if (firstModel) {
+                  await handleGlobalDefaultChange(providerId, firstModel);
+                }
               }}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded"
             >
@@ -205,11 +225,14 @@ export const TaskAssignmentTab: React.FC = () => {
                       <label className="block text-sm mb-1">Provider</label>
                       <select
                         value={assignment.providerId}
-                        onChange={(e) =>
-                          handleTaskAssignmentChange(taskId, {
-                            providerId: e.target.value,
-                          })
-                        }
+                        onChange={async (e) => {
+                          const providerId = e.target.value;
+                          // Load models for this provider first
+                          await loadModelsForProvider(providerId);
+                          await handleTaskAssignmentChange(taskId, {
+                            providerId,
+                          });
+                        }}
                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm"
                       >
                         {providers.map((p) => (

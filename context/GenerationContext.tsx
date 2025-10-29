@@ -49,6 +49,7 @@ interface GenerationContextType {
   progress: number;
   loadingMessage: string;
   generate: () => Promise<void>;
+  cancelGeneration: () => void;
   normalize: (transformInstruction?: string) => Promise<void>;
   mixPrompts: () => Promise<void>;
   inferSchema: (mode: 'additional' | 'full') => Promise<void>;
@@ -111,6 +112,8 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   // Phase 11.3: Revision request flow (Veo 3.1 scene-type detection)
   const [revisionRequest, setRevisionRequest] = useState<RevisionRequest | null>(null);
   const [conversationHistory, setConversationHistory] = useState<ConversationTurn[]>([]);
+  // Cancellation support
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   const generate = async () => {
     if (!naturalLanguageInput.trim()) {
@@ -121,6 +124,11 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
+
+    // Create new AbortController for this request
+    const controller = new AbortController();
+    setAbortController(controller);
+
     setIsLoading(true);
     setError(null);
     setProgress(0);
@@ -271,9 +279,24 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         setTimeout(() => setLoadingMessage(''), 500);
       }
     } catch (e: any) {
-      setError(`An error occurred during generation: ${e.message}`);
+      if (e.name === 'AbortError') {
+        setError('Request cancelled');
+      } else {
+        setError(`An error occurred during generation: ${e.message}`);
+      }
     } finally {
       setIsLoading(false);
+      setProgress(0);
+      setAbortController(null);
+    }
+  };
+
+  const cancelGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+      setIsLoading(false);
+      setLoadingMessage('');
       setProgress(0);
     }
   };
@@ -674,6 +697,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     progress,
     loadingMessage,
     generate,
+    cancelGeneration,
     normalize,
     mixPrompts,
     inferSchema,

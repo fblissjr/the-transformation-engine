@@ -7,6 +7,7 @@ import { ProviderProvider } from './context/ProviderContext';
 import LeftPanel from './components/LeftPanel';
 import CenterPanel from './components/CenterPanel';
 import RightPanel from './components/RightPanel';
+import SettingsPage from './components/SettingsPage';
 import { logger } from './services/loggerService';
 import { LogEntry } from './types';
 import { STRINGS } from './constants';
@@ -26,17 +27,30 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Render different pages based on route
+  const renderRoute = () => {
+    if (route === '/share') return <SharePage />;
+    if (route === '/settings') return <SettingsPageWrapper />;
+    return <Main />;
+  };
+
   return (
     <ApiKeyProvider>
       <PromptProvider>
         <ProviderProvider>
           <IntermediateProvider>
-            {route === '/share' ? <SharePage /> : <Main />}
+            {renderRoute()}
           </IntermediateProvider>
         </ProviderProvider>
       </PromptProvider>
     </ApiKeyProvider>
   );
+};
+
+// Wrapper to connect SettingsPage to PromptContext
+const SettingsPageWrapper: React.FC = () => {
+  const { settings, setSettings } = usePrompts();
+  return <SettingsPage settings={settings} onSettingsChange={setSettings} />;
 };
 
 const Main: React.FC = () => {
