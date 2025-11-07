@@ -630,6 +630,7 @@ export async function generateIntermediate(
     modelName?: string;
     temperature?: number;
   },
+  settings?: PromptSettings,
 ): Promise<any> {
   // Load intermediate generation template
   const fragment = await fragmentLoader.loadFragment(
@@ -640,6 +641,8 @@ export async function generateIntermediate(
   // Compose prompt with user input (input is already interpolated into template)
   const systemPrompt = await fragmentLoader.composePrompt(template, {
     naturalLanguageInput: input,
+    schemaKeys: settings?.schemaKeys?.join(", ") || "",
+    format: settings?.format || "Standard YAML",
   });
 
   // Use taskRouter for multi-provider support

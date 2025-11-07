@@ -18,6 +18,10 @@ DO NOT generate model-specific YAML or format-specific output. Instead, extract 
 
 ## Output Structure
 
+**User Schema Fields (if provided):** {{schemaKeys}}
+
+If the user has provided custom schema fields above, use those as your section headers (## FieldName) and structure your response accordingly. Otherwise, use the standard structure below.
+
 Return a Markdown document with the following structure:
 
 ```markdown

@@ -57,13 +57,13 @@ const RightPanel: React.FC<RightPanelProps> = ({
     }
   }, [activePrompt]);
 
-  // Sync with structuredOutput/normalizedOutput only when there's no activePrompt
-  // and only if the edited values are empty (initial load)
+  // Sync with structuredOutput/normalizedOutput when there's no activePrompt
+  // This ensures the Structured tab updates on every new generation
   useEffect(() => {
-    if (!activePrompt && !editedStructuredOutput && structuredOutput) {
+    if (!activePrompt && structuredOutput) {
       setEditedStructuredOutput(structuredOutput);
     }
-    if (!activePrompt && !editedNormalizedOutput && normalizedOutput) {
+    if (!activePrompt && normalizedOutput) {
       setEditedNormalizedOutput(normalizedOutput);
     }
   }, [structuredOutput, normalizedOutput, activePrompt]);

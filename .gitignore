@@ -12,7 +12,7 @@ dist-ssr/
 
 # Other
 .claude/*
-internal/*
+#internal/*
 
 # Editor directories and files
 .vscode/*

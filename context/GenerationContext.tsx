@@ -151,7 +151,8 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
           {
             modelName: modelSettings?.modelName,
             temperature: 0.7,
-          }
+          },
+          settings
         );
         const apiLatencyMs = Date.now() - apiStartTime;
 
