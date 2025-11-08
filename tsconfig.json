@@ -29,6 +29,7 @@
   "exclude": [
     "__mocks__",
     "node_modules",
-    "dist"
+    "dist",
+    "internal"
   ]
 }

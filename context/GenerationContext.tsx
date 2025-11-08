@@ -2,18 +2,45 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { Prompt, GenerationMetadata } from '../types';
 import { STRINGS } from '../constants';
-import * as geminiService from '../services/geminiService';
 import {
   generatePrimaryPromptV2,
   generateNormalizePromptV2,
   generateMixPromptV2,
   generateSchemaInferencePromptV2,
+  generateIntermediate,
+  detectTargetModelFromIntermediate,
   fragmentLoader
 } from '../services/promptService';
+import * as intermediateService from '../services/db/intermediateService';
+import { transformToModel } from '../services/transformers';
+import * as versionService from '../services/versionService';
+import * as dbService from '../services/dbService';
 import { useApiKey } from './ApiKeyContext';
 import { useActivePrompt } from './ActivePromptContext';
 import { useMedia } from './MediaContext';
 import { usePromptLibrary } from './PromptLibraryContext';
+import { taskRouter } from '../services/taskRouter';
+import { TASK_IDS } from '../types/providers';
+import { parseRevisionRequest, formatAnswersForPrompt } from '../services/revisionRequestParser';
+
+export interface StreamingState {
+  accumulatedContent: string;
+  currentTokenCount: number;
+  tokensPerSecond: number;
+  startTime: number;
+}
+
+export interface RevisionRequest {
+  questions: string[];
+  originalInput: string;
+  rawResponse: string;
+}
+
+export interface ConversationTurn {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+}
 
 interface GenerationContextType {
   isLoading: boolean;
@@ -22,15 +49,34 @@ interface GenerationContextType {
   progress: number;
   loadingMessage: string;
   generate: () => Promise<void>;
+  cancelGeneration: () => void;
   normalize: (transformInstruction?: string) => Promise<void>;
   mixPrompts: () => Promise<void>;
   inferSchema: (mode: 'additional' | 'full') => Promise<void>;
+  // Phase 9.4: Intermediate mode
+  useIntermediateMode: boolean;
+  setUseIntermediateMode: (value: boolean) => void;
+  generatedIntermediate: any | null;
+  selectedExportModel: 'sora2' | 'veo3' | 'generic';
+  setSelectedExportModel: (model: 'sora2' | 'veo3' | 'generic') => void;
+  // Multi-provider features
+  streamingState: StreamingState | null;
+  // Phase 11.3: Revision request flow (Veo 3.1 scene-type detection)
+  revisionRequest: RevisionRequest | null;
+  conversationHistory: ConversationTurn[];
+  answerRevisionRequest: (answers: string) => Promise<void>;
+  clearRevisionRequest: () => void;
+  enableStreaming: boolean;
+  setEnableStreaming: (value: boolean) => void;
+  currentConversation: any[] | null;
+  refineLastOutput: (refinementInstruction: string) => Promise<void>;
+  sessionTokens: { input: number; output: number; total: number };
 }
 
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
 
 export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const { apiKey, openModal } = useApiKey();
+  const { apiKey } = useApiKey();
   const {
     naturalLanguageInput,
     settings,
@@ -53,16 +99,36 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   const [progress, setProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
 
+  // Phase 9.4: Intermediate mode state
+  const [useIntermediateMode, setUseIntermediateMode] = useState(true); // Default to intermediate mode
+  const [generatedIntermediate, setGeneratedIntermediate] = useState<any | null>(null);
+  const [selectedExportModel, setSelectedExportModel] = useState<'sora2' | 'veo3' | 'generic'>('sora2');
+
+  // Multi-provider features (Phase 10+)
+  const [streamingState, setStreamingState] = useState<StreamingState | null>(null);
+  const [enableStreaming, setEnableStreaming] = useState(false);
+  const [currentConversation, setCurrentConversation] = useState<any[] | null>(null);
+  const [sessionTokens, setSessionTokens] = useState({ input: 0, output: 0, total: 0 });
+  // Phase 11.3: Revision request flow (Veo 3.1 scene-type detection)
+  const [revisionRequest, setRevisionRequest] = useState<RevisionRequest | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<ConversationTurn[]>([]);
+  // Cancellation support
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+
   const generate = async () => {
     if (!naturalLanguageInput.trim()) {
       setError("Please enter a creative idea.");
       return;
     }
     if (!apiKey) {
-      setError("Please set your Gemini API key to generate prompts.");
-      openModal();
+      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
+
+    // Create new AbortController for this request
+    const controller = new AbortController();
+    setAbortController(controller);
+
     setIsLoading(true);
     setError(null);
     setProgress(0);
@@ -70,65 +136,168 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     setNormalizedOutput('');
 
     try {
-      setLoadingMessage('Composing prompt template...');
-      setProgress(20);
-      const generationFullPrompt = await generatePrimaryPromptV2(naturalLanguageInput, settings);
+      if (useIntermediateMode) {
+        // NEW: Phase 9.4 - Intermediate-first generation
+        setLoadingMessage('Generating semantic intermediate...');
+        setProgress(20);
 
-      // Capture which fragments were used in this generation
-      const fragmentsUsed = fragmentLoader.getLoadedFragments();
+        const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
+        const apiStartTime = Date.now();
 
-      setLoadingMessage('Sending request to Gemini AI...');
-      setProgress(40);
-      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-      const apiStartTime = Date.now();
-      const structuredRes = await geminiService.generateContent(apiKey, generationFullPrompt, modelSettings);
-      const apiLatencyMs = Date.now() - apiStartTime;
+        // Generate intermediate structure
+        const intermediate = await generateIntermediate(
+          naturalLanguageInput,
+          apiKey,
+          {
+            modelName: modelSettings?.modelName,
+            temperature: 0.7,
+          },
+          settings
+        );
+        const apiLatencyMs = Date.now() - apiStartTime;
 
-      setLoadingMessage('Saving prompt to library...');
-      setProgress(80);
-      setStructuredOutput(structuredRes);
+        setLoadingMessage('Saving intermediate to library...');
+        setProgress(50);
 
-      const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
-        title: naturalLanguageInput.substring(0, 40) + '...',
-        naturalLanguageInput,
-        mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
-        structuredOutput: structuredRes,
-        normalizedOutput: '',
-        settingsSnapshot: JSON.stringify(settings),
-        tags: '[]',
-        isFavorite: false,
-      };
-      const savedPrompt = await addPrompt(newPromptData);
+        // Save to intermediates store
+        await intermediateService.createIntermediate(intermediate);
+        setGeneratedIntermediate(intermediate);
 
-      // Create metadata for version tracking
-      const metadata: GenerationMetadata = {
-        naturalLanguageInput,
-        mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
-        format: settings.format,
-        schemaKeys: settings.schemaKeys,
-        mixOptions: settings.mixOptions,
-        modelName: settings.modelName || 'gemini-2.5-pro',
-        systemPrompt: generationFullPrompt,
-        userPrompt: naturalLanguageInput,
-        operationType: 'generate',
-        apiLatencyMs,
-        fragmentsUsed,
-        branchName: 'main', // Default branch
-      };
+        setLoadingMessage('Detecting best model format...');
+        setProgress(70);
 
-      // Add initial version with metadata
-      const versionService = await import('../services/versionService');
-      await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
+        // Auto-detect target model
+        const targetModel = detectTargetModelFromIntermediate(intermediate);
+        setSelectedExportModel(targetModel);
 
-      selectPrompt(savedPrompt);
+        setLoadingMessage('Transforming to model format...');
+        setProgress(85);
 
-      setLoadingMessage('Complete!');
-      setProgress(100);
-      setTimeout(() => setLoadingMessage(''), 500);
+        // Transform to model-specific YAML
+        const transformed = transformToModel(intermediate, targetModel);
+        setStructuredOutput(transformed);
+
+        setLoadingMessage('Complete!');
+        setProgress(100);
+        setTimeout(() => setLoadingMessage(''), 500);
+      } else {
+        // LEGACY: Original YAML generation flow
+        setLoadingMessage('Composing prompt template...');
+        setProgress(20);
+        const generationFullPrompt = await generatePrimaryPromptV2(naturalLanguageInput, settings);
+
+        // Capture which fragments were used in this generation
+        const fragmentsUsed = fragmentLoader.getLoadedFragments();
+
+        setLoadingMessage('Sending request to AI provider...');
+        setProgress(40);
+
+        // Use taskRouter for multi-provider support
+        const turn = await taskRouter.executeTask(
+          TASK_IDS.PRIMARY_GENERATION,
+          naturalLanguageInput,
+          generationFullPrompt,
+          {
+            enableStreaming,
+            onToken: enableStreaming ? (token) => {
+              // Update streaming state
+            } : undefined,
+            onProgress: enableStreaming ? (state) => {
+              setStreamingState(state);
+            } : undefined,
+          }
+        );
+
+        const structuredRes = turn.response;
+        const apiLatencyMs = turn.latencyMs;
+
+        // Phase 11.3: Check for REVISION_REQUEST (Veo 3.1 scene-type detection)
+        const revisionCheck = parseRevisionRequest(structuredRes);
+        if (revisionCheck.isRevisionRequest) {
+          setLoadingMessage('Clarification needed...');
+          setProgress(100);
+          setRevisionRequest({
+            questions: revisionCheck.questions,
+            originalInput: naturalLanguageInput,
+            rawResponse: revisionCheck.rawResponse,
+          });
+          // Add assistant's question to conversation history
+          setConversationHistory([
+            { role: 'user', content: naturalLanguageInput, timestamp: Date.now() },
+            { role: 'assistant', content: structuredRes, timestamp: Date.now() },
+          ]);
+          setIsLoading(false);
+          setLoadingMessage('');
+          return; // Stop generation, wait for user's answers
+        }
+
+        setLoadingMessage('Saving prompt to library...');
+        setProgress(80);
+        setStructuredOutput(structuredRes);
+
+        const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
+          title: naturalLanguageInput.substring(0, 40) + '...',
+          naturalLanguageInput,
+          mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
+          structuredOutput: structuredRes,
+          normalizedOutput: '',
+          settingsSnapshot: JSON.stringify(settings),
+          tags: '[]',
+          isFavorite: false,
+        };
+        const savedPrompt = await addPrompt(newPromptData);
+
+        // Create metadata for version tracking
+        const metadata: GenerationMetadata = {
+          naturalLanguageInput,
+          mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
+          format: settings.format,
+          schemaKeys: settings.schemaKeys,
+          mixOptions: settings.mixOptions,
+          modelName: settings.modelName || 'gemini-2.5-pro',
+          systemPrompt: generationFullPrompt,
+          userPrompt: naturalLanguageInput,
+          operationType: 'generate',
+          apiLatencyMs,
+          fragmentsUsed,
+          branchName: 'main', // Default branch
+        };
+
+        // Add initial version with metadata
+        await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
+
+        selectPrompt(savedPrompt);
+
+        // Update session token tracking
+        setSessionTokens(prev => ({
+          input: prev.input + turn.usage.promptTokens,
+          output: prev.output + turn.usage.completionTokens,
+          total: prev.total + turn.usage.totalTokens,
+        }));
+
+        setLoadingMessage('Complete!');
+        setProgress(100);
+        setTimeout(() => setLoadingMessage(''), 500);
+      }
     } catch (e: any) {
-      setError(`An error occurred during generation: ${e.message}`);
+      if (e.name === 'AbortError') {
+        setError('Request cancelled');
+      } else {
+        setError(`An error occurred during generation: ${e.message}`);
+      }
     } finally {
       setIsLoading(false);
+      setProgress(0);
+      setAbortController(null);
+    }
+  };
+
+  const cancelGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+      setIsLoading(false);
+      setLoadingMessage('');
       setProgress(0);
     }
   };
@@ -139,8 +308,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       return;
     }
     if (!apiKey) {
-      setError("Please set your Gemini API key to transform prompts.");
-      openModal();
+      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
 
@@ -161,9 +329,29 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         transformPrompt = await generateNormalizePromptV2(structuredOutput, 'English');
       }
 
-      setLoadingMessage('Sending transformation request to Gemini AI...');
-      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-      const result = await geminiService.generateContent(apiKey, transformPrompt, modelSettings);
+      setLoadingMessage('Sending transformation request to AI provider...');
+
+      // Use taskRouter for multi-provider support
+      const turn = await taskRouter.executeTask(
+        TASK_IDS.NORMALIZE,
+        transformPrompt,
+        '', // No system prompt needed for normalization
+        {
+          enableStreaming,
+          onProgress: enableStreaming ? (state) => {
+            setStreamingState(state);
+          } : undefined,
+        }
+      );
+
+      const result = turn.response;
+
+      // Update session token tracking
+      setSessionTokens(prev => ({
+        input: prev.input + turn.usage.promptTokens,
+        output: prev.output + turn.usage.completionTokens,
+        total: prev.total + turn.usage.totalTokens,
+      }));
 
       setLoadingMessage('Updating prompt...');
       setNormalizedOutput(result);
@@ -192,8 +380,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       return;
     }
     if (!apiKey) {
-      setError("Please set your Gemini API key to mix prompts.");
-      openModal();
+      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
     const guidance = prompt(STRINGS.MIX_PROMPTS_GUIDANCE_PROMPT, STRINGS.MIX_PROMPTS_GUIDANCE_DEFAULT);
@@ -219,12 +406,24 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       // Capture fragments used in mix
       const fragmentsUsed = fragmentLoader.getLoadedFragments();
 
-      setLoadingMessage('Sending mix request to Gemini AI...');
+      setLoadingMessage('Sending mix request to AI provider...');
       setProgress(60);
-      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-      const apiStartTime = Date.now();
-      const structuredRes = await geminiService.generateContent(apiKey, mixFullPrompt, modelSettings);
-      const apiLatencyMs = Date.now() - apiStartTime;
+
+      // Use taskRouter for multi-provider support
+      const turn = await taskRouter.executeTask(
+        TASK_IDS.MIX_PROMPTS,
+        guidance,
+        mixFullPrompt,
+        {
+          enableStreaming,
+          onProgress: enableStreaming ? (state) => {
+            setStreamingState(state);
+          } : undefined,
+        }
+      );
+
+      const structuredRes = turn.response;
+      const apiLatencyMs = turn.latencyMs;
 
       setLoadingMessage('Saving mixed prompt...');
       setProgress(85);
@@ -260,11 +459,17 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       };
 
       // Add initial version with metadata
-      const versionService = await import('../services/versionService');
       await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
 
       selectPrompt(savedPrompt);
       clearSelection();
+
+      // Update session token tracking
+      setSessionTokens(prev => ({
+        input: prev.input + turn.usage.promptTokens,
+        output: prev.output + turn.usage.completionTokens,
+        total: prev.total + turn.usage.totalTokens,
+      }));
 
       setLoadingMessage('Complete!');
       setProgress(100);
@@ -283,8 +488,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       return;
     }
     if (!apiKey) {
-      setError("Please set your Gemini API key to infer a schema.");
-      openModal();
+      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
     setIsLoading(true);
@@ -297,7 +501,13 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
       setLoadingMessage('Requesting AI schema inference...');
       setProgress(50);
-      const jsonResponse = await geminiService.generateJsonContent(apiKey, inferencePrompt);
+
+      // Use taskRouter with JSON mode
+      const jsonResponse = await taskRouter.executeTaskJson(
+        TASK_IDS.SCHEMA_INFERENCE,
+        naturalLanguageInput,
+        inferencePrompt
+      );
 
       setLoadingMessage('Processing schema keys...');
       setProgress(75);
@@ -324,9 +534,161 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
   // Helper function to update prompt in DB and state
   const updatePromptInDb = async (updatedPrompt: Prompt) => {
-    const dbService = await import('../services/dbService');
     await dbService.updatePrompt(updatedPrompt);
     setActivePrompt(updatedPrompt);
+  };
+
+  // Multi-provider: Refine last output
+  const refineLastOutput = async (refinementInstruction: string) => {
+    if (!currentConversation || currentConversation.length === 0) {
+      setError('No conversation to refine. Please generate a prompt first.');
+      return;
+    }
+
+    if (!apiKey) {
+      setError('No provider configured. Please configure a provider in Settings → Providers tab.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setProgress(0);
+
+    try {
+      const lastTurn = currentConversation[currentConversation.length - 1];
+
+      setLoadingMessage('Refining previous output...');
+      setProgress(50);
+
+      // Use taskRouter to refine
+      const refinedTurn = await taskRouter.refineTurn(
+        lastTurn.id,
+        refinementInstruction,
+        {
+          enableStreaming,
+          onProgress: enableStreaming ? (state) => {
+            setStreamingState(state);
+          } : undefined,
+        }
+      );
+
+      // Update conversation state
+      setCurrentConversation([...currentConversation, refinedTurn]);
+
+      // Update structured output
+      setStructuredOutput(refinedTurn.response);
+
+      // Update session token tracking
+      setSessionTokens(prev => ({
+        input: prev.input + refinedTurn.usage.promptTokens,
+        output: prev.output + refinedTurn.usage.completionTokens,
+        total: prev.total + refinedTurn.usage.totalTokens,
+      }));
+
+      setLoadingMessage('Complete!');
+      setProgress(100);
+      setTimeout(() => setLoadingMessage(''), 500);
+    } catch (e: any) {
+      setError(`An error occurred during refinement: ${e.message}`);
+    } finally {
+      setIsLoading(false);
+      setProgress(0);
+    }
+  };
+
+  // Phase 11.3: Answer revision request (Veo 3.1 scene-type detection)
+  const answerRevisionRequest = async (answers: string) => {
+    if (!revisionRequest) {
+      setError('No revision request to answer.');
+      return;
+    }
+
+    if (!apiKey) {
+      setError('No provider configured. Please configure a provider in Settings → Providers tab.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setProgress(0);
+
+    try {
+      setLoadingMessage('Processing your answers...');
+      setProgress(20);
+
+      // Format user's answers with context
+      const answersBlock = formatAnswersForPrompt(revisionRequest.questions, answers);
+      const enhancedInput = `${revisionRequest.originalInput}\n\n${answersBlock}`;
+
+      // Add user's answers to conversation history
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user', content: answers, timestamp: Date.now() },
+      ]);
+
+      setLoadingMessage('Composing prompt template...');
+      setProgress(40);
+
+      // Regenerate with enhanced context
+      const generationFullPrompt = await generatePrimaryPromptV2(enhancedInput, settings);
+
+      setLoadingMessage('Sending request to AI provider...');
+      setProgress(60);
+
+      // Use taskRouter for multi-provider support
+      const turn = await taskRouter.executeTask(
+        TASK_IDS.PRIMARY_GENERATION,
+        enhancedInput,
+        generationFullPrompt,
+        {
+          enableStreaming,
+          onProgress: enableStreaming ? (state) => {
+            setStreamingState(state);
+          } : undefined,
+        }
+      );
+
+      const structuredRes = turn.response;
+
+      // Add assistant's final response to conversation history
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'assistant', content: structuredRes, timestamp: Date.now() },
+      ]);
+
+      // Clear revision request (we got the answer)
+      setRevisionRequest(null);
+
+      setLoadingMessage('Saving prompt to library...');
+      setProgress(80);
+      setStructuredOutput(structuredRes);
+
+      // Save to library
+      const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
+        title: revisionRequest.originalInput.substring(0, 40) + '...',
+        naturalLanguageInput: enhancedInput,
+        structuredOutput: structuredRes,
+        normalizedOutput: '',
+        settingsSnapshot: JSON.stringify(settings),
+        tags: '[]',
+        isFavorite: false,
+      };
+      await addPrompt(newPromptData);
+
+      setLoadingMessage('Complete!');
+      setProgress(100);
+      setTimeout(() => setLoadingMessage(''), 500);
+    } catch (e: any) {
+      setError(`An error occurred: ${e.message}`);
+    } finally {
+      setIsLoading(false);
+      setProgress(0);
+    }
+  };
+
+  const clearRevisionRequest = () => {
+    setRevisionRequest(null);
+    setConversationHistory([]);
   };
 
   const value = {
@@ -336,9 +698,28 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     progress,
     loadingMessage,
     generate,
+    cancelGeneration,
     normalize,
     mixPrompts,
     inferSchema,
+    // Phase 9.4: Intermediate mode
+    useIntermediateMode,
+    setUseIntermediateMode,
+    generatedIntermediate,
+    selectedExportModel,
+    setSelectedExportModel,
+    // Multi-provider features
+    streamingState,
+    enableStreaming,
+    setEnableStreaming,
+    currentConversation,
+    refineLastOutput,
+    sessionTokens,
+    // Phase 11.3: Revision request flow
+    revisionRequest,
+    conversationHistory,
+    answerRevisionRequest,
+    clearRevisionRequest,
   };
 
   return <GenerationContext.Provider value={value}>{children}</GenerationContext.Provider>;

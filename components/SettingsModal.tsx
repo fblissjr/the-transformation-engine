@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useApiKey } from '../context/ApiKeyContext';
-import * as geminiService from '../services/geminiService';
+import React, { useState } from 'react';
 import { PromptSettings } from '../types';
 import { DEFAULT_MODEL_SETTINGS, PRIMARY_GENERATION_PROMPT, SYNESTHETIC_MIXER_PROMPT, NORMALIZER_PROMPT, SCHEMA_INFERENCE_PROMPT } from '../constants';
+import { ProvidersTab } from './settings/ProvidersTab';
+import { TaskAssignmentTab } from './settings/TaskAssignmentTab';
+import { TokenUsageTab } from './settings/TokenUsageTab';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -10,15 +11,10 @@ interface SettingsModalProps {
   onSettingsChange: (settings: PromptSettings) => void;
 }
 
-type Tab = 'api' | 'model' | 'prompts' | 'data';
+type Tab = 'providers' | 'tasks' | 'model' | 'prompts' | 'tokens' | 'data';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onSettingsChange }) => {
-  const { apiKey, setApiKey } = useApiKey();
-  const [activeTab, setActiveTab] = useState<Tab>('api');
-  const [newApiKey, setNewApiKey] = useState('');
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isKeyValid, setIsKeyValid] = useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('providers');
 
   // Local state for model settings (extracted from settings)
   const [localModelName, setLocalModelName] = useState<string>(settings.modelName || DEFAULT_MODEL_SETTINGS.modelName);
@@ -45,50 +41,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onSett
   });
   const [activePromptTab, setActivePromptTab] = useState<'primary' | 'mixer' | 'normalizer' | 'schema'>('primary');
 
-  // Check if current API key is valid on mount
-  useEffect(() => {
-    if (apiKey) {
-      geminiService.validateApiKey(apiKey).then(valid => setIsKeyValid(valid));
-    } else {
-      setIsKeyValid(null);
-    }
-  }, [apiKey]);
-
-  const handleSetApiKey = async () => {
-    const trimmedKey = newApiKey.trim();
-    if (!trimmedKey) {
-      setValidationError('API key cannot be empty');
-      return;
-    }
-
-    if (trimmedKey.includes(' ')) {
-      setValidationError('API key should not contain spaces');
-      return;
-    }
-
-    setIsValidating(true);
-    setValidationError(null);
-
-    const isValid = await geminiService.validateApiKey(trimmedKey);
-    setIsValidating(false);
-
-    if (isValid) {
-      setApiKey(trimmedKey);
-      setNewApiKey('');
-      setIsKeyValid(true);
-      setValidationError(null);
-    } else {
-      setValidationError('Invalid API key');
-    }
-  };
-
-  const handleRemoveApiKey = () => {
-    if (confirm('Are you sure you want to remove your API key?')) {
-      setApiKey(null);
-      setIsKeyValid(null);
-    }
-  };
-
   const handleClearCache = () => {
     if (confirm('Clear all cached data? This includes API responses and model lists.')) {
       // Clear localStorage cache
@@ -99,13 +51,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onSett
   };
 
   const handleClearAllData = async () => {
-    if (confirm('WARNING: This will delete ALL your prompts, versions, and settings. This cannot be undone. Are you sure?')) {
+    if (confirm('WARNING: This will delete ALL your prompts, versions, providers, and settings. This cannot be undone. Are you sure?')) {
       if (confirm('FINAL WARNING: You are about to permanently delete all data. Continue?')) {
         try {
           // Clear IndexedDB
-          const databases = ['PromptsDB'];
+          const databases = ['TransformationEngineDB'];
           for (const dbName of databases) {
-            indexedDB.deleteDatabase(dbName);
+            const deleteRequest = indexedDB.deleteDatabase(dbName);
+            await new Promise((resolve, reject) => {
+              deleteRequest.onsuccess = () => resolve(true);
+              deleteRequest.onerror = () => reject(deleteRequest.error);
+              deleteRequest.onblocked = () => {
+                console.warn(`Database ${dbName} deletion blocked - close other tabs`);
+                resolve(true);
+              };
+            });
           }
           // Clear localStorage
           localStorage.clear();
@@ -115,7 +75,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onSett
           window.location.reload();
         } catch (error) {
           console.error('Failed to clear data:', error);
-          alert('Failed to clear all data. Please try manually clearing browser data.');
+          alert('Failed to clear all data. Please try manually clearing browser data or close other tabs using this app.');
         }
       }
     }
@@ -164,77 +124,24 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onSett
         <h2 className="text-xl font-bold text-white mb-4 shrink-0">Settings</h2>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-800 mb-4 shrink-0">
-          <TabButton label="API Key" isActive={activeTab === 'api'} onClick={() => setActiveTab('api')} />
+        <div className="flex flex-wrap border-b border-gray-800 mb-4 shrink-0 gap-y-2">
+          <TabButton label="Providers" isActive={activeTab === 'providers'} onClick={() => setActiveTab('providers')} />
+          <TabButton label="Tasks" isActive={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
           <TabButton label="Model" isActive={activeTab === 'model'} onClick={() => setActiveTab('model')} />
           <TabButton label="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
+          <TabButton label="Tokens" isActive={activeTab === 'tokens'} onClick={() => setActiveTab('tokens')} />
           <TabButton label="Data" isActive={activeTab === 'data'} onClick={() => setActiveTab('data')} />
         </div>
 
         <div className="flex-1 overflow-y-auto pr-2 -mr-2">
-          {/* API Key Tab */}
-          {activeTab === 'api' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Current API Key Status</label>
-                <div className="flex items-center gap-2">
-                  {apiKey ? (
-                    <>
-                      <div className="flex items-center gap-2 flex-1">
-                        <div className={`w-3 h-3 rounded-full ${isKeyValid === true ? 'bg-green-500' : isKeyValid === false ? 'bg-red-500' : 'bg-yellow-500'}`}></div>
-                        <span className="text-sm text-gray-400">
-                          {isKeyValid === true ? 'API Key Set (Valid)' : isKeyValid === false ? 'API Key Set (Invalid)' : 'API Key Set (Checking...)'}
-                        </span>
-                      </div>
-                      <button
-                        onClick={handleRemoveApiKey}
-                        className="text-xs text-red-400 hover:text-red-300 px-3 py-1 border border-red-400/30 rounded hover:border-red-400/50 transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-3 h-3 rounded-full bg-gray-600"></div>
-                      <span className="text-sm text-gray-400">No API Key Set</span>
-                    </>
-                  )}
-                </div>
-              </div>
+          {/* Providers Tab */}
+          {activeTab === 'providers' && <ProvidersTab />}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  {apiKey ? 'Change API Key' : 'Set API Key'}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    value={newApiKey}
-                    onChange={e => setNewApiKey(e.target.value)}
-                    onBlur={e => setNewApiKey(e.target.value.trim())}
-                    placeholder="Enter your Gemini API Key"
-                    className="flex-1 bg-gray-800 text-white text-sm border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    onClick={handleSetApiKey}
-                    disabled={isValidating || !newApiKey.trim()}
-                    className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium px-4 py-2 rounded transition-colors text-sm"
-                  >
-                    {isValidating ? 'Validating...' : apiKey ? 'Update' : 'Set'}
-                  </button>
-                </div>
-                {validationError && (
-                  <p className="text-red-400 text-xs mt-1">{validationError}</p>
-                )}
-                <p className="text-xs text-gray-500 mt-2">
-                  Get your API key from{' '}
-                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
-                    Google AI Studio
-                  </a>
-                </p>
-              </div>
-            </div>
-          )}
+          {/* Task Assignment Tab */}
+          {activeTab === 'tasks' && <TaskAssignmentTab />}
+
+          {/* Token Usage Tab */}
+          {activeTab === 'tokens' && <TokenUsageTab />}
 
           {/* Model Settings Tab */}
           {activeTab === 'model' && (

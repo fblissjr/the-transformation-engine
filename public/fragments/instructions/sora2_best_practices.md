@@ -6,9 +6,7 @@ category: instruction
 description: Research-backed best practices for Sora 2 prompts with good/bad examples
 ---
 
-**SORA 2 BEST PRACTICES** (Research-Based)
-
-**Source**: US_2025259362_A1 (Prompt Editor Patent), SORA2_DOC_ANALYSIS.md
+**SORA 2 BEST PRACTICES**
 
 ## Critical Constraints
 

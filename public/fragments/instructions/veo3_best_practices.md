@@ -6,9 +6,7 @@ category: instruction
 description: Research-backed best practices for Veo 3 prompts with good/bad examples
 ---
 
-**VEO 3 BEST PRACTICES** (Research-Based)
-
-**Source**: Google AI API Documentation, VEO3_RESEARCH_ANALYSIS.md, Official Prompt Guide
+**VEO 3 BEST PRACTICES**
 
 ## Critical Constraints
 
@@ -204,7 +202,7 @@ audio_elements: |
 ```
 
 ### Example 2: Nature Scene (No Dialogue)
-```yaml
+```
 audio_elements: |
   Ambient: Forest soundscape - rustling leaves, distant bird calls (robin, blue jay)
   Sound effects: Footsteps on forest floor (twigs snapping, leaf crunching)
@@ -212,7 +210,7 @@ audio_elements: |
 ```
 
 ### Example 3: Product Reveal
-```yaml
+```
 audio_elements: |
   Sound effects: Subtle whoosh as product rotates, soft click as it settles
   Music: Minimalist electronic ambient (warm pads, no percussion)

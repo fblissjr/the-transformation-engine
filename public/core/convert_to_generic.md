@@ -10,15 +10,12 @@ Analyze the input prompt and convert it to a generic format suitable for any tex
 4. **Preserve Intent:** Maintain the creative vision and emotional core
 5. **Clarity:** Use clear, descriptive language without jargon
 
-@include[fragments/rules/obscuring_figures_full.md]
+@include[rules/obscuring_figures_full.md]
 
 **Input Prompt to Convert:**
-```
 {{structuredOutput}}
-```
 
 **Target Output Structure (YAML format):**
-```yaml
 scene: |
   [Core concept and what happens in the scene - the essential narrative]
 visuals: |
@@ -27,7 +24,6 @@ audio: |
   [Essential sound elements: dialogue, ambient sounds, music if relevant to the scene]
 style: |
   [Overall aesthetic, mood, color palette, artistic direction]
-```
 
 **Conversion Guidelines:**
 - Extract the essential narrative and visual concept
@@ -41,18 +37,15 @@ style: |
 **Example Conversion:**
 
 **Input (Sora 2-specific):**
-```yaml
-technical_specs: "10s duration, 1920x1080, 16:9"
 temporal_progression: "Camera begins with a wide establishing shot..."
 visual_description: "A sun-drenched beach at golden hour..."
 camera_movement: "Smooth dolly-in combined with slight crane down..."
 cinematography: "Shallow depth of field (f/2.8) with subject in sharp focus..."
 lighting: "Natural golden hour lighting from camera-left..."
+audio_design: "Gentle waves, soft wind, distant seagulls..."
 style: "Cinematic realism with warm color grading..."
-```
 
 **Output (Generic):**
-```yaml
 scene: |
   A beach scene at golden hour as the camera smoothly moves closer to reveal details.
 visuals: |
@@ -61,7 +54,6 @@ audio: |
   Gentle waves, soft wind, distant seagulls.
 style: |
   Cinematic, warm, realistic with golden hour atmosphere.
-```
 
 **Final Output:**
-Provide ONLY the converted YAML prompt. No commentary or explanations.
+Provide ONLY the converted YAML prompt. No commentary, explanations, or code fences. Output raw YAML only.

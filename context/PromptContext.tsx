@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { useContext, ReactNode } from 'react';
+import React, { useContext, ReactNode, useMemo } from 'react';
 import { PromptLibraryProvider, usePromptLibrary } from './PromptLibraryContext';
 import { ActivePromptProvider, useActivePrompt } from './ActivePromptContext';
 import { GenerationProvider, useGeneration } from './GenerationContext';
@@ -45,7 +45,7 @@ export const usePrompts = () => {
   const media = useMedia();
 
   // Wrapper for backward compatibility: combines media description with input update
-  const describeMediaWrapper = async () => {
+  const describeMediaWrapper = useMemo(() => async () => {
     try {
       const description = await media.describeMedia();
       if (description) {
@@ -61,9 +61,9 @@ export const usePrompts = () => {
       // Error will be caught by GenerationContext or shown to user
       console.error(e.message);
     }
-  };
+  }, [media, active]);
 
-  return {
+  return useMemo(() => ({
     // From PromptLibraryContext
     prompts: library.prompts,
     selectedPromptIds: library.selectedPromptIds,
@@ -116,7 +116,53 @@ export const usePrompts = () => {
     addMediaReference: media.addMediaReference,
     removeMediaReference: media.removeMediaReference,
     describeMedia: describeMediaWrapper,
-  };
+  }), [
+    library.prompts,
+    library.selectedPromptIds,
+    library.hasMore,
+    library.total,
+    library.isLoadingMore,
+    library.loadPrompts,
+    library.loadMore,
+    library.searchPrompts,
+    library.addPrompt,
+    library.deletePrompt,
+    library.deletePrompts,
+    library.duplicatePrompts,
+    library.toggleFavorite,
+    library.toggleSelectPrompt,
+    library.clearSelection,
+    active.activePrompt,
+    active.naturalLanguageInput,
+    active.settings,
+    active.structuredOutput,
+    active.normalizedOutput,
+    active.promptVersions,
+    active.setNaturalLanguageInput,
+    active.setSettings,
+    active.setStructuredOutput,
+    active.setNormalizedOutput,
+    active.selectPrompt,
+    active.newPrompt,
+    active.updatePrompt,
+    active.restoreVersion,
+    generation.isLoading,
+    generation.isNormalizing,
+    generation.error,
+    generation.progress,
+    generation.loadingMessage,
+    generation.generate,
+    generation.normalize,
+    generation.mixPrompts,
+    generation.inferSchema,
+    media.mediaReferences,
+    media.isDescribing,
+    media.describingMessage,
+    media.setMediaReferences,
+    media.addMediaReference,
+    media.removeMediaReference,
+    describeMediaWrapper,
+  ]);
 };
 
 // Export individual hooks for granular usage

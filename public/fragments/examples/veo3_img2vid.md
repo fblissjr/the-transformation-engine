@@ -9,7 +9,6 @@ description: Example of Veo 3 image-to-video transition with starting frame refe
 
 **VEO 3 EXAMPLE: Portrait Comes to Life**
 
-**Technical Specs:** Duration: 8s | Resolution: 720p | Aspect Ratio: 16:9 | Frame Rate: 24fps
 **Input Type:** Image-to-Video (starting frame provided)
 
 **STARTING IMAGE DESCRIPTION (Reference Frame):**

@@ -4,7 +4,6 @@ import { useApiKey } from '../context/ApiKeyContext';
 import { LogoIcon, PlusIcon, ImportIcon, ExportIcon, SettingsIcon, MixIcon, TrashIcon, StarIconFilled, StarIconOutline, CopyIcon, ShareIcon } from './icons';
 import * as dbService from '../services/dbService';
 import ShareModal from './ShareModal';
-import SettingsModal from './SettingsModal';
 import { PrivacyDashboard } from './PrivacyDashboard';
 import { Prompt } from '../types';
 
@@ -36,7 +35,6 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isPrivacyDashboardOpen, setIsPrivacyDashboardOpen] = useState(false);
   const [deleteConfirmIds, setDeleteConfirmIds] = useState<string[]>([]);
 
@@ -166,33 +164,26 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
   }, [prompts, selectedPromptIds]);
 
   return (
-    <aside className="w-1/4 max-w-[350px] h-full bg-gray-900 border-r border-gray-800 flex flex-col">
+    <aside className="w-full h-full bg-gray-900 border-r border-gray-800 flex flex-col">
         {isShareModalOpen && selectedPromptForShare && (
             <ShareModal prompt={selectedPromptForShare} onClose={() => setIsShareModalOpen(false)} />
-        )}
-        {isSettingsModalOpen && (
-            <SettingsModal
-              onClose={() => setIsSettingsModalOpen(false)}
-              settings={settings}
-              onSettingsChange={setSettings}
-            />
         )}
         <PrivacyDashboard
           isOpen={isPrivacyDashboardOpen}
           onClose={() => setIsPrivacyDashboardOpen(false)}
         />
-      <div className="p-4 border-b border-gray-800 flex items-center gap-3 shrink-0">
+      <div className="p-3 sm:p-4 border-b border-gray-800 flex items-center gap-3 shrink-0">
         <LogoIcon />
         <div>
-          <h1 className="text-lg font-bold text-white">The Transformation Engine</h1>
+          <h1 className="text-base sm:text-lg font-bold text-white">The Transformation Engine</h1>
           <p className="text-xs text-gray-400">Your Local Prompt IDE</p>
         </div>
       </div>
-      <div className="p-4 border-b border-gray-800 flex items-center gap-2 shrink-0">
+      <div className="p-3 sm:p-4 border-b border-gray-800 flex items-center gap-2 shrink-0">
         {getHeaderButton()}
       </div>
 
-      <div className="p-4 shrink-0">
+      <div className="p-3 sm:p-4 shrink-0">
         <input
           type="text"
           placeholder="Search prompts..."
@@ -204,7 +195,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
 
       {/* Multi-action toolbar - shows when items are selected */}
       {selectedPromptIds.length > 0 && (
-        <div className="px-4 pb-3 shrink-0">
+        <div className="px-3 sm:px-4 pb-3 shrink-0">
           {deleteConfirmIds.length > 0 ? (
             <div className="bg-red-900/30 border border-red-600 rounded-md p-3 flex flex-col gap-2">
               <p className="text-red-400 text-sm font-medium">
@@ -375,7 +366,10 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
           Privacy
         </button>
         <button
-          onClick={() => setIsSettingsModalOpen(true)}
+          onClick={() => {
+            window.history.pushState({}, '', '/settings');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }}
           className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-medium py-2.5 px-3 rounded transition-colors text-sm"
         >
           <SettingsIcon />

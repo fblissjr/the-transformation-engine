@@ -16,32 +16,173 @@ export interface FewShotExample {
 }
 
 // Map of available examples with their metadata
-const SORA2_EXAMPLE_REGISTRY: Record<string, { path: string; metadata: any }> = {
+// 16 Sora 2 GPT-5 examples organized by category
+const SORA2_EXAMPLE_REGISTRY: Record<string, { path: string; category: string; metadata: any }> = {
+  // Product/Commercial (5 examples)
+  interior_product_macro: {
+    path: 'examples/sora2_interior_product_macro.md',
+    category: 'product',
+    metadata: {
+      sceneType: ['indoor', 'studio', 'product', 'commercial', 'macro'],
+      cameraMovement: ['push', 'slow', 'static', 'roll'],
+      subjectType: ['object', 'product', 'item', 'bottle', 'perfume'],
+      keywords: ['macro', 'product', 'studio', 'close-up', 'commercial', 'glass', 'refraction', 'bokeh', 'elegant'],
+    },
+  },
+  product_demo_desktop: {
+    path: 'examples/sora2_product_demo_desktop.md',
+    category: 'product',
+    metadata: {
+      sceneType: ['indoor', 'studio', 'product', 'tech', 'demo'],
+      cameraMovement: ['orbit', 'circular', 'smooth'],
+      subjectType: ['object', 'product', 'tech', 'gadget', 'device'],
+      keywords: ['product', 'tech', 'desktop', 'demo', 'commercial', 'showcase', 'gadget', 'device'],
+    },
+  },
+  food_commercial_pancakes: {
+    path: 'examples/sora2_food_commercial_pancakes.md',
+    category: 'product',
+    metadata: {
+      sceneType: ['indoor', 'kitchen', 'food', 'commercial', 'cooking'],
+      cameraMovement: ['overhead', 'vertical', 'crane', 'descending'],
+      subjectType: ['food', 'cooking', 'kitchen', 'breakfast'],
+      keywords: ['food', 'commercial', 'breakfast', 'kitchen', 'cooking', 'pancakes', 'overhead', 'ingredients'],
+    },
+  },
+  automotive_exterior_hero: {
+    path: 'examples/sora2_automotive_exterior_hero.md',
+    category: 'product',
+    metadata: {
+      sceneType: ['outdoor', 'automotive', 'commercial', 'hero', 'vehicle'],
+      cameraMovement: ['arc', 'orbit', 'circular', 'reveal'],
+      subjectType: ['car', 'vehicle', 'automotive', 'transport'],
+      keywords: ['car', 'automotive', 'exterior', 'vehicle', 'hero', 'commercial', 'reveal', 'sleek'],
+    },
+  },
+  fashion_street_style: {
+    path: 'examples/sora2_fashion_street_style.md',
+    category: 'product',
+    metadata: {
+      sceneType: ['outdoor', 'urban', 'fashion', 'portrait', 'street'],
+      cameraMovement: ['dolly', 'tracking', 'following'],
+      subjectType: ['person', 'model', 'fashion', 'character'],
+      keywords: ['fashion', 'street', 'portrait', 'urban', 'style', 'walking', 'model', 'outfit'],
+    },
+  },
+
+  // Nature/Wildlife (3 examples)
   beach_walk: {
     path: 'examples/sora2_beach_walk.md',
+    category: 'nature',
     metadata: {
       sceneType: ['outdoor', 'nature', 'beach', 'coast', 'sunset'],
-      cameraMovement: ['dolly', 'forward', 'moving'],
+      cameraMovement: ['dolly', 'forward', 'push', 'moving'],
       subjectType: ['person', 'human', 'character', 'walking'],
-      keywords: ['beach', 'ocean', 'sunset', 'walking', 'water', 'sand', 'golden hour'],
+      keywords: ['beach', 'outdoor', 'sunset', 'nature', 'coastal', 'ocean', 'walking', 'water', 'sand', 'golden hour'],
     },
   },
-  camera_push: {
-    path: 'examples/sora2_camera_push.md',
+  wildlife_meadow: {
+    path: 'examples/sora2_wildlife_meadow.md',
+    category: 'nature',
     metadata: {
-      sceneType: ['urban', 'city', 'cityscape', 'futuristic', 'aerial'],
-      cameraMovement: ['dolly', 'forward', 'fast', 'push', 'zoom', 'aerial'],
-      subjectType: ['environment', 'architecture', 'building', 'cityscape'],
-      keywords: ['city', 'urban', 'building', 'skyscraper', 'neon', 'futuristic', 'camera push', 'aerial'],
+      sceneType: ['outdoor', 'nature', 'wildlife', 'meadow', 'animals'],
+      cameraMovement: ['handheld', 'documentary', 'tracking', 'slow'],
+      subjectType: ['animal', 'wildlife', 'deer', 'nature'],
+      keywords: ['wildlife', 'nature', 'animals', 'meadow', 'outdoor', 'deer', 'documentary', 'grass', 'forest'],
     },
   },
-  interior_product: {
-    path: 'examples/sora2_interior_product.md',
+  underwater_reef: {
+    path: 'examples/sora2_underwater_reef.md',
+    category: 'nature',
     metadata: {
-      sceneType: ['indoor', 'studio', 'product', 'commercial'],
-      cameraMovement: ['orbit', 'rotate', 'turntable', 'circular'],
-      subjectType: ['object', 'product', 'item', 'showcase'],
-      keywords: ['product', 'commercial', 'showcase', 'studio', 'rotating', 'orbit', 'headphones', 'gadget'],
+      sceneType: ['underwater', 'nature', 'ocean', 'marine', 'reef'],
+      cameraMovement: ['floating', 'drift', 'smooth', 'slow'],
+      subjectType: ['fish', 'coral', 'marine', 'ocean'],
+      keywords: ['underwater', 'ocean', 'reef', 'marine', 'diving', 'coral', 'fish', 'blue', 'aquatic'],
+    },
+  },
+
+  // Urban/Architecture (4 examples)
+  night_city_broll: {
+    path: 'examples/sora2_night_city_broll.md',
+    category: 'urban',
+    metadata: {
+      sceneType: ['urban', 'city', 'night', 'street', 'cinematic'],
+      cameraMovement: ['truck', 'arc', 'orbit', 'moving'],
+      subjectType: ['environment', 'cityscape', 'architecture', 'street'],
+      keywords: ['city', 'night', 'urban', 'neon', 'street', 'rain', 'reflections', 'cinematic', 'lights'],
+    },
+  },
+  architecture_reveal: {
+    path: 'examples/sora2_architecture_reveal.md',
+    category: 'urban',
+    metadata: {
+      sceneType: ['outdoor', 'architecture', 'modern', 'geometric', 'building'],
+      cameraMovement: ['crane', 'vertical', 'reveal', 'ascending'],
+      subjectType: ['building', 'architecture', 'structure', 'design'],
+      keywords: ['architecture', 'building', 'geometric', 'modern', 'reveal', 'glass', 'concrete', 'design'],
+    },
+  },
+  scifi_corridor: {
+    path: 'examples/sora2_scifi_corridor.md',
+    category: 'urban',
+    metadata: {
+      sceneType: ['indoor', 'scifi', 'futuristic', 'corridor', 'interior'],
+      cameraMovement: ['dolly', 'forward', 'floating', 'smooth'],
+      subjectType: ['environment', 'corridor', 'interior', 'space'],
+      keywords: ['scifi', 'futuristic', 'corridor', 'interior', 'space', 'technology', 'lights', 'metallic'],
+    },
+  },
+  cozy_coffee_shop: {
+    path: 'examples/sora2_cozy_coffee_shop.md',
+    category: 'urban',
+    metadata: {
+      sceneType: ['indoor', 'cafe', 'interior', 'cozy', 'lifestyle'],
+      cameraMovement: ['dolly', 'slow', 'intimate', 'tracking'],
+      subjectType: ['environment', 'interior', 'cafe', 'lifestyle'],
+      keywords: ['cafe', 'interior', 'cozy', 'warm', 'coffee', 'shop', 'lifestyle', 'intimate', 'atmosphere'],
+    },
+  },
+
+  // Performance/Action (4 examples)
+  sports_sprint: {
+    path: 'examples/sora2_sports_sprint.md',
+    category: 'action',
+    metadata: {
+      sceneType: ['outdoor', 'sports', 'athletic', 'dynamic', 'action'],
+      cameraMovement: ['truck', 'tracking', 'fast', 'pedestal'],
+      subjectType: ['person', 'athlete', 'runner', 'sports'],
+      keywords: ['sports', 'running', 'track', 'athletic', 'dynamic', 'action', 'sprint', 'fast', 'movement'],
+    },
+  },
+  dance_performance: {
+    path: 'examples/sora2_dance_performance.md',
+    category: 'action',
+    metadata: {
+      sceneType: ['indoor', 'performance', 'artistic', 'dance', 'stage'],
+      cameraMovement: ['arc', 'orbit', 'circular', 'smooth'],
+      subjectType: ['person', 'dancer', 'performer', 'character'],
+      keywords: ['dance', 'performance', 'movement', 'artistic', 'choreography', 'stage', 'expression', 'graceful'],
+    },
+  },
+  macro_insects: {
+    path: 'examples/sora2_macro_insects.md',
+    category: 'action',
+    metadata: {
+      sceneType: ['outdoor', 'nature', 'macro', 'wildlife', 'close-up'],
+      cameraMovement: ['dolly', 'slow', 'tracking', 'handheld'],
+      subjectType: ['insect', 'bug', 'nature', 'wildlife'],
+      keywords: ['macro', 'nature', 'insects', 'close-up', 'wildlife', 'bug', 'detail', 'small'],
+    },
+  },
+  fpv_parkour_chase: {
+    path: 'examples/sora2_fpv_parkour_chase.md',
+    category: 'action',
+    metadata: {
+      sceneType: ['outdoor', 'urban', 'action', 'dynamic', 'chase'],
+      cameraMovement: ['fpv', 'fast', 'dynamic', 'chase', 'aggressive'],
+      subjectType: ['person', 'athlete', 'parkour', 'action'],
+      keywords: ['fpv', 'parkour', 'action', 'chase', 'urban', 'fast', 'dynamic', 'aggressive', 'movement'],
     },
   },
 };
@@ -130,11 +271,53 @@ export async function selectFewShotExamples(
 
   // Sort by score and take top N
   scores.sort((a, b) => b.score - a.score);
-  const selectedIds = scores.slice(0, maxExamples).map(s => s.id);
+
+  // Ensure category diversity when possible
+  // Take highest scoring example, then prefer examples from different categories
+  const selectedIds: string[] = [];
+  const usedCategories = new Set<string>();
+
+  for (const { id, score } of scores) {
+    if (selectedIds.length >= maxExamples) break;
+
+    const exampleData = EXAMPLE_REGISTRY[id];
+    const category: string = 'category' in exampleData ? (exampleData.category as string) : 'unknown';
+
+    // Always take first example (highest score)
+    if (selectedIds.length === 0) {
+      selectedIds.push(id);
+      usedCategories.add(category);
+    }
+    // Prefer examples from new categories
+    else if (!usedCategories.has(category)) {
+      selectedIds.push(id);
+      usedCategories.add(category);
+    }
+    // If all categories used, take by score
+    else if (usedCategories.size >= maxExamples) {
+      selectedIds.push(id);
+    }
+  }
+
+  // If we still need more examples and have remaining scored items, fill from same categories
+  if (selectedIds.length < maxExamples) {
+    for (const { id } of scores) {
+      if (selectedIds.length >= maxExamples) break;
+      if (!selectedIds.includes(id)) {
+        selectedIds.push(id);
+      }
+    }
+  }
 
   // If no matches, use default examples based on model
+  // For Sora 2, pick 2 examples from different categories for variety
   if (selectedIds.length === 0) {
-    selectedIds.push(model === 'veo3' ? 'coffee_shop' : 'beach_walk');
+    if (model === 'veo3') {
+      selectedIds.push('coffee_shop');
+    } else {
+      // Default to one from each major category
+      selectedIds.push('interior_product_macro', 'beach_walk');
+    }
   }
 
   // Load selected examples

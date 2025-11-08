@@ -9,8 +9,6 @@ description: Example of Veo 3 atmospheric scene focused on soundscape and sensor
 
 **VEO 3 EXAMPLE: Foggy Forest Dawn**
 
-**Technical Specs:** Duration: 8s | Resolution: 1080p | Aspect Ratio: 16:9 | Frame Rate: 24fps
-
 **Subject:**
 Ancient gnarled oak tree, trunk approximately 2 meters diameter, deeply textured bark with moss growth on north side, sprawling root system visible at base creating natural steps and hollows. Lower branches spread wide (3-4 meters), bare except for remnant dried leaves that cling stubbornly. Tree stands alone in small clearing. No human subjects - tree is the character.
 

@@ -5,6 +5,8 @@ import * as geminiService from '../services/geminiService';
 import * as dbService from '../services/dbService';
 import { useApiKey } from './ApiKeyContext';
 import { useActivePrompt } from './ActivePromptContext';
+// TODO: Migrate to taskRouter once multimodal support is added to IProvider interface
+// Currently media description still uses geminiService.describeMedia() directly
 
 interface MediaContextType {
   mediaReferences: MediaReference[];
@@ -19,7 +21,7 @@ interface MediaContextType {
 const MediaContext = createContext<MediaContextType | undefined>(undefined);
 
 export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const { apiKey, openModal } = useApiKey();
+  const { apiKey } = useApiKey();
   const { settings } = useActivePrompt();
   const [mediaReferences, setMediaReferences] = useState<MediaReference[]>([]);
   const [isDescribing, setIsDescribing] = useState(false);
@@ -58,8 +60,7 @@ export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => 
       throw new Error("No media to describe.");
     }
     if (!apiKey) {
-      openModal();
-      throw new Error("Please set your Gemini API key.");
+      throw new Error("No provider configured. Please configure a provider in Settings → Providers tab.");
     }
 
     setIsDescribing(true);

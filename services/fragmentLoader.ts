@@ -29,12 +29,18 @@ class FragmentLoader {
 
     try {
       // Fetch from public directory (served at root by Vite)
-      const fullPath = `/fragments/${path}`;
+      // If path starts with /, it's absolute (e.g., /core/template.md)
+      // Otherwise, assume it's relative to /fragments/
+      const fullPath = path.startsWith('/') ? path : `/fragments/${path}`;
+      console.log(`[FragmentLoader] Loading: ${path} -> ${fullPath}`);
       const response = await fetch(fullPath);
 
       if (!response.ok) {
-        throw new Error(`Fragment not found: ${path}`);
+        console.error(`[FragmentLoader] Failed to fetch: ${fullPath}, status: ${response.status}`);
+        throw new Error(`Fragment not found: ${path} (tried: ${fullPath})`);
       }
+
+      console.log(`[FragmentLoader] Successfully loaded: ${fullPath}`);
 
       const raw = await response.text();
       const fragment = this.parseFragment(raw);
@@ -124,11 +130,28 @@ class FragmentLoader {
     const includes = template.matchAll(includePattern);
 
     for (const match of includes) {
-      const fragmentPath = match[1];
+      const fullDirective = match[1];
+      // Parse: path/to/file.md | param="value" | param2="value2"
+      const parts = fullDirective.split('|').map(p => p.trim());
+      const fragmentPath = parts[0];
+
+      // Parse parameters (everything after the path)
+      const fragmentVars: Record<string, string> = {};
+      for (let i = 1; i < parts.length; i++) {
+        const paramMatch = parts[i].match(/^(\w+)=["'](.*)["']$/);
+        if (paramMatch) {
+          const [, key, value] = paramMatch;
+          fragmentVars[key] = value;
+        }
+      }
+
       try {
         const fragment = await this.loadFragment(fragmentPath);
         this.loadedFragments.add(fragmentPath); // Track this fragment
-        output = output.replace(match[0], fragment.content);
+
+        // Interpolate variables in the fragment content before replacing
+        const interpolatedContent = this.interpolateVariables(fragment.content, fragmentVars);
+        output = output.replace(match[0], interpolatedContent);
       } catch (error) {
         console.warn(`Failed to include fragment: ${fragmentPath}`, error);
         // Leave the @include directive in place if it fails

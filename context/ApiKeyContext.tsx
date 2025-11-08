@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useMemo, useCallback, useEffect } from 'react';
-import { encryptedStorage } from '../services/encryptedStorage';
+import { providerService } from '../services/providerService';
+import { getDB } from '../services/db/indexedDbService';
 
 interface ApiKeyContextType {
   apiKey: string | null;
@@ -11,69 +12,64 @@ interface ApiKeyContextType {
   closeModal: () => void;
   clearApiKey: () => Promise<void>;
   getApiKeyExpiration: () => Promise<number | null>;
+  refreshApiKey: () => Promise<void>;
 }
 
 const ApiKeyContext = createContext<ApiKeyContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'gemini_api_key';
-const DEFAULT_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+const DEFAULT_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days (legacy)
 
 export const ApiKeyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [apiKey, setApiKeyState] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load API key on mount
-  useEffect(() => {
-    const loadApiKey = async () => {
-      try {
-        // Check encrypted storage for user-provided key
-        const storedKey = await encryptedStorage.get(STORAGE_KEY);
+  const loadApiKey = useCallback(async () => {
+    try {
+      // Wait for database to be initialized
+      await getDB();
+
+      // Get first enabled Gemini provider and its key
+      const allProviders = await providerService.getAllProviders();
+      const geminiProvider = allProviders.find(p => p.type === 'gemini' && p.enabled);
+
+      if (geminiProvider) {
+        const storedKey = await providerService.getFirstValidKey(geminiProvider.id);
         if (storedKey) {
           setApiKeyState(storedKey);
+        } else {
+          setApiKeyState(null);
         }
-      } catch (error) {
-        console.error('Failed to load API key:', error);
-      } finally {
-        setIsLoading(false);
+      } else {
+        setApiKeyState(null);
       }
-    };
-
-    loadApiKey();
+    } catch (error) {
+      console.error('[ApiKeyContext] Failed to load API key:', error);
+      setApiKeyState(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Handle HMR in development: reload key if state is empty but storage has it
+  // Load API key on mount
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((import.meta as any).hot && !isLoading && !apiKey) {
-      const recheckApiKey = async () => {
-        const storedKey = await encryptedStorage.get(STORAGE_KEY);
-        if (storedKey && storedKey !== apiKey) {
-          console.log('HMR: Restoring API key from encrypted storage');
-          setApiKeyState(storedKey);
-        }
-      };
-      recheckApiKey();
-    }
-  }, [apiKey, isLoading]);
+    loadApiKey();
+  }, [loadApiKey]);
 
-  const setApiKey = useCallback(async (key: string | null, ttl: number = DEFAULT_TTL) => {
-    if (key) {
-      await encryptedStorage.set(STORAGE_KEY, key, { ttl });
-      setApiKeyState(key);
-    } else {
-      await encryptedStorage.remove(STORAGE_KEY);
-      setApiKeyState(null);
-    }
+  // These are no-ops for backward compatibility
+  const setApiKey = useCallback(async (_key: string | null, _ttl: number = DEFAULT_TTL) => {
+    // No-op: Use ProviderContext to manage keys now
+    console.warn('[ApiKeyContext] setApiKey is deprecated. Use ProviderContext.addApiKey instead');
   }, []);
 
   const clearApiKey = useCallback(async () => {
-    await encryptedStorage.remove(STORAGE_KEY);
-    setApiKeyState(null);
+    // No-op: Use ProviderContext to manage keys now
+    console.warn('[ApiKeyContext] clearApiKey is deprecated. Use ProviderContext.deleteApiKey instead');
   }, []);
 
   const getApiKeyExpiration = useCallback(async () => {
-    return await encryptedStorage.getExpiration(STORAGE_KEY);
+    // No-op: Keys are managed by provider system now
+    return null;
   }, []);
 
   const openModal = useCallback(() => setIsModalOpen(true), []);
@@ -88,7 +84,8 @@ export const ApiKeyProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     closeModal,
     clearApiKey,
     getApiKeyExpiration,
-  }), [apiKey, isLoading, isModalOpen, openModal, closeModal, setApiKey, clearApiKey, getApiKeyExpiration]);
+    refreshApiKey: loadApiKey,
+  }), [apiKey, isLoading, isModalOpen, openModal, closeModal, setApiKey, clearApiKey, getApiKeyExpiration, loadApiKey]);
 
   return (
     <ApiKeyContext.Provider value={contextValue}>

@@ -9,8 +9,6 @@ description: Example of Veo 3 cinematic landscape with atmospheric audio
 
 **VEO 3 EXAMPLE: Mountain Vista at Dawn**
 
-**Technical Specs:** Duration: 8s | Resolution: 720p | Aspect Ratio: 16:9 | Frame Rate: 24fps
-
 **Subject:**
 No human subjects. Primary focus: Dramatic mountain range with jagged snow-capped peaks catching first light of sunrise. Tallest peak positioned in right third of frame, approximately 12,000 feet elevation. Snow line visible around 9,000 feet with exposed granite faces below. Alpine environment with pristine natural beauty.
 

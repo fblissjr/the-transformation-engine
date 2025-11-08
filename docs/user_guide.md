@@ -11,15 +11,90 @@ Complete documentation for The Transformation Engine
 1. **Node.js 18+** ([download](https://nodejs.org/))
 2. **Gemini API key** from [Google AI Studio](https://aistudio.google.com/app/apikey)
 
-### Installation
+### Installation & Deployment
 
+**Development (Local)**:
 ```bash
 cd the-transformation-engine
 npm install
-npm run dev
+./manage.sh dev
+```
+Opens at http://localhost:5173 (Vite default) or http://localhost:7392 (production port)
+
+**Production (Self-Hosted)**:
+```bash
+# Build and serve
+./manage.sh build    # Creates dist/ directory
+./manage.sh start    # Serves on port 1847 with PM2
+
+# Management
+./manage.sh stop     # Stop PM2 process
+./manage.sh logs     # View logs
+./manage.sh status   # Check status
 ```
 
-Open http://localhost:1847 (or custom port via `npm run dev -- --port 12345`)
+**Custom Port/Host**:
+```bash
+# Development
+npm run dev -- --port 3000 --host 0.0.0.0
+
+# Production (environment variables)
+APP_PORT=8080 ./manage.sh start                    # Custom port
+APP_HOST=0.0.0.0 APP_PORT=8080 ./manage.sh start  # External access
+APP_NAME=prod-engine ./manage.sh start            # Custom PM2 name
+
+# All options
+APP_NAME=prod-engine APP_PORT=8080 APP_HOST=0.0.0.0 ./manage.sh start
+```
+
+**Production with Nginx + HTTPS**:
+1. Build: `./manage.sh build`
+2. Configure Nginx reverse proxy (see below)
+3. Start app: `./manage.sh start`
+4. Setup SSL: Use certbot for Let's Encrypt
+
+**Nginx Configuration** (`/etc/nginx/sites-available/transformation-engine`):
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:7392;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable and reload:
+```bash
+sudo ln -s /etc/nginx/sites-available/transformation-engine /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+**Static Hosting** (Netlify/Cloudflare/AWS S3):
+```bash
+./manage.sh build
+# Upload dist/ directory to your static host
+# See DEPLOYMENT.md for detailed multi-tenant setup
+```
 
 ### First Run
 
@@ -43,18 +118,26 @@ speech: "CHEF: 'The key is in the wrist motion'"
 
 ### Generation
 
-**Basic**:
-1. Enter text in Creative Idea
-2. Select format (YAML, JSON, XML, Markdown)
-3. Customize schema keys (optional)
-4. Generate Prompt
+**Intermediate Mode (Recommended)**:
+1. Ensure "Generate as Intermediate" toggle is ON (default)
+2. Enter natural language in Creative Idea
+3. Generate Prompt (single API call)
+4. View intermediate markdown in "Intermediate" tab
+5. View transformed YAML in "Structured" tab
+6. Switch export model (Sora 2/Veo 3/Generic) instantly without regenerating
+
+**Legacy Mode**:
+1. Toggle "Generate as Intermediate" OFF
+2. Select format (YAML, JSON, XML, Markdown, Natural Language)
+3. Customize schema keys manually
+4. Generate Prompt (format-locked output)
 
 **With Media**:
 1. Add Image/Video → select files (max 10MB each)
 2. Optional: Describe with AI (adds descriptions to input)
-3. Generate with visual context
+3. Generate with visual context (works in both modes)
 
-**Schema Customization**:
+**Schema Customization** (Legacy mode):
 - Add keys manually or use presets (Video Scene, Music, Art Direction)
 - AI: Suggest Keys - adds to existing
 - AI: Full Schema - replaces all keys
@@ -297,12 +380,40 @@ Clear all: Settings → Data & Cache → Clear All Data
 ```bash
 rm -rf node_modules
 npm install
-npm run build
+./manage.sh build
 ```
 
 **TypeScript errors**:
 ```bash
 npx tsc --noEmit
+```
+
+**Production server issues**:
+```bash
+# Check status
+./manage.sh status
+
+# View logs
+./manage.sh logs
+
+# Restart
+./manage.sh stop
+./manage.sh start
+
+# Check port availability
+lsof -i :7392  # or your custom port
+```
+
+**Nginx issues**:
+```bash
+# Test config
+sudo nginx -t
+
+# View error logs
+sudo tail -f /var/log/nginx/error.log
+
+# Reload after changes
+sudo systemctl reload nginx
 ```
 
 **Console errors**:

@@ -1,57 +1,41 @@
 
 import { openDB, IDBPDatabase } from 'idb';
 import { Prompt, PromptVersion, SystemPromptConfig, AppSettings, MediaBlob } from '../../types';
+import { DB_NAME, DB_VERSION, STORE_NAMES } from '../../config/database';
+import { applySchemaV9 } from './migrations/schema_v9';
 
-const DB_NAME = 'TransformationEngineDB';
-const PROMPTS_STORE_NAME = 'prompts';
-const VERSIONS_STORE_NAME = 'versions';
-const CONFIG_STORE_NAME = 'promptConfigs';
-const SETTINGS_STORE_NAME = 'appSettings';
-const MEDIA_STORE_NAME = 'media';
-const DB_VERSION = 6;
+const PROMPTS_STORE_NAME = STORE_NAMES.prompts;
+const VERSIONS_STORE_NAME = STORE_NAMES.versions;
+const CONFIG_STORE_NAME = STORE_NAMES.promptConfigs;
+const SETTINGS_STORE_NAME = STORE_NAMES.appSettings;
+const MEDIA_STORE_NAME = STORE_NAMES.media;
 
 let db: IDBPDatabase;
+let dbPromise: Promise<IDBPDatabase> | null = null;
+
+// Export a function to get the shared DB instance
+export async function getDB(): Promise<IDBPDatabase> {
+  if (!dbPromise) {
+    dbPromise = initDB();
+  }
+  return dbPromise;
+}
 
 export async function initDB() {
+  if (db) {
+    return db;
+  }
+  console.log(`[IndexedDB] Opening ${DB_NAME} (schema v${DB_VERSION})...`);
   db = await openDB(DB_NAME, DB_VERSION, {
     upgrade(db, oldVersion, newVersion, tx) {
-      if (oldVersion < 1) {
-        const store = db.createObjectStore(PROMPTS_STORE_NAME, {
-          keyPath: 'id',
-          autoIncrement: false,
-        });
-        store.createIndex('createdAt', 'createdAt');
-      }
-      if (oldVersion < 2) {
-        const store = db.createObjectStore(VERSIONS_STORE_NAME, {
-            keyPath: 'versionId',
-        });
-        store.createIndex('promptId', 'promptId');
-      }
-      if (oldVersion < 3) {
-        const promptStore = tx.objectStore(PROMPTS_STORE_NAME);
-        promptStore.createIndex('title_lowercase', 'title_lowercase');
-      }
-      if (oldVersion < 4) {
-        const configStore = db.createObjectStore(CONFIG_STORE_NAME, {
-          keyPath: 'id',
-        });
-        configStore.createIndex('isDefault', 'isDefault');
-        configStore.createIndex('createdAt', 'createdAt');
-      }
-      if (oldVersion < 5) {
-        db.createObjectStore(SETTINGS_STORE_NAME, {
-          keyPath: 'id',
-        });
-      }
-      if (oldVersion < 6) {
-        const mediaStore = db.createObjectStore(MEDIA_STORE_NAME, {
-          keyPath: 'id',
-        });
-        mediaStore.createIndex('uploadedAt', 'uploadedAt');
-      }
+      console.log(`[IndexedDB] Upgrading schema from v${oldVersion} to v${newVersion}`);
+
+      // Apply clean schema (handles both fresh installs and upgrades)
+      applySchemaV9(db, oldVersion, newVersion, tx);
     },
   });
+  console.log(`[IndexedDB] Database ready (schema v${db.version})`);
+  return db;
 }
 
 export async function addPrompt(promptData: Omit<Prompt, 'id' | 'createdAt'>): Promise<Prompt> {

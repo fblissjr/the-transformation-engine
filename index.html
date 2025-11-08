@@ -13,7 +13,7 @@
       img-src 'self' data: blob:;
       media-src 'self' blob:;
       font-src 'self';
-      connect-src 'self' https://generativelanguage.googleapis.com;
+      connect-src 'self' https://generativelanguage.googleapis.com https://openrouter.ai https://api.openai.com;
       worker-src 'self' blob:;
       object-src 'none';
       base-uri 'self';
@@ -21,8 +21,8 @@
       frame-ancestors 'none';
     " />
 
-    <!-- Logo path defined in constants.ts as LOGO_PATH -->
-    <link rel="icon" href="assets/logo_256x256.png" type="image/png">
+    <!-- Favicon (served from /public folder) -->
+    <link rel="icon" href="/logo.png" type="image/png">
   </head>
   <body class="bg-gray-950 text-gray-300">
     <div id="root"></div>

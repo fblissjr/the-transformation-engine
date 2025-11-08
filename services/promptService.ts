@@ -8,18 +8,22 @@ import {
 } from "../constants";
 import { fragmentLoader } from "./fragmentLoader";
 import { selectFewShotExamples, shouldUseFewShot } from "./fewShotService";
+import { taskRouter } from "./taskRouter";
+import { TASK_IDS } from "../types/providers";
 
 const getFormatGuidance = (format: string): string => {
   const formatLower = format.toLowerCase();
 
   if (formatLower.includes("yaml")) {
-    return 'Use YAML syntax with keys followed by colon and value (e.g., "key: value"). Be concise while maintaining the overall specifics of the scene envisioned by the user.';
+    return 'Use YAML syntax with keys followed by colon and value (e.g., "key: value"). DO NOT wrap your output in code fences or markdown formatting. Output raw YAML only.';
   } else if (formatLower.includes("xml")) {
-    return 'Use XML syntax with opening and closing tags (e.g., "<key>value</key>"). Be concise while maintaining the overall specifics of the scene envisioned by the user.';
+    return 'Use XML syntax with opening and closing tags (e.g., "<key>value</key>"). DO NOT wrap your output in code fences or markdown formatting. Output raw XML only.';
   } else if (formatLower.includes("json")) {
-    return 'Use valid JSON object syntax with quoted keys and values (e.g., {"key": "value"}). Be concise while maintaining the overall specifics of the scene envisioned by the user.';
+    return 'Use valid JSON object syntax with quoted keys and values (e.g., {"key": "value"}). DO NOT wrap your output in code fences or markdown formatting. Output raw JSON only.';
   } else if (formatLower.includes("markdown")) {
-    return "Use Markdown syntax with headers (## for each key) and content below each header. Separate out each part of the scene by using bullet point lists. Be concise while maintaining the overall specifics of the scene envisioned by the user.";
+    return "Use Markdown syntax with headers (## for each key) and content below each header. Separate out each part of the scene by using bullet point lists.";
+  } else if (formatLower.includes("natural")) {
+    return "Write in flowing, natural language prose. Describe the scene as you would tell someone about it in conversation, without any structured format or labels. Focus on vivid, cinematic description.";
   } else if (formatLower.includes("emoji")) {
     return "Use emoji-based formatting where each key is represented by relevant emojis.";
   }
@@ -208,7 +212,10 @@ Generate a *complete* new schema that best represents the user's idea from scrat
 /**
  * Load and compose a prompt template from fragments
  */
-async function loadPromptTemplate(templateName: string, modelPreset?: string): Promise<string> {
+async function loadPromptTemplate(
+  templateName: string,
+  modelPreset?: string,
+): Promise<string> {
   // Try model-specific template first, fallback to generic
   const templateSuffix = modelPreset || "";
   let response = await fetch(`/core/${templateName}${templateSuffix}.md`);
@@ -228,15 +235,25 @@ async function loadPromptTemplate(templateName: string, modelPreset?: string): P
  * Detect target model from schema keys or settings
  */
 function detectTargetModel(settings: PromptSettings): string {
-  const keySet = new Set(settings.schemaKeys.map(k => k.toLowerCase()));
+  const keySet = new Set(settings.schemaKeys.map((k) => k.toLowerCase()));
 
   // Veo 3 indicators (audio-first model)
-  const veo3Keys = ['audio_elements', 'dialogue', 'voiceover_script', 'ambient_audio', 'subject'];
-  const veo3Score = veo3Keys.filter(k => keySet.has(k)).length;
+  const veo3Keys = [
+    "audio_elements",
+    "dialogue",
+    "voiceover_script",
+    "ambient_audio",
+    "subject",
+  ];
+  const veo3Score = veo3Keys.filter((k) => keySet.has(k)).length;
 
   // Sora 2 indicators (visual-first with temporal progression)
-  const sora2Keys = ['temporal_progression', 'cinematography', 'visual_description'];
-  const sora2Score = sora2Keys.filter(k => keySet.has(k)).length;
+  const sora2Keys = [
+    "temporal_progression",
+    "cinematography",
+    "visual_description",
+  ];
+  const sora2Score = sora2Keys.filter((k) => keySet.has(k)).length;
 
   // Decision: Use highest score, prefer Veo 3 on tie (audio is distinctive)
   if (veo3Score > sora2Score || (veo3Score === sora2Score && veo3Score > 0)) {
@@ -278,17 +295,26 @@ export async function generatePrimaryPromptV2(
 
   // Detect target model and get preset
   const targetModel = detectTargetModel(settings);
-  const modelPreset = MODEL_PRESETS[targetModel as keyof typeof MODEL_PRESETS] || MODEL_PRESETS.generic;
+  const modelPreset =
+    MODEL_PRESETS[targetModel as keyof typeof MODEL_PRESETS] ||
+    MODEL_PRESETS.generic;
 
   // Load template (model-specific or generic)
-  const template = await loadPromptTemplate("primary", modelPreset.templateSuffix);
+  const template = await loadPromptTemplate(
+    "primary",
+    modelPreset.templateSuffix,
+  );
 
   // Select few-shot examples if using Sora 2 or Veo 3
   let fewShotExamples = "";
   const fewShotModel = shouldUseFewShot(settings.schemaKeys);
   if (fewShotModel) {
     try {
-      fewShotExamples = await selectFewShotExamples(naturalLanguageInput, 2, fewShotModel);
+      fewShotExamples = await selectFewShotExamples(
+        naturalLanguageInput,
+        2,
+        fewShotModel,
+      );
     } catch (error) {
       console.warn("Failed to load few-shot examples:", error);
       // Continue without examples if loading fails
@@ -322,7 +348,7 @@ export async function generatePrimaryPromptV2(
   };
 
   // Add model-specific technical specs if available
-  if ('technicalSpecs' in modelPreset && modelPreset.technicalSpecs) {
+  if ("technicalSpecs" in modelPreset && modelPreset.technicalSpecs) {
     Object.assign(variables, modelPreset.technicalSpecs);
   }
 
@@ -351,10 +377,15 @@ export async function generateMixPromptV2(
 
   // Detect target model and get preset
   const targetModel = detectTargetModel(settings);
-  const modelPreset = MODEL_PRESETS[targetModel as keyof typeof MODEL_PRESETS] || MODEL_PRESETS.generic;
+  const modelPreset =
+    MODEL_PRESETS[targetModel as keyof typeof MODEL_PRESETS] ||
+    MODEL_PRESETS.generic;
 
   // Load template (model-specific or generic)
-  const template = await loadPromptTemplate("mixer", modelPreset.templateSuffix);
+  const template = await loadPromptTemplate(
+    "mixer",
+    modelPreset.templateSuffix,
+  );
 
   const sourcePromptsText = sourcePrompts
     .map(
@@ -390,7 +421,7 @@ export async function generateMixPromptV2(
   };
 
   // Add model-specific technical specs if available
-  if ('technicalSpecs' in modelPreset && modelPreset.technicalSpecs) {
+  if ("technicalSpecs" in modelPreset && modelPreset.technicalSpecs) {
     Object.assign(variables, modelPreset.technicalSpecs);
   }
 
@@ -521,7 +552,7 @@ function generateTextDirectionInstruction(settings: PromptSettings): string {
  */
 export async function generateConversionPrompt(
   structuredOutput: string,
-  targetModel: 'sora2' | 'veo3' | 'generic'
+  targetModel: "sora2" | "veo3" | "generic",
 ): Promise<string> {
   const templatePath = `/core/convert_to_${targetModel}.md`;
 
@@ -537,9 +568,137 @@ export async function generateConversionPrompt(
     const variables = { structuredOutput };
     return await fragmentLoader.composePrompt(template, variables);
   } catch (error) {
-    console.error(`Failed to load conversion template for ${targetModel}:`, error);
+    console.error(
+      `Failed to load conversion template for ${targetModel}:`,
+      error,
+    );
     throw new Error(`Conversion template not found: ${templatePath}`);
   }
+}
+
+/**
+ * Detect target model from intermediate structure
+ * Used to auto-select best transformer after generation
+ */
+export function detectTargetModelFromIntermediate(intermediate: {
+  structure: { temporal?: any; audio?: any };
+}): "sora2" | "veo3" | "generic" {
+  // Veo 3 indicators: Rich audio with dialogue or music
+  if (
+    intermediate.structure.audio?.dialogue ||
+    intermediate.structure.audio?.music ||
+    (intermediate.structure.audio?.ambient &&
+      intermediate.structure.audio?.soundEffects)
+  ) {
+    return "veo3";
+  }
+
+  // Sora 2 indicators: Temporal progression with multiple segments
+  if (
+    intermediate.structure.temporal?.segments &&
+    intermediate.structure.temporal.segments.length > 0
+  ) {
+    return "sora2";
+  }
+
+  // Default to generic
+  return "generic";
+}
+
+/**
+ * Extract title from input (first sentence, max 50 chars)
+ */
+function extractTitleFromInput(input: string): string {
+  const firstSentence = input.split(/[.!?]/)[0].trim();
+  return firstSentence.length > 50
+    ? firstSentence.substring(0, 47) + "..."
+    : firstSentence;
+}
+
+/**
+ * Generate intermediate representation from natural language
+ * Uses primary_intermediate.md template to get semantic JSON structure
+ *
+ * @param input - Natural language description of the scene
+ * @param options - Generation options (model, temperature, etc.)
+ * @returns IntermediatePrompt object ready to save to IndexedDB
+ */
+export async function generateIntermediate(
+  input: string,
+  apiKey: string,
+  options?: {
+    modelName?: string;
+    temperature?: number;
+  },
+  settings?: PromptSettings,
+): Promise<any> {
+  // Load intermediate generation template
+  const fragment = await fragmentLoader.loadFragment(
+    "/core/primary_intermediate.md",
+  );
+  const template = typeof fragment === "string" ? fragment : fragment.content;
+
+  // Compose prompt with user input (input is already interpolated into template)
+  const systemPrompt = await fragmentLoader.composePrompt(template, {
+    naturalLanguageInput: input,
+    schemaKeys: settings?.schemaKeys?.join(", ") || "",
+    format: settings?.format || "Standard YAML",
+  });
+
+  // Use taskRouter for multi-provider support
+  const turn = await taskRouter.executeTask(
+    TASK_IDS.INTERMEDIATE_GENERATION,
+    input,
+    systemPrompt,
+    {}
+  );
+
+  const response = turn.response;
+
+  // Parse Markdown response - much more forgiving than JSON!
+  let markdownContent = response.trim();
+
+  // Strip markdown code fences if present (LLM might add them despite instructions)
+  const fenceMatch = markdownContent.match(/```markdown\s*\n([\s\S]*?)\n```/);
+  if (fenceMatch) {
+    markdownContent = fenceMatch[1].trim();
+  }
+
+  // Also try plain ``` fences without language
+  if (!fenceMatch) {
+    const plainFence = markdownContent.match(/```\s*\n([\s\S]*?)\n```/);
+    if (plainFence) {
+      markdownContent = plainFence[1].trim();
+    }
+  }
+
+  // Basic validation: check if it looks like markdown with sections
+  const hasSections = /^##\s+\w+/m.test(markdownContent);
+  if (!hasSections) {
+    throw new Error(
+      `Failed to parse intermediate structure from LLM response. Response did not contain valid Markdown sections (## Visual, ## Audio, etc.). Got: ${markdownContent.substring(0, 200) || '(empty response)'}`,
+    );
+  }
+
+  // Create IntermediatePrompt with Markdown structure
+  const intermediate: any = {
+    id: `intermediate_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    version: "1.0.0",
+    created: new Date(),
+    modified: new Date(),
+    title: extractTitleFromInput(input),
+    tags: [],
+    sources: {
+      text: input,
+    },
+    // Store the markdown as-is - transformers will parse it when needed
+    structure: {
+      format: "markdown",
+      content: markdownContent,
+    },
+  };
+
+  return intermediate;
 }
 
 // Export fragmentLoader for accessing loaded fragments list

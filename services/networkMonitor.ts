@@ -26,6 +26,8 @@ class NetworkMonitorService {
   // Approved domains for the app
   private readonly APPROVED_DOMAINS = [
     'generativelanguage.googleapis.com', // Gemini API
+    'openrouter.ai', // OpenRouter API
+    'api.openai.com', // OpenAI API
   ];
 
   constructor() {

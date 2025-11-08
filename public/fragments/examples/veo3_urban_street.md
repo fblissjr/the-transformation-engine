@@ -9,8 +9,6 @@ description: Example of Veo 3 urban documentary style with ambient city audio
 
 **VEO 3 EXAMPLE: Urban Street Corner - Late Afternoon**
 
-**Technical Specs:** Duration: 8s | Resolution: 720p | Aspect Ratio: 16:9 | Frame Rate: 24fps
-
 **Subject:**
 Woman in her late 20s, natural appearance, wearing olive green oversized canvas jacket, faded black jeans, white Converse sneakers with worn rubber soles, dark brown hair in casual messy bun with loose strands framing face. Small silver nose ring (left nostril), canvas tote bag over shoulder with visible book corner protruding. Checking her phone while standing at street corner waiting for light. Authentic urban dweller aesthetic - not styled, genuinely everyday appearance. Height approximately 5'6", athletic casual build, minimal makeup, natural expression shows mild distraction/focus on phone screen.
 

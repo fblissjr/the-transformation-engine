@@ -1,51 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePrompts } from '../context/PromptContext';
 import { useApiKey } from '../context/ApiKeyContext';
+import { useGeneration } from '../context/GenerationContext';
 import { SparklesIcon, WandIcon, EditIcon } from './icons';
-import * as dbService from '../services/dbService';
+import IntermediateEditor from './intermediate/IntermediateEditor';
+import { ConversationThread } from './ConversationThread';
+import { ModelInfoDisplay } from './ModelInfoDisplay';
 import * as geminiService from '../services/geminiService';
 import * as configService from '../services/configService';
 import * as promptService from '../services/promptService';
+import { taskRouter } from '../services/taskRouter';
+import { TASK_IDS } from '../types/providers';
+import { transformToModel } from '../services/transformers';
+import { useMediaBlobUrls } from '../hooks/useMediaBlobUrls';
 import { MediaReference, MixOption, Prompt } from '../types';
 import { GEMINI_MODEL_NAME, BUILT_IN_MIX_OPTIONS, DEFAULT_MODEL_SETTINGS } from '../constants';
-
-// Custom hook to manage blob URLs for media references
-function useMediaBlobUrls(mediaReferences: MediaReference[]): Map<string, string> {
-  const [blobUrls, setBlobUrls] = useState<Map<string, string>>(new Map());
-
-  useEffect(() => {
-    const loadBlobUrls = async () => {
-      const newBlobUrls = new Map<string, string>();
-
-      for (const ref of mediaReferences) {
-        if (ref.blobId) {
-          const url = await dbService.getMediaBlobUrl(ref.blobId);
-          if (url) {
-            newBlobUrls.set(ref.id, url);
-          }
-        } else if (ref.dataUrl) {
-          // Legacy: use dataUrl directly
-          newBlobUrls.set(ref.id, ref.dataUrl);
-        }
-      }
-
-      setBlobUrls(newBlobUrls);
-    };
-
-    loadBlobUrls();
-
-    // Cleanup: revoke blob URLs on unmount
-    return () => {
-      blobUrls.forEach(url => {
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      });
-    };
-  }, [mediaReferences]);
-
-  return blobUrls;
-}
 
 const CenterPanel: React.FC = () => {
   const {
@@ -70,6 +39,19 @@ const CenterPanel: React.FC = () => {
     addPrompt,
   } = usePrompts();
   const { apiKey } = useApiKey();
+  const {
+    useIntermediateMode,
+    setUseIntermediateMode,
+    generatedIntermediate,
+    selectedExportModel,
+    setSelectedExportModel,
+    cancelGeneration,
+    // Phase 11.3: Revision request flow
+    revisionRequest,
+    conversationHistory,
+    answerRevisionRequest,
+    clearRevisionRequest,
+  } = useGeneration();
 
   // Load blob URLs for media references
   const mediaBlobUrls = useMediaBlobUrls(mediaReferences);
@@ -80,12 +62,20 @@ const CenterPanel: React.FC = () => {
   const [showAddCustomMixOption, setShowAddCustomMixOption] = useState(false);
   const [customMixOptionName, setCustomMixOptionName] = useState('');
   const [customMixOptionInstruction, setCustomMixOptionInstruction] = useState('');
+  const [editingMixOptionId, setEditingMixOptionId] = useState<string | null>(null);
+  const [viewingMixOptionId, setViewingMixOptionId] = useState<string | null>(null);
   const [showPromptPreview, setShowPromptPreview] = useState(false);
   const [editedSystemPrompt, setEditedSystemPrompt] = useState<string | null>(null);
   const [editedUserPrompt, setEditedUserPrompt] = useState<string | null>(null);
   const [isEditingPrompts, setIsEditingPrompts] = useState(false);
   const [templateOverride, setTemplateOverride] = useState<'auto' | 'generic'>('auto');
+  const [showIntermediateEditor, setShowIntermediateEditor] = useState(false);
   const configFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Collapsible sections state
+  const [showMixOptions, setShowMixOptions] = useState(false);
+  const [showSchemaDesigner, setShowSchemaDesigner] = useState(false);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   // Detect which template will be used based on schema keys
   const detectTemplateModel = (): 'sora2' | 'veo3' | 'generic' => {
@@ -244,6 +234,35 @@ const CenterPanel: React.FC = () => {
     }));
   };
 
+  const startEditingMixOption = (option: MixOption) => {
+    setEditingMixOptionId(option.id);
+    setCustomMixOptionName(option.name);
+    setCustomMixOptionInstruction(option.instruction);
+    setShowAddCustomMixOption(false);
+  };
+
+  const updateMixOption = () => {
+    if (editingMixOptionId && customMixOptionName && customMixOptionInstruction) {
+      setSettings(prev => ({
+        ...prev,
+        mixOptions: prev.mixOptions.map(opt =>
+          opt.id === editingMixOptionId
+            ? { ...opt, name: customMixOptionName, instruction: customMixOptionInstruction }
+            : opt
+        )
+      }));
+      setEditingMixOptionId(null);
+      setCustomMixOptionName('');
+      setCustomMixOptionInstruction('');
+    }
+  };
+
+  const cancelEditingMixOption = () => {
+    setEditingMixOptionId(null);
+    setCustomMixOptionName('');
+    setCustomMixOptionInstruction('');
+  };
+
   // Export/Import handlers
   const handleExportConfig = () => {
     try {
@@ -289,15 +308,17 @@ const CenterPanel: React.FC = () => {
 
   // Handle generation with optional custom prompts
   const handleGenerate = async () => {
-    // If there are no edited prompts, use the regular generate function
+    // If there are no edited prompts, use the regular generate function from context
     if (!editedSystemPrompt && !editedUserPrompt) {
       await generate();
       return;
     }
 
     // Custom generation with edited prompts
+    // NOTE: This is a power-user feature that bypasses the normal generation flow
+    // It allows direct manipulation of system and user prompts
     if (!apiKey) {
-      alert('Please set your Gemini API key to generate prompts.');
+      alert('Please configure a provider in Settings → Providers tab.');
       return;
     }
 
@@ -305,10 +326,15 @@ const CenterPanel: React.FC = () => {
     const systemPrompt = editedSystemPrompt || promptService.generatePrimaryPrompt(naturalLanguageInput, settings);
 
     try {
-      // Call API with custom prompts - combine system + user
-      const combinedPrompt = `${systemPrompt}\n\n**User Input:**\n${userInput}`;
-      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-      const result = await geminiService.generateContent(apiKey, combinedPrompt, modelSettings);
+      // Use taskRouter for multi-provider support (even in custom prompt mode)
+      const turn = await taskRouter.executeTask(
+        TASK_IDS.PRIMARY_GENERATION,
+        userInput,
+        systemPrompt,
+        {}
+      );
+
+      const result = turn.response;
 
       // Set the output and save to DB
       setStructuredOutput(result);
@@ -360,10 +386,10 @@ const CenterPanel: React.FC = () => {
 
   return (
     <main className="flex-1 h-full flex flex-col bg-gray-950">
-      <div className="flex-1 p-4 flex flex-col gap-4 overflow-y-auto">
+      <div className="flex-1 p-2 sm:p-4 flex flex-col gap-3 sm:gap-4 overflow-y-auto pt-16 lg:pt-4">
         {/* Main Prompt Input */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
             <label htmlFor="main-input" className="text-sm font-semibold text-white flex items-center gap-2">
               <SparklesIcon className="w-4 h-4 text-amber-500" />
               Your Creative Idea
@@ -464,6 +490,135 @@ const CenterPanel: React.FC = () => {
           </div>
         </div>
 
+        {/* Phase 11.3: Conversation Thread for REVISION_REQUEST (Veo 3.1 scene-type detection) */}
+        {revisionRequest && (
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
+            <ConversationThread
+              revisionRequest={revisionRequest}
+              conversationHistory={conversationHistory}
+              onSubmitAnswers={answerRevisionRequest}
+              onCancel={clearRevisionRequest}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
+
+        {/* Primary Action Buttons - Prominent Section */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
+          {/* Phase 9.4: Intermediate Mode Toggle */}
+          <div className="mb-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useIntermediateMode}
+                onChange={(e) => setUseIntermediateMode(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-600 text-amber-500 focus:ring-amber-500 focus:ring-offset-gray-900"
+              />
+              <span className="text-sm font-medium text-gray-200">
+                Generate as Intermediate (recommended)
+              </span>
+            </label>
+            {useIntermediateMode && (
+              <p className="text-xs text-gray-400 mt-2">
+                Creates model-agnostic representation. Transform to any format instantly without regenerating.
+              </p>
+            )}
+          </div>
+
+          {/* Phase 9.4: Model Selector (shown after generation in intermediate mode) */}
+          {useIntermediateMode && generatedIntermediate && (
+            <div className="mb-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Export Format:
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={selectedExportModel}
+                  onChange={(e) => {
+                    const newModel = e.target.value as 'sora2' | 'veo3' | 'generic';
+                    setSelectedExportModel(newModel);
+                    // Re-transform intermediate to new format
+                    const transformed = transformToModel(generatedIntermediate, newModel);
+                    setStructuredOutput(transformed);
+                  }}
+                  className="flex-1 bg-gray-900 border border-gray-600 text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                >
+                  <option value="sora2">Sora 2 (OpenAI)</option>
+                  <option value="veo3">Veo 3 (Google)</option>
+                  <option value="generic">Generic</option>
+                </select>
+                <button
+                  onClick={async () => {
+                    // Save intermediate as prompt with current format
+                    const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
+                      title: generatedIntermediate.title,
+                      naturalLanguageInput: generatedIntermediate.sources.text || '',
+                      structuredOutput: structuredOutput,
+                      normalizedOutput: '',
+                      settingsSnapshot: JSON.stringify(settings),
+                      tags: '[]',
+                      isFavorite: false,
+                    };
+                    const savedPrompt = await addPrompt(newPromptData);
+                    selectPrompt(savedPrompt);
+                    alert('Saved to library!');
+                  }}
+                  className="bg-green-600 hover:bg-green-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors whitespace-nowrap"
+                >
+                  Save to Library
+                </button>
+              </div>
+            </div>
+          )}
+
+          {(isLoading || isDescribing) && (
+            <div className="mb-3">
+              <div className="w-full bg-gray-700 rounded-full h-1.5 mb-1">
+                <div
+                  className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              {(loadingMessage || describingMessage) && (
+                <p className="text-xs text-gray-400 text-center animate-pulse">
+                  {loadingMessage || describingMessage}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            {isLoading ? (
+              <button
+                onClick={cancelGeneration}
+                className="flex-1 bg-red-600 text-white font-bold py-3 px-4 sm:px-6 rounded-lg shadow-lg hover:bg-red-500 transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span>Cancel Request</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleGenerate}
+                disabled={!naturalLanguageInput}
+                className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-3 px-4 sm:px-6 rounded-lg shadow-lg hover:from-amber-500 hover:to-orange-500 hover:shadow-amber-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              >
+                <SparklesIcon className="w-4 h-4" />
+                <span>Generate Prompt</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowIntermediateEditor(true)}
+              className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:flex-none"
+            >
+              <EditIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">Create from Intermediate</span>
+              <span className="sm:hidden">Intermediate</span>
+            </button>
+          </div>
+        </div>
+
         {/* Template Selection - Prominent Section */}
         <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-2 border-purple-500/50 rounded-lg p-4">
           <div className="flex items-start justify-between gap-4">
@@ -519,65 +674,145 @@ const CenterPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Format Selector */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-              </svg>
-              Output Format
-            </h3>
-            <div className="space-y-2">
-              <select
-                value={settings.format}
-                onChange={e => setSettings(s => ({...s, format: e.target.value}))}
-                className="w-full bg-gray-800 text-white text-sm border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="Standard YAML">YAML</option>
-                <option value="Standard XML">XML</option>
-                <option value="JSON">JSON</option>
-                <option value="Markdown">Markdown</option>
-                <option value="Emoji Script">Emoji Script</option>
-                <option value="Reversed YAML-like in XML">Reversed YAML/XML</option>
-              </select>
+        {/* Two Column Layout - Stack on mobile */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+          {/* Format Selector - Only shown in legacy mode */}
+          {!useIntermediateMode && (
+            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+                Final Output Format
+              </h3>
+              <div className="space-y-2">
+                <select
+                  value={settings.format}
+                  onChange={e => setSettings(s => ({...s, format: e.target.value}))}
+                  className="w-full bg-gray-800 text-white text-sm border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="Standard YAML">YAML</option>
+                  <option value="Markdown">Markdown</option>
+                  <option value="Natural Language">Natural Language</option>
+                  <option value="Standard XML">XML</option>
+                  <option value="JSON">JSON</option>
+                  <option value="Reversed YAML-like in XML">Reversed YAML/XML</option>
+                  <option value="Emoji Script">Emoji Script</option>
+                </select>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Mix Options */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+          {/* Mix Options - Collapsible */}
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setShowMixOptions(!showMixOptions)}
+              className="w-full p-3 sm:p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                <h3 className="text-sm font-semibold text-white">Mix Options</h3>
+                <span className="text-xs text-gray-500">(Transform output)</span>
+              </div>
+              <svg
+                className={`w-4 h-4 text-gray-400 transition-transform ${showMixOptions ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-              Mix Options
-            </h3>
-            <p className="text-xs text-gray-500 mb-3">Apply transformations to the output</p>
+            </button>
+            {showMixOptions && (
+              <div className="p-3 sm:p-4 pt-0 border-t border-gray-800">
             <div className="space-y-2">
               {settings.mixOptions?.map(option => (
-                <div key={option.id} className="flex items-center justify-between gap-2">
-                  <label className="flex items-center gap-2 flex-1 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={option.isEnabled}
-                      onChange={() => toggleMixOption(option.id)}
-                      className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-yellow-500 focus:ring-yellow-500 focus:ring-offset-gray-900"
-                    />
-                    <span className="text-sm text-white">{option.name}</span>
-                  </label>
-                  {!option.isBuiltIn && (
-                    <button
-                      onClick={() => removeCustomMixOption(option.id)}
-                      className="text-xs text-red-400 hover:text-red-300"
-                    >
-                      Remove
-                    </button>
+                <div key={option.id}>
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="flex items-center gap-2 flex-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={option.isEnabled}
+                        onChange={() => toggleMixOption(option.id)}
+                        className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-yellow-500 focus:ring-yellow-500 focus:ring-offset-gray-900"
+                      />
+                      <span className="text-sm text-white">{option.name}</span>
+                      {option.isBuiltIn && (
+                        <span className="text-xs text-gray-500">(built-in)</span>
+                      )}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setViewingMixOptionId(viewingMixOptionId === option.id ? null : option.id)}
+                        className="text-xs text-blue-400 hover:text-blue-300"
+                        title="View instruction"
+                      >
+                        {viewingMixOptionId === option.id ? 'Hide' : 'View'}
+                      </button>
+                      {!option.isBuiltIn && (
+                        <>
+                          <button
+                            onClick={() => startEditingMixOption(option)}
+                            className="text-xs text-yellow-400 hover:text-yellow-300"
+                            title="Edit option"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => removeCustomMixOption(option.id)}
+                            className="text-xs text-red-400 hover:text-red-300"
+                            title="Delete option"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {viewingMixOptionId === option.id && (
+                    <div className="mt-2 ml-6 p-2 bg-gray-800/50 rounded border border-gray-700">
+                      <p className="text-xs text-gray-300">{option.instruction}</p>
+                    </div>
                   )}
                 </div>
               ))}
-              {showAddCustomMixOption ? (
+              {editingMixOptionId ? (
+                <div className="mt-3 p-3 bg-gray-800/50 rounded border border-yellow-600 space-y-2">
+                  <div className="text-xs text-yellow-400 font-medium mb-2">Editing Mix Option</div>
+                  <input
+                    type="text"
+                    value={customMixOptionName}
+                    onChange={e => setCustomMixOptionName(e.target.value)}
+                    placeholder="Option name"
+                    className="w-full bg-gray-800 text-white text-xs border border-gray-700 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                  />
+                  <textarea
+                    value={customMixOptionInstruction}
+                    onChange={e => setCustomMixOptionInstruction(e.target.value)}
+                    placeholder="Instruction to LLM"
+                    rows={3}
+                    className="w-full bg-gray-800 text-white text-xs border border-gray-700 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={updateMixOption}
+                      className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-gray-900 text-xs font-medium px-3 py-1.5 rounded transition"
+                    >
+                      Update
+                    </button>
+                    <button
+                      onClick={cancelEditingMixOption}
+                      className="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium px-3 py-1.5 rounded transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : showAddCustomMixOption ? (
                 <div className="mt-3 p-3 bg-gray-800/50 rounded border border-gray-700 space-y-2">
+                  <div className="text-xs text-gray-400 font-medium mb-2">Add Custom Mix Option</div>
                   <input
                     type="text"
                     value={customMixOptionName}
@@ -589,7 +824,7 @@ const CenterPanel: React.FC = () => {
                     value={customMixOptionInstruction}
                     onChange={e => setCustomMixOptionInstruction(e.target.value)}
                     placeholder="Instruction to LLM (e.g., 'Use poetic and metaphorical language')"
-                    rows={2}
+                    rows={3}
                     className="w-full bg-gray-800 text-white text-xs border border-gray-700 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-yellow-500"
                   />
                   <div className="flex gap-2">
@@ -620,49 +855,42 @@ const CenterPanel: React.FC = () => {
                 </button>
               )}
             </div>
+              </div>
+            )}
           </div>
 
-          {/* Model Selector */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              AI Model
-            </h3>
-            <select
-              value={settings.modelName || GEMINI_MODEL_NAME}
-              onChange={e => setSettings(s => ({...s, modelName: e.target.value}))}
-              disabled={isLoadingModels}
-              className="w-full bg-gray-800 text-white text-sm border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {isLoadingModels ? (
-                <option>Loading models...</option>
-              ) : availableModels.length > 0 ? (
-                availableModels.map(model => (
-                  <option key={model.name} value={model.name}>
-                    {model.displayName}
-                  </option>
-                ))
-              ) : (
-                <option value={GEMINI_MODEL_NAME}>gemini-2.5-pro (default)</option>
-              )}
-            </select>
-          </div>
+          {/* Model & Sampler Info - Read-only display */}
+          <ModelInfoDisplay />
         </div>
 
-        {/* Schema Designer */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
+        {/* Schema Designer - Collapsible */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setShowSchemaDesigner(!showSchemaDesigner)}
+            className="w-full p-3 sm:p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+          >
             <div>
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Structure Fields
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">Define what sections the output should contain</p>
+                <h3 className="text-sm font-semibold text-white">Structure Fields</h3>
+                <span className="text-xs text-gray-500 hidden sm:inline">(Define output sections)</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5 sm:hidden">Define output sections</p>
             </div>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform ${showSchemaDesigner ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {showSchemaDesigner && (
+            <div className="p-3 sm:p-4 pt-0 border-t border-gray-800">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => inferSchema('additional')}
@@ -685,18 +913,20 @@ const CenterPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Presets */}
-          <div className="flex gap-2 mb-3">
-            <span className="text-xs text-gray-400 self-center">Quick:</span>
-            {PRESETS.map(preset => (
-              <button
-                key={preset.name}
-                onClick={() => applyPreset(preset.keys)}
-                className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white px-2 py-1 rounded transition-colors"
-              >
-                {preset.name}
-              </button>
-            ))}
+          {/* Presets - Wrap on mobile */}
+          <div className="mb-3">
+            <span className="text-xs text-gray-400 block mb-2">Quick Presets:</span>
+            <div className="flex flex-wrap gap-2">
+              {PRESETS.map(preset => (
+                <button
+                  key={preset.name}
+                  onClick={() => applyPreset(preset.keys)}
+                  className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white px-2 py-1 rounded transition-colors"
+                >
+                  {preset.name}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Sora 2 Tip */}
@@ -741,41 +971,68 @@ const CenterPanel: React.FC = () => {
               <span className="text-gray-500">Example:</span> {settings.schemaKeys[0]}: <span className="text-gray-300">"Your content here..."</span>
             </div>
           )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Bottom Bar with Generate */}
-      <div className="p-4 border-t border-gray-800 bg-gray-900/80 backdrop-blur-sm flex items-center gap-3 shrink-0">
-        {/* Export/Import Config */}
-        <div className="flex items-center gap-2">
+      {/* Bottom Bar - Collapsible Advanced Section */}
+      <div className="border-t border-gray-800 bg-gray-900/80 backdrop-blur-sm shrink-0">
+        {/* Export/Import Config - Collapsible */}
+        <div className="bg-gray-900/50 border-b border-gray-800">
           <button
-            onClick={handleExportConfig}
-            title="Export configuration"
-            className="flex items-center gap-2 text-gray-400 hover:text-white font-medium py-2 px-3 rounded-md hover:bg-gray-800 transition-colors text-sm"
+            onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+            className="w-full p-3 sm:p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              </svg>
+              <span className="text-sm font-medium text-gray-300">Advanced Settings</span>
+              <span className="text-xs text-gray-500">(Export/Import, Preview)</span>
+            </div>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform ${showAdvancedSettings ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
-            Export
           </button>
-          <input
-            ref={configFileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportConfig}
-            className="hidden"
-          />
-          <button
-            onClick={() => configFileInputRef.current?.click()}
-            title="Import configuration"
-            className="flex items-center gap-2 text-gray-400 hover:text-white font-medium py-2 px-3 rounded-md hover:bg-gray-800 transition-colors text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L9 8m4-4v12" />
-            </svg>
-            Import
-          </button>
-        </div>
+          {showAdvancedSettings && (
+            <div className="p-3 sm:p-4 pt-0 border-t border-gray-800 space-y-3">
+              {/* Export/Import Config */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-gray-400 mr-2">Configuration:</span>
+                <button
+                  onClick={handleExportConfig}
+                  title="Export configuration"
+                  className="flex items-center gap-2 text-gray-400 hover:text-white font-medium py-2 px-3 rounded-md hover:bg-gray-800 transition-colors text-xs"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export
+                </button>
+                <input
+                  ref={configFileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportConfig}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => configFileInputRef.current?.click()}
+                  title="Import configuration"
+                  className="flex items-center gap-2 text-gray-400 hover:text-white font-medium py-2 px-3 rounded-md hover:bg-gray-800 transition-colors text-xs"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L9 8m4-4v12" />
+                  </svg>
+                  Import
+                </button>
+              </div>
 
         {/* Prompt Preview Section */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
@@ -894,45 +1151,22 @@ const CenterPanel: React.FC = () => {
             </div>
           )}
         </div>
-
-        <div className="flex-1">
-          {(isLoading || isDescribing) && (
-            <div className="mb-2">
-              <div className="w-full bg-gray-700 rounded-full h-1.5 mb-1">
-                <div
-                  className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              {(loadingMessage || describingMessage) && (
-                <p className="text-xs text-gray-400 text-center animate-pulse">
-                  {loadingMessage || describingMessage}
-                </p>
-              )}
             </div>
           )}
-          <button
-            onClick={handleGenerate}
-            disabled={isLoading || !naturalLanguageInput}
-            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-lg hover:from-amber-500 hover:to-orange-500 hover:shadow-amber-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
-          >
-            {isLoading ? (
-              <>
-                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Generating...</span>
-              </>
-            ) : (
-              <>
-                <SparklesIcon className="w-4 h-4" />
-                <span>Generate Prompt</span>
-              </>
-            )}
-          </button>
         </div>
       </div>
+
+      {/* Intermediate Editor Modal */}
+      {showIntermediateEditor && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-5xl h-[90vh] bg-gray-950 rounded-lg shadow-2xl overflow-hidden">
+            <IntermediateEditor
+              onSave={() => setShowIntermediateEditor(false)}
+              onCancel={() => setShowIntermediateEditor(false)}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 };
