@@ -1,12 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useMemo } from 'react';
 import { Prompt, GenerationMetadata } from '../types';
 import { STRINGS } from '../constants';
 import {
-  generatePrimaryPromptV2,
-  generateNormalizePromptV2,
-  generateMixPromptV2,
-  generateSchemaInferencePromptV2,
+  generateNormalizePrompt,
+  generateMixPrompt,
+  generateSchemaInferencePrompt,
   generateIntermediate,
   detectTargetModelFromIntermediate,
   fragmentLoader
@@ -15,7 +14,7 @@ import * as intermediateService from '../services/db/intermediateService';
 import { transformToModel } from '../services/transformers';
 import * as versionService from '../services/versionService';
 import * as dbService from '../services/dbService';
-import { useApiKey } from './ApiKeyContext';
+import { useProviders } from './ProviderContext';
 import { useActivePrompt } from './ActivePromptContext';
 import { useMedia } from './MediaContext';
 import { usePromptLibrary } from './PromptLibraryContext';
@@ -53,9 +52,7 @@ interface GenerationContextType {
   normalize: (transformInstruction?: string) => Promise<void>;
   mixPrompts: () => Promise<void>;
   inferSchema: (mode: 'additional' | 'full') => Promise<void>;
-  // Phase 9.4: Intermediate mode
-  useIntermediateMode: boolean;
-  setUseIntermediateMode: (value: boolean) => void;
+  // Intermediate mode (always enabled)
   generatedIntermediate: any | null;
   selectedExportModel: 'sora2' | 'veo3' | 'generic';
   setSelectedExportModel: (model: 'sora2' | 'veo3' | 'generic') => void;
@@ -76,7 +73,11 @@ interface GenerationContextType {
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
 
 export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const { apiKey } = useApiKey();
+  const { providers } = useProviders();
+  const apiKey = useMemo(() => {
+    const defaultProvider = providers.find(p => p.enabled);
+    return defaultProvider?.apiKeys?.[0]?.key || null;
+  }, [providers]);
   const {
     naturalLanguageInput,
     settings,
@@ -99,8 +100,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   const [progress, setProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState('');
 
-  // Phase 9.4: Intermediate mode state
-  const [useIntermediateMode, setUseIntermediateMode] = useState(true); // Default to intermediate mode
+  // Intermediate mode state (always enabled)
   const [generatedIntermediate, setGeneratedIntermediate] = useState<any | null>(null);
   const [selectedExportModel, setSelectedExportModel] = useState<'sora2' | 'veo3' | 'generic'>('sora2');
 
@@ -136,149 +136,49 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     setNormalizedOutput('');
 
     try {
-      if (useIntermediateMode) {
-        // NEW: Phase 9.4 - Intermediate-first generation
-        setLoadingMessage('Generating semantic intermediate...');
-        setProgress(20);
+      // Intermediate-first generation (previously Phase 9.4)
+      setLoadingMessage('Generating semantic intermediate...');
+      setProgress(20);
 
-        const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
-        const apiStartTime = Date.now();
+      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
+      const apiStartTime = Date.now();
 
-        // Generate intermediate structure
-        const intermediate = await generateIntermediate(
-          naturalLanguageInput,
-          apiKey,
-          {
-            modelName: modelSettings?.modelName,
-            temperature: 0.7,
-          },
-          settings
-        );
-        const apiLatencyMs = Date.now() - apiStartTime;
+      // Generate intermediate structure
+      const intermediate = await generateIntermediate(
+        naturalLanguageInput,
+        apiKey,
+        {
+          modelName: modelSettings?.modelName,
+          temperature: 0.7,
+        },
+        settings
+      );
+      const apiLatencyMs = Date.now() - apiStartTime;
 
-        setLoadingMessage('Saving intermediate to library...');
-        setProgress(50);
+      setLoadingMessage('Saving intermediate to library...');
+      setProgress(50);
 
-        // Save to intermediates store
-        await intermediateService.createIntermediate(intermediate);
-        setGeneratedIntermediate(intermediate);
+      // Save to intermediates store
+      await intermediateService.createIntermediate(intermediate);
+      setGeneratedIntermediate(intermediate);
 
-        setLoadingMessage('Detecting best model format...');
-        setProgress(70);
+      setLoadingMessage('Detecting best model format...');
+      setProgress(70);
 
-        // Auto-detect target model
-        const targetModel = detectTargetModelFromIntermediate(intermediate);
-        setSelectedExportModel(targetModel);
+      // Auto-detect target model
+      const targetModel = detectTargetModelFromIntermediate(intermediate);
+      setSelectedExportModel(targetModel);
 
-        setLoadingMessage('Transforming to model format...');
-        setProgress(85);
+      setLoadingMessage('Transforming to model format...');
+      setProgress(85);
 
-        // Transform to model-specific YAML
-        const transformed = transformToModel(intermediate, targetModel);
-        setStructuredOutput(transformed);
+      // Transform to model-specific YAML
+      const transformed = transformToModel(intermediate, targetModel);
+      setStructuredOutput(transformed);
 
-        setLoadingMessage('Complete!');
-        setProgress(100);
-        setTimeout(() => setLoadingMessage(''), 500);
-      } else {
-        // LEGACY: Original YAML generation flow
-        setLoadingMessage('Composing prompt template...');
-        setProgress(20);
-        const generationFullPrompt = await generatePrimaryPromptV2(naturalLanguageInput, settings);
-
-        // Capture which fragments were used in this generation
-        const fragmentsUsed = fragmentLoader.getLoadedFragments();
-
-        setLoadingMessage('Sending request to AI provider...');
-        setProgress(40);
-
-        // Use taskRouter for multi-provider support
-        const turn = await taskRouter.executeTask(
-          TASK_IDS.PRIMARY_GENERATION,
-          naturalLanguageInput,
-          generationFullPrompt,
-          {
-            enableStreaming,
-            onToken: enableStreaming ? (token) => {
-              // Update streaming state
-            } : undefined,
-            onProgress: enableStreaming ? (state) => {
-              setStreamingState(state);
-            } : undefined,
-          }
-        );
-
-        const structuredRes = turn.response;
-        const apiLatencyMs = turn.latencyMs;
-
-        // Phase 11.3: Check for REVISION_REQUEST (Veo 3.1 scene-type detection)
-        const revisionCheck = parseRevisionRequest(structuredRes);
-        if (revisionCheck.isRevisionRequest) {
-          setLoadingMessage('Clarification needed...');
-          setProgress(100);
-          setRevisionRequest({
-            questions: revisionCheck.questions,
-            originalInput: naturalLanguageInput,
-            rawResponse: revisionCheck.rawResponse,
-          });
-          // Add assistant's question to conversation history
-          setConversationHistory([
-            { role: 'user', content: naturalLanguageInput, timestamp: Date.now() },
-            { role: 'assistant', content: structuredRes, timestamp: Date.now() },
-          ]);
-          setIsLoading(false);
-          setLoadingMessage('');
-          return; // Stop generation, wait for user's answers
-        }
-
-        setLoadingMessage('Saving prompt to library...');
-        setProgress(80);
-        setStructuredOutput(structuredRes);
-
-        const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
-          title: naturalLanguageInput.substring(0, 40) + '...',
-          naturalLanguageInput,
-          mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
-          structuredOutput: structuredRes,
-          normalizedOutput: '',
-          settingsSnapshot: JSON.stringify(settings),
-          tags: '[]',
-          isFavorite: false,
-        };
-        const savedPrompt = await addPrompt(newPromptData);
-
-        // Create metadata for version tracking
-        const metadata: GenerationMetadata = {
-          naturalLanguageInput,
-          mediaReferences: mediaReferences.length > 0 ? mediaReferences : undefined,
-          format: settings.format,
-          schemaKeys: settings.schemaKeys,
-          mixOptions: settings.mixOptions,
-          modelName: settings.modelName || 'gemini-2.5-pro',
-          systemPrompt: generationFullPrompt,
-          userPrompt: naturalLanguageInput,
-          operationType: 'generate',
-          apiLatencyMs,
-          fragmentsUsed,
-          branchName: 'main', // Default branch
-        };
-
-        // Add initial version with metadata
-        await versionService.addVersion(savedPrompt, metadata, undefined, 'main');
-
-        selectPrompt(savedPrompt);
-
-        // Update session token tracking
-        setSessionTokens(prev => ({
-          input: prev.input + turn.usage.promptTokens,
-          output: prev.output + turn.usage.completionTokens,
-          total: prev.total + turn.usage.totalTokens,
-        }));
-
-        setLoadingMessage('Complete!');
-        setProgress(100);
-        setTimeout(() => setLoadingMessage(''), 500);
-      }
+      setLoadingMessage('Complete!');
+      setProgress(100);
+      setTimeout(() => setLoadingMessage(''), 500);
     } catch (e: any) {
       if (e.name === 'AbortError') {
         setError('Request cancelled');
@@ -326,7 +226,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       } else {
         // Default: normalize to plain English
         setLoadingMessage('Composing normalization prompt...');
-        transformPrompt = await generateNormalizePromptV2(structuredOutput, 'English');
+        transformPrompt = await generateNormalizePrompt(structuredOutput, 'English');
       }
 
       setLoadingMessage('Sending transformation request to AI provider...');
@@ -401,7 +301,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
       setLoadingMessage('Composing synesthetic mix prompt...');
       setProgress(40);
-      const mixFullPrompt = await generateMixPromptV2(sourcePrompts, settings, guidance);
+      const mixFullPrompt = await generateMixPrompt(sourcePrompts, settings, guidance);
 
       // Capture fragments used in mix
       const fragmentsUsed = fragmentLoader.getLoadedFragments();
@@ -497,7 +397,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     try {
       setLoadingMessage('Analyzing input for schema suggestions...');
       setProgress(25);
-      const inferencePrompt = await generateSchemaInferencePromptV2(naturalLanguageInput, settings.schemaKeys, mode);
+      const inferencePrompt = await generateSchemaInferencePrompt(naturalLanguageInput, settings.schemaKeys, mode);
 
       setLoadingMessage('Requesting AI schema inference...');
       setProgress(50);
@@ -626,29 +526,29 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
         { role: 'user', content: answers, timestamp: Date.now() },
       ]);
 
-      setLoadingMessage('Composing prompt template...');
+      setLoadingMessage('Generating semantic intermediate...');
       setProgress(40);
 
-      // Regenerate with enhanced context
-      const generationFullPrompt = await generatePrimaryPromptV2(enhancedInput, settings);
-
-      setLoadingMessage('Sending request to AI provider...');
-      setProgress(60);
-
-      // Use taskRouter for multi-provider support
-      const turn = await taskRouter.executeTask(
-        TASK_IDS.PRIMARY_GENERATION,
+      // Regenerate with enhanced context using intermediate-first approach
+      const intermediate = await generateIntermediate(
         enhancedInput,
-        generationFullPrompt,
+        apiKey,
         {
-          enableStreaming,
-          onProgress: enableStreaming ? (state) => {
-            setStreamingState(state);
-          } : undefined,
-        }
+          modelName: settings.modelName,
+          temperature: 0.7,
+        },
+        settings
       );
 
-      const structuredRes = turn.response;
+      // Save to intermediates store
+      await intermediateService.createIntermediate(intermediate);
+
+      setLoadingMessage('Transforming to model format...');
+      setProgress(60);
+
+      // Auto-detect target model and transform
+      const targetModel = detectTargetModelFromIntermediate(intermediate);
+      const structuredRes = transformToModel(intermediate, targetModel);
 
       // Add assistant's final response to conversation history
       setConversationHistory(prev => [
@@ -702,9 +602,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     normalize,
     mixPrompts,
     inferSchema,
-    // Phase 9.4: Intermediate mode
-    useIntermediateMode,
-    setUseIntermediateMode,
+    // Intermediate mode (always enabled)
     generatedIntermediate,
     selectedExportModel,
     setSelectedExportModel,

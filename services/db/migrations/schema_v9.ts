@@ -1,17 +1,17 @@
 /**
- * Schema Version 9 Migration
+ * Database Schema Migration
  *
- * Clean slate schema with all Phase 10 and Phase 11 features.
+ * Clean slate schema with all features.
  * No auto-migration from previous versions - users keep existing data.
  *
  * Database name: TransformationEngineDB (NEVER changes)
- * Schema version: 9 (increments for schema changes)
+ * Schema version: 9 (current version)
  */
 
 import { IDBPDatabase } from 'idb';
 
-export function applySchemaV9(db: IDBPDatabase, oldVersion: number, newVersion: number | null, tx: any) {
-  console.log(`[Migration] Applying schema version 9 (from v${oldVersion})`);
+export function applySchema(db: IDBPDatabase, oldVersion: number, newVersion: number | null, tx: any) {
+  console.log(`[Migration] Applying schema (from v${oldVersion})`);
 
   // Core Stores (Phases 1-9)
   if (!db.objectStoreNames.contains('prompts')) {

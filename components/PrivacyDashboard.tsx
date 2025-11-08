@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { networkMonitor, NetworkRequest } from '../services/networkMonitor';
-import { useApiKey } from '../context/ApiKeyContext';
+import { useProviders } from '../context/ProviderContext';
 
 interface PrivacyDashboardProps {
   isOpen: boolean;
@@ -8,16 +8,15 @@ interface PrivacyDashboardProps {
 }
 
 export const PrivacyDashboard: React.FC<PrivacyDashboardProps> = ({ isOpen, onClose }) => {
-  const { getApiKeyExpiration, apiKey } = useApiKey();
+  const { providers } = useProviders();
+  const apiKey = providers.find(p => p.enabled)?.apiKeys?.[0]?.key || null;
   const [requests, setRequests] = useState<NetworkRequest[]>([]);
-  const [apiKeyExpiry, setApiKeyExpiry] = useState<number | null>(null);
   const [storageSize, setStorageSize] = useState<{ prompts: number; media: number }>({ prompts: 0, media: 0 });
 
   useEffect(() => {
     if (isOpen) {
       // Load current state
       setRequests(networkMonitor.getRequests());
-      loadApiKeyExpiry();
       estimateStorageSize();
 
       // Subscribe to new requests
@@ -28,11 +27,6 @@ export const PrivacyDashboard: React.FC<PrivacyDashboardProps> = ({ isOpen, onCl
       return unsubscribe;
     }
   }, [isOpen]);
-
-  const loadApiKeyExpiry = async () => {
-    const expiry = await getApiKeyExpiration();
-    setApiKeyExpiry(expiry);
-  };
 
   const estimateStorageSize = async () => {
     if ('storage' in navigator && 'estimate' in navigator.storage) {
@@ -111,7 +105,7 @@ export const PrivacyDashboard: React.FC<PrivacyDashboardProps> = ({ isOpen, onCl
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <div>
-                  <strong>Encrypted API Key:</strong> Your API key is encrypted in browser storage (AES-GCM). {apiKey && apiKeyExpiry && `Expires: ${new Date(apiKeyExpiry).toLocaleString()}`}
+                  <strong>Encrypted API Key:</strong> Your API key is encrypted in browser storage (AES-GCM). {apiKey ? 'Active' : 'Not configured'}
                 </div>
               </div>
             </div>

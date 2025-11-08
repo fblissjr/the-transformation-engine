@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ApiKeyProvider } from './context/ApiKeyContext';
 import { PromptProvider, usePrompts } from './context/PromptContext';
-import { IntermediateProvider } from './context/IntermediateContext';
 import { ProviderProvider } from './context/ProviderContext';
 import LeftPanel from './components/LeftPanel';
 import CenterPanel from './components/CenterPanel';
@@ -35,15 +33,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <ApiKeyProvider>
-      <PromptProvider>
-        <ProviderProvider>
-          <IntermediateProvider>
-            {renderRoute()}
-          </IntermediateProvider>
-        </ProviderProvider>
-      </PromptProvider>
-    </ApiKeyProvider>
+    <PromptProvider>
+      <ProviderProvider>
+        {renderRoute()}
+      </ProviderProvider>
+    </PromptProvider>
   );
 };
 

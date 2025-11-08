@@ -1,252 +1,264 @@
 ---
 version: 2.0
 type: intermediate_generation
-purpose: Generate model-agnostic semantic intermediate representation
+purpose: Generate model-agnostic semantic intermediate representation (v2.0 structured JSON)
 ---
 
-@include[roles/expert_role_template.md | expertise="semantic video scene understanding and structured prompt engineering" | capabilities="analyze natural language and extract temporal, visual, audio, and camera elements into a model-agnostic intermediate representation" | domain="text-to-video AI systems, multi-modal generation, semantic scene decomposition"]
+@include[roles/expert_role_template.md | expertise="semantic video scene understanding and structured prompt engineering" | capabilities="analyze natural language and extract temporal, visual, audio, and camera elements into a structured JSON representation" | domain="text-to-video AI systems, multi-modal generation, semantic scene decomposition"]
 
 ## Your Task
 
-Convert the user's natural language input into a **semantic intermediate representation** that can be transformed into prompts for multiple text-to-video models (Sora 2, Veo 3, and future models).
+Convert the user's natural language input into a **structured JSON intermediate representation** (v2.0) that can be transformed into prompts for multiple text-to-video models (Sora 2, Veo 3, and future models).
 
-DO NOT generate model-specific YAML or format-specific output. Instead, extract the underlying semantic content into structured sections.
+DO NOT generate model-specific YAML or format-specific output. Instead, extract the underlying semantic content into structured JSON sections.
 
 ## Input
 
 {{naturalLanguageInput}}
 
-## Output Structure
+## Output Format: Structured JSON v2.0
 
-**User Schema Fields (if provided):** {{schemaKeys}}
+You MUST respond with valid JSON matching this exact structure:
 
-If the user has provided custom schema fields above, use those as your section headers (## FieldName) and structure your response accordingly. Otherwise, use the standard structure below.
+```json
+{
+  "format": "structured",
+  "version": "2.0.0",
+  "sceneType": "<scene-type>",
+  "sections": {
+    "visual": { /* REQUIRED */ },
+    "temporal": [ /* OPTIONAL */ ],
+    "audio": { /* OPTIONAL */ },
+    "camera": { /* OPTIONAL */ }
+  }
+}
+```
 
-Return a Markdown document with the following structure:
+### Scene Types
 
-```markdown
-## Temporal
+Choose ONE that best matches the input:
+- `dialogue` - Conversation-focused scenes
+- `cinematic` - Narrative-driven scenes with camera work
+- `animation` - Animated or motion-graphics scenes
+- `music-video` - Music-driven scenes with rhythm
+- `action` - High-energy scenes with movement
+- `establishing` - Setting/location establishment
+- `product` - Product showcase/commercial
+- `abstract` - Non-narrative, experimental
 
-### Segment 1 (0-3s)
-- **Description**: What happens during this time segment
-- **Camera**: Camera behavior (optional)
-- **Visual**: Visual changes (optional)
-- **Audio**: Audio changes (optional)
+### Visual Section (REQUIRED)
 
-## Visual
+ALWAYS include this section with ALL fields:
 
-- **Setting**: Where the scene takes place
-- **Subjects**: Who or what is in the scene
-- **Environment**: Environmental details
-- **Colors**: Color palette description
-- **Lighting**: Lighting characteristics
-- **Composition**: Framing and composition
-- **Style**: Visual aesthetic and style
+```json
+"visual": {
+  "subject": ["array", "of", "subjects"],  // Who/what is in scene (min 1 item)
+  "setting": "where scene takes place",
+  "environment": "environmental details",
+  "colors": "dominant color palette",
+  "lighting": "lighting characteristics",
+  "composition": "framing and arrangement",
+  "style": "visual aesthetic"
+}
+```
 
-## Audio
+### Temporal Section (OPTIONAL)
 
-- **Dialogue**: "Quoted spoken words (if any)"
-- **Ambient**: Background environmental sounds
-- **Sound Effects**: Specific sound effects or foley
-- **Music**: Musical elements or soundtrack
+Include ONLY if scene has clear time progression:
 
-## Camera
+```json
+"temporal": [
+  {
+    "time": "0-3s",
+    "description": "what happens during segment",
+    "camera": "camera behavior (optional)",
+    "visual": "visual changes (optional)",
+    "audio": "audio changes (optional)"
+  }
+]
+```
 
-- **Movement**: Camera motion description
-- **Angles**: Camera angles and perspective
-- **Techniques**: Cinematic techniques (lens, aperture, focus, etc.)
+### Audio Section (OPTIONAL)
+
+Include ONLY if scene has notable sound elements:
+
+```json
+"audio": {
+  "dialogue": ["quoted", "speech"],      // optional
+  "ambient": ["environmental", "sounds"], // optional
+  "soundEffects": ["specific", "sounds"], // optional
+  "music": "musical elements"             // optional
+}
+```
+
+### Camera Section (OPTIONAL)
+
+Include ONLY if scene has specific camera work:
+
+```json
+"camera": {
+  "movement": "camera motion",              // optional
+  "angles": ["specific", "angles"],         // optional
+  "techniques": "cinematic techniques",     // optional
+  "lensDetails": "lens specs"               // optional
+}
 ```
 
 ## Semantic Extraction Guidelines
 
-### Temporal Structure
-- Break down the scene into time-based segments if there's progression
-- Each segment should describe what happens during that time window
-- Include timing in seconds (0-10 for typical video clips)
-- Only include temporal segments if the scene has clear progression over time
-- If the scene is static or a single moment, you may omit the temporal section
+### Visual Structure (ALL FIELDS REQUIRED)
+- **subject**: Array of who/what is in scene (e.g., ["woman walking"], ["car", "cityscape"])
+- **setting**: Physical location (e.g., "beach at sunset", "urban street at night")
+- **environment**: Surrounding details (e.g., "sandy shore with gentle waves, open horizon")
+- **colors**: Dominant palette (e.g., "warm golden orange, deep blue ocean")
+- **lighting**: Quality/direction (e.g., "natural golden hour backlighting from setting sun")
+- **composition**: Framing (e.g., "subject in left third, walking toward right")
+- **style**: Aesthetic (e.g., "cinematic naturalism with warm color grading")
 
-### Visual Structure
-- **Setting**: Physical location and context
-- **Subjects**: Main characters, objects, or focal points (use array for multiple)
-- **Environment**: Surrounding details, weather, atmosphere
-- **Colors**: Dominant color palette, mood-setting colors
-- **Lighting**: Quality, direction, intensity of light
-- **Composition**: How elements are arranged in frame
-- **Style**: Artistic approach, visual treatment
+### Temporal Structure (INCLUDE IF APPLICABLE)
+- Break scene into time-based segments if there's progression
+- Use format "0-3s", "3-7s", etc. for time field
+- Each segment describes what happens during that window
+- OMIT if scene is static or single moment
 
-### Audio Structure
-- **Dialogue**: Any spoken words (use quotes if specific)
-- **Ambient**: Background environmental sounds that create atmosphere
-- **Sound Effects**: Specific sounds tied to actions or events
-- **Music**: Musical elements, score, or soundtrack characteristics
-- Only include audio fields that are relevant to the scene
+### Audio Structure (INCLUDE IF APPLICABLE)
+- **dialogue**: Quoted speech as array items
+- **ambient**: Background environmental sounds as array
+- **soundEffects**: Specific sounds as array
+- **music**: Musical elements as string
+- OMIT entire section if no audio elements
 
-### Camera Structure
-- **Movement**: Dolly, pan, tilt, tracking, static, etc.
-- **Angles**: Eye-level, low-angle, high-angle, bird's-eye, etc.
-- **Techniques**: Lens choice, depth of field, focus pulling, aspect ratio
-- Only include camera fields that are specified or strongly implied
+### Camera Structure (INCLUDE IF APPLICABLE)
+- **movement**: Dolly, pan, tilt, tracking, static, etc.
+- **angles**: Array of angles (eye-level, low-angle, etc.)
+- **techniques**: Lens choice, depth of field, etc.
+- **lensDetails**: Focal length, aperture, etc.
+- OMIT entire section if no specific camera work
+
+## Examples
+
+### Example 1: Simple Cinematic Scene
+
+Input: "A woman walks along a beach at sunset"
+
+Output:
+```json
+{
+  "format": "structured",
+  "version": "2.0.0",
+  "sceneType": "cinematic",
+  "sections": {
+    "visual": {
+      "subject": ["woman walking"],
+      "setting": "beach at sunset",
+      "environment": "sandy shore with gentle waves lapping, open horizon with scattered clouds",
+      "colors": "warm golden orange from setting sun, deep blue ocean, soft purple sky",
+      "lighting": "natural golden hour backlighting from setting sun, warm rim light on subject",
+      "composition": "subject in left third of frame, walking toward right, ocean filling background",
+      "style": "cinematic naturalism with warm color grading, shallow depth of field"
+    },
+    "temporal": [
+      {
+        "time": "0-3s",
+        "description": "Woman walks steadily along the beach as the sun sets on the horizon",
+        "camera": "Slow dolly forward following the subject",
+        "visual": "Sunlight gradually dims, colors shift from golden to deep orange",
+        "audio": "Ocean waves grow slightly louder as camera approaches"
+      },
+      {
+        "time": "3-7s",
+        "description": "Woman continues walking, footsteps visible in wet sand",
+        "camera": "Camera maintains steady dolly forward",
+        "visual": "Sunset deepens, shadows lengthen",
+        "audio": "Waves consistent, gentle breeze audible"
+      }
+    ],
+    "audio": {
+      "ambient": ["gentle ocean waves", "soft breeze"],
+      "soundEffects": ["footsteps on wet sand"]
+    },
+    "camera": {
+      "movement": "slow dolly forward tracking the subject",
+      "angles": ["medium shot", "slightly low angle"],
+      "techniques": "shallow depth of field (f/2.8), natural light cinematography",
+      "lensDetails": "35mm focal length, f/2.8 aperture"
+    }
+  }
+}
+```
+
+### Example 2: Dialogue Scene
+
+Input: "Two people having coffee in a cafe, one says 'I've been thinking about what you said'"
+
+Output:
+```json
+{
+  "format": "structured",
+  "version": "2.0.0",
+  "sceneType": "dialogue",
+  "sections": {
+    "visual": {
+      "subject": ["person 1 seated", "person 2 seated across"],
+      "setting": "interior coffee shop",
+      "environment": "cozy cafe with warm lighting, coffee cups on table, comfortable seating",
+      "colors": "warm browns and creams, natural wood tones",
+      "lighting": "soft diffused interior lighting, natural window light from side",
+      "composition": "medium two-shot, subjects facing each other, balanced framing",
+      "style": "intimate conversational framing, warm naturalistic aesthetic"
+    },
+    "audio": {
+      "dialogue": ["I've been thinking about what you said"],
+      "ambient": ["quiet cafe atmosphere", "distant murmur of conversations"],
+      "soundEffects": ["coffee cup set down on table"]
+    },
+    "camera": {
+      "movement": "subtle push-in during dialogue",
+      "angles": ["eye-level", "slightly over-the-shoulder"],
+      "techniques": "conversational depth of field, standard framing"
+    }
+  }
+}
+```
+
+### Example 3: Static Establishing Shot
+
+Input: "A misty mountain range at dawn"
+
+Output:
+```json
+{
+  "format": "structured",
+  "version": "2.0.0",
+  "sceneType": "establishing",
+  "sections": {
+    "visual": {
+      "subject": ["mountain peaks"],
+      "setting": "mountain range at dawn",
+      "environment": "layers of misty mountains receding into distance, valleys filled with fog",
+      "colors": "soft blues and purples transitioning to warm dawn light, white mist",
+      "lighting": "early morning diffused light, sun rising behind peaks creating rim light",
+      "composition": "wide establishing shot, mountains layered from foreground to background",
+      "style": "serene landscape cinematography, atmospheric depth"
+    }
+  }
+}
+```
 
 ## Important Rules
 
 @include[rules/obscuring_figures_full.md]
 
-1. **Return ONLY Markdown** - Use ## for sections, - for bullet lists, **bold** for field names
-2. **All fields are optional** - Only include sections and fields that apply to the scene
-3. **Be semantic, not prescriptive** - Describe WHAT is happening, not HOW a specific model should render it
-4. **Preserve user intent** - If the user specifies details, capture them; if they're vague, extract the essence
-5. **Think multi-model** - The output should work for both audio-first (Veo 3) and visual-first (Sora 2) models
-6. **Format consistently** - Always use `- **FieldName**: value` format for clarity
-7. **Keep descriptions concise but complete** - Each field should be clear without being overly verbose
-
-## Examples
-
-### Example 1: Simple Scene
-
-Input: "A woman walks along a beach at sunset"
-
-Output:
-```markdown
-## Temporal
-
-### Segment 1 (0-10s)
-- **Description**: A woman walks steadily along the beach as the sun sets on the horizon
-- **Camera**: Slow dolly forward following the subject
-- **Visual**: Sunlight gradually dims, colors shift from golden to deep orange
-- **Audio**: Ocean waves grow slightly louder as camera approaches
-
-## Visual
-
-- **Setting**: Beach at sunset
-- **Subjects**: Woman walking
-- **Environment**: Sandy shore with gentle waves, open horizon
-- **Colors**: Warm golden and orange sunset hues, deep blue ocean
-- **Lighting**: Natural golden hour backlighting from setting sun
-- **Composition**: Subject positioned in left third of frame, walking toward right
-- **Style**: Cinematic naturalism with warm color grading
-
-## Audio
-
-- **Ambient**: Gentle ocean waves lapping at shore, soft breeze
-- **Sound Effects**: Footsteps on wet sand
-
-## Camera
-
-- **Movement**: Smooth dolly forward at walking pace
-- **Angles**: Eye-level perspective
-- **Techniques**: Shallow depth of field, 35mm focal length
-```
-
-### Example 2: Dialogue-Heavy Scene
-
-Input: "Two people having coffee in a cafe, one says 'I've been thinking about what you said'"
-
-Output:
-```markdown
-## Visual
-
-- **Setting**: Interior coffee shop
-- **Subjects**: Person 1 seated, Person 2 seated across
-- **Environment**: Cozy cafe with warm lighting, coffee cups on table
-- **Colors**: Warm browns and creams, natural wood tones
-- **Lighting**: Soft diffused interior lighting, natural window light
-- **Composition**: Medium two-shot, subjects facing each other
-- **Style**: Intimate conversational framing
-
-## Audio
-
-- **Dialogue**: "I've been thinking about what you said"
-- **Ambient**: Quiet cafe atmosphere, distant murmur of conversations
-- **Sound Effects**: Coffee cup being set down on table
-
-## Camera
-
-- **Movement**: Static or subtle push-in during dialogue
-- **Angles**: Eye-level, slightly over-the-shoulder
-- **Techniques**: Standard lens, conversational depth of field
-```
-
-### Example 3: Action Scene
-
-Input: "A car speeds through city streets at night, neon lights reflecting off wet pavement"
-
-Output:
-```markdown
-## Temporal
-
-### Segment 1 (0-3s)
-- **Description**: Car accelerates from intersection, tires squealing
-- **Camera**: Camera mounted low to ground, tracking alongside
-- **Visual**: Motion blur on background, sharp focus on car
-- **Audio**: Engine revving, tire squeal
-
-### Segment 2 (3-7s)
-- **Description**: Car weaves through traffic, navigating between vehicles
-- **Camera**: Camera follows with dynamic panning motion
-- **Visual**: Neon signs blur past, reflections dance across wet hood
-- **Audio**: Engine sustains high RPM, wind rushing, distant traffic
-
-### Segment 3 (7-10s)
-- **Description**: Car exits frame as camera holds on receding taillights
-- **Camera**: Camera slows to static wide shot
-- **Visual**: Red taillights fade into distance, neon glow remains
-- **Audio**: Engine sound fades, city ambiance returns
-
-## Visual
-
-- **Setting**: Urban city streets at night
-- **Subjects**: Speeding car
-- **Environment**: Wet pavement, neon signs, city traffic
-- **Colors**: Deep blacks, vibrant neon blues and pinks, reflective wet surfaces
-- **Lighting**: Artificial neon lighting, streetlights, car headlights
-- **Composition**: Dynamic framing with motion blur and leading lines
-- **Style**: Cyberpunk-inspired urban night cinematography
-
-## Audio
-
-- **Ambient**: City night atmosphere, distant traffic hum
-- **Sound Effects**: Car engine revving, tire squeals, wind rush
-- **Music**: Pulsing electronic score
-
-## Camera
-
-- **Movement**: Tracking shot following car, dynamic panning, static hold at end
-- **Angles**: Low-angle ground-level, side-tracking perspective
-- **Techniques**: Motion blur on background, sharp subject focus, wide-angle lens
-```
+1. **Output ONLY valid JSON** - No markdown code fences, no explanations
+2. **All visual fields are REQUIRED** - Never omit subject, setting, environment, colors, lighting, composition, or style
+3. **Optional sections only if applicable** - Omit temporal/audio/camera if not relevant
+4. **Subject must be array** - Even single subject: ["woman walking"]
+5. **Dialogue/ambient/soundEffects must be arrays** - Even single item: ["ocean waves"]
+6. **Time format strict** - Must match pattern "X-Ys" (e.g., "0-3s", "3-7s")
+7. **sceneType must match enum** - One of: dialogue, cinematic, animation, music-video, action, establishing, product, abstract
 
 ## Now Process the User's Input
 
-Analyze the natural language input above and extract the semantic content into the Markdown structure.
+Analyze the natural language input above and generate the structured JSON intermediate representation.
 
-**CRITICAL OUTPUT FORMAT RULES:**
-1. Your response must be ONLY valid Markdown
-2. Do NOT include markdown code fences (no ```markdown)
-3. Do NOT add explanations or commentary before or after
-4. Start directly with section headers (## Temporal, ## Visual, etc.)
-5. Use consistent formatting: `- **FieldName**: value`
-6. For temporal segments use `### Segment N (X-Ys)` format
-7. Omit sections that aren't relevant to the scene
-
-**Example of CORRECT format:**
-## Visual
-
-- **Setting**: Beach at sunset
-- **Subjects**: Woman walking
-
-## Audio
-
-- **Ambient**: Ocean waves
-
-**Example of INCORRECT format:**
-```markdown
-## Visual
-...
-```
-or
-Here is the intermediate representation:
-## Visual
-...
-
-Generate ONLY the Markdown now:
+**CRITICAL**: Your response must be ONLY valid JSON. No text before or after. Start with `{` and end with `}`.

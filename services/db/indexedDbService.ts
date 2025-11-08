@@ -2,7 +2,7 @@
 import { openDB, IDBPDatabase } from 'idb';
 import { Prompt, PromptVersion, SystemPromptConfig, AppSettings, MediaBlob } from '../../types';
 import { DB_NAME, DB_VERSION, STORE_NAMES } from '../../config/database';
-import { applySchemaV9 } from './migrations/schema_v9';
+import { applySchema } from './migrations/schema_v9';
 
 const PROMPTS_STORE_NAME = STORE_NAMES.prompts;
 const VERSIONS_STORE_NAME = STORE_NAMES.versions;
@@ -31,7 +31,7 @@ export async function initDB() {
       console.log(`[IndexedDB] Upgrading schema from v${oldVersion} to v${newVersion}`);
 
       // Apply clean schema (handles both fresh installs and upgrades)
-      applySchemaV9(db, oldVersion, newVersion, tx);
+      applySchema(db, oldVersion, newVersion, tx);
     },
   });
   console.log(`[IndexedDB] Database ready (schema v${db.version})`);

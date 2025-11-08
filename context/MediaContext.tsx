@@ -1,9 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useMemo } from 'react';
 import { MediaReference } from '../types';
 import * as geminiService from '../services/geminiService';
 import * as dbService from '../services/dbService';
-import { useApiKey } from './ApiKeyContext';
+import { useProviders } from './ProviderContext';
 import { useActivePrompt } from './ActivePromptContext';
 // TODO: Migrate to taskRouter once multimodal support is added to IProvider interface
 // Currently media description still uses geminiService.describeMedia() directly
@@ -21,7 +21,11 @@ interface MediaContextType {
 const MediaContext = createContext<MediaContextType | undefined>(undefined);
 
 export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const { apiKey } = useApiKey();
+  const { providers } = useProviders();
+  const apiKey = useMemo(() => {
+    const defaultProvider = providers.find(p => p.enabled);
+    return defaultProvider?.apiKeys?.[0]?.key || null;
+  }, [providers]);
   const { settings } = useActivePrompt();
   const [mediaReferences, setMediaReferences] = useState<MediaReference[]>([]);
   const [isDescribing, setIsDescribing] = useState(false);

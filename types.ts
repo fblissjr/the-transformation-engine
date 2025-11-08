@@ -28,6 +28,7 @@ export interface Prompt {
   tags: string; // JSON string of string[]
   createdAt: string;
   isFavorite: boolean;
+  intermediate?: string; // JSON string of IntermediatePrompt (model-agnostic representation)
 }
 
 export interface GenerationMetadata {

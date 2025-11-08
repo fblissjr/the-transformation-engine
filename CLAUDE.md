@@ -29,7 +29,7 @@ npm run build  # Production build
 ### For Developers (Start Here)
 **[internal/living-docs/00_INDEX.md](./internal/living-docs/00_INDEX.md)** - Complete technical documentation
 
-The living-docs contain 14 modular files covering:
+The living-docs contain 16 modular files covering:
 - Architecture & system design
 - Features & capabilities
 - Development guidelines

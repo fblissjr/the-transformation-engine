@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { usePrompts } from '../context/PromptContext';
-import { useApiKey } from '../context/ApiKeyContext';
 import { LogoIcon, PlusIcon, ImportIcon, ExportIcon, SettingsIcon, MixIcon, TrashIcon, StarIconFilled, StarIconOutline, CopyIcon, ShareIcon } from './icons';
 import * as dbService from '../services/dbService';
 import ShareModal from './ShareModal';

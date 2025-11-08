@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { usePrompts } from '../context/PromptContext';
-import { useApiKey } from '../context/ApiKeyContext';
+import { useProviders } from '../context/ProviderContext';
 import { useGeneration } from '../context/GenerationContext';
 import { SparklesIcon, WandIcon, EditIcon } from './icons';
-import IntermediateEditor from './intermediate/IntermediateEditor';
 import { ConversationThread } from './ConversationThread';
 import { ModelInfoDisplay } from './ModelInfoDisplay';
 import * as geminiService from '../services/geminiService';
@@ -38,10 +37,12 @@ const CenterPanel: React.FC = () => {
     selectPrompt,
     addPrompt,
   } = usePrompts();
-  const { apiKey } = useApiKey();
+  const { providers } = useProviders();
+  const apiKey = useMemo(() => {
+    const defaultProvider = providers.find(p => p.enabled);
+    return defaultProvider?.apiKeys?.[0]?.key || null;
+  }, [providers]);
   const {
-    useIntermediateMode,
-    setUseIntermediateMode,
     generatedIntermediate,
     selectedExportModel,
     setSelectedExportModel,
@@ -69,7 +70,6 @@ const CenterPanel: React.FC = () => {
   const [editedUserPrompt, setEditedUserPrompt] = useState<string | null>(null);
   const [isEditingPrompts, setIsEditingPrompts] = useState(false);
   const [templateOverride, setTemplateOverride] = useState<'auto' | 'generic'>('auto');
-  const [showIntermediateEditor, setShowIntermediateEditor] = useState(false);
   const configFileInputRef = useRef<HTMLInputElement>(null);
 
   // Collapsible sections state
@@ -505,28 +505,8 @@ const CenterPanel: React.FC = () => {
 
         {/* Primary Action Buttons - Prominent Section */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-          {/* Phase 9.4: Intermediate Mode Toggle */}
-          <div className="mb-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={useIntermediateMode}
-                onChange={(e) => setUseIntermediateMode(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-600 text-amber-500 focus:ring-amber-500 focus:ring-offset-gray-900"
-              />
-              <span className="text-sm font-medium text-gray-200">
-                Generate as Intermediate (recommended)
-              </span>
-            </label>
-            {useIntermediateMode && (
-              <p className="text-xs text-gray-400 mt-2">
-                Creates model-agnostic representation. Transform to any format instantly without regenerating.
-              </p>
-            )}
-          </div>
-
-          {/* Phase 9.4: Model Selector (shown after generation in intermediate mode) */}
-          {useIntermediateMode && generatedIntermediate && (
+          {/* Model Selector (shown after generation) */}
+          {generatedIntermediate && (
             <div className="mb-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Export Format:
@@ -608,14 +588,6 @@ const CenterPanel: React.FC = () => {
                 <span>Generate Prompt</span>
               </button>
             )}
-            <button
-              onClick={() => setShowIntermediateEditor(true)}
-              className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:flex-none"
-            >
-              <EditIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Create from Intermediate</span>
-              <span className="sm:hidden">Intermediate</span>
-            </button>
           </div>
         </div>
 
@@ -676,33 +648,6 @@ const CenterPanel: React.FC = () => {
 
         {/* Two Column Layout - Stack on mobile */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-          {/* Format Selector - Only shown in legacy mode */}
-          {!useIntermediateMode && (
-            <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                </svg>
-                Final Output Format
-              </h3>
-              <div className="space-y-2">
-                <select
-                  value={settings.format}
-                  onChange={e => setSettings(s => ({...s, format: e.target.value}))}
-                  className="w-full bg-gray-800 text-white text-sm border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="Standard YAML">YAML</option>
-                  <option value="Markdown">Markdown</option>
-                  <option value="Natural Language">Natural Language</option>
-                  <option value="Standard XML">XML</option>
-                  <option value="JSON">JSON</option>
-                  <option value="Reversed YAML-like in XML">Reversed YAML/XML</option>
-                  <option value="Emoji Script">Emoji Script</option>
-                </select>
-              </div>
-            </div>
-          )}
-
           {/* Mix Options - Collapsible */}
           <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
             <button
@@ -1155,18 +1100,6 @@ const CenterPanel: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Intermediate Editor Modal */}
-      {showIntermediateEditor && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-5xl h-[90vh] bg-gray-950 rounded-lg shadow-2xl overflow-hidden">
-            <IntermediateEditor
-              onSave={() => setShowIntermediateEditor(false)}
-              onCancel={() => setShowIntermediateEditor(false)}
-            />
-          </div>
-        </div>
-      )}
     </main>
   );
 };
