@@ -82,7 +82,7 @@ Get API keys:
 - **Gemini**: [Google AI Studio](https://aistudio.google.com/app/apikey)
 - **Local**: Run [heylookitsanllm](https://github.com/fredbliss/heylookitsanllm) or any OpenAI-compatible server
 
-**Documentation:** [User Guide](./docs/user_guide.md) - includes installation, features, and advanced usage
+**Documentation:** [User Guide](./docs/USER_GUIDE.md) - includes installation, features, and advanced usage
 
 ## Storage
 

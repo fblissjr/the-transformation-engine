@@ -29,7 +29,7 @@ APP_NAME="${APP_NAME:-tte}"
 APP_PORT="${APP_PORT:-7392}"
 
 # Host to bind to (0.0.0.0 for external access, 127.0.0.1 for localhost only)
-APP_HOST="${APP_HOST:-127.0.0.1}"
+APP_HOST="${APP_HOST:-0.0.0.0}"
 
 # Directory where the production build is output
 BUILD_DIR="dist"

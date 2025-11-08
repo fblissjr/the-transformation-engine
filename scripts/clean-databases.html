@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clean IndexedDB Databases</title>
+</head>
+<body>
+    <h1>Database Cleanup</h1>
+    <button onclick="cleanDatabases()">Delete All Databases</button>
+    <pre id="output"></pre>
+
+    <script>
+        async function cleanDatabases() {
+            const output = document.getElementById('output');
+            output.textContent = 'Starting cleanup...\n';
+
+            // List of potential database names
+            const databases = [
+                'TransformationEngineDB',
+                'the-transformation-engine',
+                'PromptsDB'
+            ];
+
+            for (const dbName of databases) {
+                try {
+                    output.textContent += `Deleting ${dbName}...\n`;
+                    const request = indexedDB.deleteDatabase(dbName);
+                    
+                    await new Promise((resolve, reject) => {
+                        request.onsuccess = () => {
+                            output.textContent += `✓ Deleted ${dbName}\n`;
+                            resolve();
+                        };
+                        request.onerror = () => {
+                            output.textContent += `✗ Error deleting ${dbName}: ${request.error}\n`;
+                            resolve(); // Continue anyway
+                        };
+                        request.onblocked = () => {
+                            output.textContent += `⚠ Deletion of ${dbName} blocked - close other tabs\n`;
+                            resolve();
+                        };
+                    });
+                } catch (error) {
+                    output.textContent += `Error with ${dbName}: ${error}\n`;
+                }
+            }
+
+            output.textContent += '\n✓ Cleanup complete! You can close this tab and refresh the app.\n';
+        }
+    </script>
+</body>
+</html>
