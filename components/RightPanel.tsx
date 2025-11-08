@@ -5,6 +5,7 @@ import { CopyIcon, RestoreIcon } from './icons';
 import { LogEntry, PromptVersion } from '../types';
 import { VersionTree } from './VersionTree';
 import { generateConversionPrompt } from '../services/promptService';
+import IntermediateRefinementPanel from './IntermediateRefinementPanel';
 
 interface RightPanelProps {
   logs: LogEntry[];
@@ -13,7 +14,7 @@ interface RightPanelProps {
   onClearLogs: () => void;
 }
 
-type Tab = 'structured' | 'normalized' | 'history' | 'debug';
+type Tab = 'intermediate' | 'structured' | 'normalized' | 'history' | 'debug';
 
 const RightPanel: React.FC<RightPanelProps> = ({ 
   logs,
@@ -35,8 +36,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
     restoreVersion,
   } = usePrompts();
 
-  const { } = useGeneration();
-  const [activeTab, setActiveTab] = useState<Tab>('structured');
+  const { generatedIntermediate } = useGeneration();
+  const [activeTab, setActiveTab] = useState<Tab>('intermediate');
   const [editedStructuredOutput, setEditedStructuredOutput] = useState('');
   const [editedNormalizedOutput, setEditedNormalizedOutput] = useState('');
   const [showTransformInput, setShowTransformInput] = useState(false);
@@ -148,6 +149,11 @@ const RightPanel: React.FC<RightPanelProps> = ({
     <aside className="w-full h-full bg-gray-900 border-l border-gray-800 flex flex-col p-3 sm:p-4 gap-3 sm:gap-4">
       <div>
         <div className="flex flex-wrap border-b border-gray-800 overflow-x-auto">
+          <TabButton
+            label="Intermediate"
+            isActive={activeTab === 'intermediate'}
+            onClick={() => setActiveTab('intermediate')}
+          />
           <TabButton
             label="Structured"
             isActive={activeTab === 'structured'}

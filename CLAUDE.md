@@ -86,3 +86,4 @@ The living-docs contain 16 modular files covering:
 ---
 
 **Always read this file to get up to speed. For detailed info, see [living-docs](./internal/living-docs/). This is a hobbyist project - aim for simplicity and extensibility.**
+- No migration scripts from prior versions.

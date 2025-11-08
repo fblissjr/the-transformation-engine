@@ -33,11 +33,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <PromptProvider>
-      <ProviderProvider>
+    <ProviderProvider>
+      <PromptProvider>
         {renderRoute()}
-      </ProviderProvider>
-    </PromptProvider>
+      </PromptProvider>
+    </ProviderProvider>
   );
 };
 
