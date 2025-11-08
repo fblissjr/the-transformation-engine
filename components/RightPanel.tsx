@@ -377,6 +377,18 @@ const RightPanel: React.FC<RightPanelProps> = ({
           </div>
         )}
 
+        {activeTab === 'intermediate' && (
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <IntermediateRefinementPanel
+              intermediate={generatedIntermediate}
+              onUpdate={(updated) => {
+                // TODO: Implement update handler to save refined intermediate
+                console.log('Updated intermediate:', updated);
+              }}
+            />
+          </div>
+        )}
+
         {activeTab === 'structured' && (
           <div className="flex-1 min-h-0">
             <OutputDisplay
