@@ -56,6 +56,12 @@ interface GenerationContextType {
   generatedIntermediate: any | null;
   selectedExportModel: 'sora2' | 'veo3' | 'generic';
   setSelectedExportModel: (model: 'sora2' | 'veo3' | 'generic') => void;
+  // Phase 2.1: UX Redesign - Final Output State
+  finalOutput: string; // Currently displayed output (plain text, no code fences)
+  genericFinalOutput: string; // Always available generic output
+  systemSpecificFinalOutput: string; // Sora 2/Veo 3 output (if selected)
+  structuredViewData: any | null; // Intermediate JSON for Structured View tab
+  handleExportFormatChange: (newFormat: 'sora2' | 'veo3' | 'generic') => void;
   // Multi-provider features
   streamingState: StreamingState | null;
   // Phase 11.3: Revision request flow (Veo 3.1 scene-type detection)
@@ -99,6 +105,12 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   // Intermediate mode state (always enabled)
   const [generatedIntermediate, setGeneratedIntermediate] = useState<any | null>(null);
   const [selectedExportModel, setSelectedExportModel] = useState<'sora2' | 'veo3' | 'generic'>('sora2');
+
+  // Phase 2.1: UX Redesign - Final Output State
+  const [finalOutput, setFinalOutput] = useState<string>('');
+  const [genericFinalOutput, setGenericFinalOutput] = useState<string>('');
+  const [systemSpecificFinalOutput, setSystemSpecificFinalOutput] = useState<string>('');
+  const [structuredViewData, setStructuredViewData] = useState<any | null>(null);
 
   // Multi-provider features (Phase 10+)
   const [streamingState, setStreamingState] = useState<StreamingState | null>(null);
@@ -152,20 +164,40 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       // Save to intermediates store
       await intermediateService.createIntermediate(intermediate);
       setGeneratedIntermediate(intermediate);
+      setStructuredViewData(intermediate); // Phase 2.1: Save for Structured View tab
 
-      setLoadingMessage('Detecting best model format...');
+      setLoadingMessage('Generating outputs...');
       setProgress(70);
 
-      // Auto-detect target model
-      const targetModel = detectTargetModelFromIntermediate(intermediate);
-      setSelectedExportModel(targetModel);
+      // Phase 2.1: ALWAYS generate Generic final output (plain text, no code fences)
+      const genericOutput = transformToModel(intermediate, 'generic');
+      const cleanGenericOutput = genericOutput.replace(/```yaml\n?|```$/g, '').trim();
+      setGenericFinalOutput(cleanGenericOutput);
 
-      setLoadingMessage('Transforming to model format...');
-      setProgress(85);
+      // If user selected Sora 2 or Veo 3, also generate system-specific output
+      let systemSpecificOutput = '';
+      if (selectedExportModel === 'sora2') {
+        systemSpecificOutput = transformToModel(intermediate, 'sora2');
+      } else if (selectedExportModel === 'veo3') {
+        systemSpecificOutput = transformToModel(intermediate, 'veo3');
+      }
 
-      // Transform to model-specific YAML
-      const transformed = transformToModel(intermediate, targetModel);
-      setStructuredOutput(transformed);
+      // Remove code fences from system-specific output too
+      const cleanSystemSpecificOutput = systemSpecificOutput
+        ? systemSpecificOutput.replace(/```yaml\n?|```$/g, '').trim()
+        : '';
+      if (cleanSystemSpecificOutput) {
+        setSystemSpecificFinalOutput(cleanSystemSpecificOutput);
+      }
+
+      // Display the selected format output (or generic if format is generic)
+      const displayOutput = selectedExportModel === 'generic'
+        ? cleanGenericOutput
+        : (cleanSystemSpecificOutput || cleanGenericOutput);
+      setFinalOutput(displayOutput);
+
+      // Keep structuredOutput for backward compatibility
+      setStructuredOutput(displayOutput);
 
       setLoadingMessage('Complete!');
       setProgress(100);
@@ -577,6 +609,46 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     setConversationHistory([]);
   };
 
+  // Phase 2.1: Handle export format changes
+  const handleExportFormatChange = (newFormat: 'sora2' | 'veo3' | 'generic') => {
+    setSelectedExportModel(newFormat);
+
+    // If we already have an intermediate, switch to appropriate output
+    if (generatedIntermediate) {
+      if (newFormat === 'generic') {
+        // Switch to generic output (always available)
+        setFinalOutput(genericFinalOutput);
+        setStructuredOutput(genericFinalOutput); // Backward compatibility
+      } else if (newFormat === 'sora2') {
+        // Check if we already have Sora 2 output cached
+        if (systemSpecificFinalOutput && selectedExportModel === 'sora2') {
+          setFinalOutput(systemSpecificFinalOutput);
+          setStructuredOutput(systemSpecificFinalOutput);
+        } else {
+          // Generate Sora 2 output on demand
+          const sora2Output = transformToModel(generatedIntermediate, 'sora2');
+          const cleanOutput = sora2Output.replace(/```yaml\n?|```$/g, '').trim();
+          setSystemSpecificFinalOutput(cleanOutput);
+          setFinalOutput(cleanOutput);
+          setStructuredOutput(cleanOutput);
+        }
+      } else if (newFormat === 'veo3') {
+        // Check if we already have Veo 3 output cached
+        if (systemSpecificFinalOutput && selectedExportModel === 'veo3') {
+          setFinalOutput(systemSpecificFinalOutput);
+          setStructuredOutput(systemSpecificFinalOutput);
+        } else {
+          // Generate Veo 3 output on demand
+          const veo3Output = transformToModel(generatedIntermediate, 'veo3');
+          const cleanOutput = veo3Output.replace(/```yaml\n?|```$/g, '').trim();
+          setSystemSpecificFinalOutput(cleanOutput);
+          setFinalOutput(cleanOutput);
+          setStructuredOutput(cleanOutput);
+        }
+      }
+    }
+  };
+
   const value = {
     isLoading,
     isNormalizing,
@@ -592,6 +664,12 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     generatedIntermediate,
     selectedExportModel,
     setSelectedExportModel,
+    // Phase 2.1: UX Redesign - Final Output State
+    finalOutput,
+    genericFinalOutput,
+    systemSpecificFinalOutput,
+    structuredViewData,
+    handleExportFormatChange,
     // Multi-provider features
     streamingState,
     enableStreaming,

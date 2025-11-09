@@ -59,14 +59,6 @@ export const IntermediateRefinementPanel: React.FC<IntermediateRefinementPanelPr
     setSuggestions([]);
 
     try {
-      // Get default provider API key
-      const defaultProvider = providers.find(p => p.enabled);
-      if (!defaultProvider?.apiKeys?.[0]?.key) {
-        throw new Error('No provider configured. Please add an API key in Settings.');
-      }
-
-      const apiKey = defaultProvider.apiKeys[0].key;
-
       // Build refinement prompt
       const currentValueStr = Array.isArray(currentValue)
         ? currentValue.join(', ')
@@ -86,6 +78,7 @@ Your task: Provide 3 alternative suggestions that:
 Output ONLY a JSON array of strings, nothing else. Example:
 ["suggestion 1", "suggestion 2", "suggestion 3"]`;
 
+      // Use task router - it handles provider/API key lookup automatically
       const turn = await taskRouter.executeTaskJson(
         TASK_IDS.TRANSFORM,
         `Refine: ${currentValueStr}`,
@@ -143,7 +136,39 @@ Output ONLY a JSON array of strings, nothing else. Example:
     type?: 'text' | 'array';
   }> = ({ label, field, value, type = 'text' }) => {
     const valueStr = Array.isArray(value) ? value.join(', ') : value;
+    const [currentValue, setCurrentValue] = useState(valueStr);
     const isCurrentlyRefining = isRefining && refiningField === field;
+
+    /**
+     * Handle manual field editing
+     */
+    const handleChange = (newValue: string) => {
+      setCurrentValue(newValue);
+
+      if (!onUpdate) return;
+
+      // Deep clone structure
+      const updated = JSON.parse(JSON.stringify(structure)) as IntermediateStructure;
+
+      // Update the specific field
+      const fieldPath = field.split('.');
+      let target: any = updated.sections;
+
+      for (let i = 1; i < fieldPath.length - 1; i++) {
+        target = target[fieldPath[i]];
+      }
+
+      const finalKey = fieldPath[fieldPath.length - 1];
+
+      // Convert back to array if needed
+      if (type === 'array') {
+        target[finalKey] = newValue.split(',').map(s => s.trim()).filter(s => s);
+      } else {
+        target[finalKey] = newValue;
+      }
+
+      onUpdate(updated);
+    };
 
     return (
       <div className="mb-4">
@@ -165,9 +190,17 @@ Output ONLY a JSON array of strings, nothing else. Example:
           </button>
         </div>
 
-        <div className="text-sm text-gray-400 mb-2 p-2 bg-gray-900 rounded border border-gray-700">
-          {valueStr}
-        </div>
+        <textarea
+          value={currentValue}
+          onChange={(e) => handleChange(e.target.value)}
+          className="
+            w-full text-sm text-gray-300 mb-2 p-2
+            bg-gray-900 rounded border border-gray-700
+            focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none
+            resize-y min-h-[60px]
+          "
+          rows={3}
+        />
 
         {suggestions.length > 0 && refiningField === field && (
           <div className="space-y-2 animate-fadeIn">

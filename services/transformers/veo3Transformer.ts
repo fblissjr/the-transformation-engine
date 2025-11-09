@@ -13,14 +13,17 @@ export const veo3Transformer: Transformer = {
       ? parseMarkdownIntermediate(intermediate.structure.content)
       : intermediate.structure as StructuredFormat;
 
-    let output = '```yaml\n';
+    // Handle 'sections' wrapper (Phase 2 format)
+    const data = (structure as any).sections || structure;
+
+    let output = '';
 
     // 1. Subject (30-50 words for consistency)
-    if (structure.visual?.subjects || structure.visual?.setting) {
-      const subjects = Array.isArray(structure.visual.subjects)
-        ? structure.visual.subjects.join(', ')
-        : structure.visual.subjects || 'Scene';
-      const setting = structure.visual.setting || '';
+    if (data.visual?.subjects || data.visual?.setting) {
+      const subjects = Array.isArray(data.visual.subjects)
+        ? data.visual.subjects.join(', ')
+        : data.visual.subjects || 'Scene';
+      const setting = data.visual.setting || '';
 
       output += `subject: "${subjects}`;
       if (setting) {
@@ -30,30 +33,35 @@ export const veo3Transformer: Transformer = {
     }
 
     // 2. Context (where/when)
-    if (structure.visual?.setting || structure.visual?.environment) {
+    if (data.visual?.setting || data.visual?.environment) {
       const parts: string[] = [];
-      if (structure.visual.setting) parts.push(structure.visual.setting);
-      if (structure.visual.environment) parts.push(structure.visual.environment);
+      if (data.visual.setting) parts.push(data.visual.setting);
+      if (data.visual.environment) parts.push(data.visual.environment);
 
       output += `context: "${parts.join('. ')}"\n\n`;
     }
 
     // 3. Action (narrative progression)
-    if (structure.temporal?.segments || structure.narrative) {
+    const temporal = data.temporal;
+    if (temporal || data.narrative) {
       let actionText = '';
 
       // Prefer narrative structure if available
-      if (structure.narrative) {
+      if (data.narrative) {
         const parts: string[] = [];
-        if (structure.narrative.beginning) parts.push(structure.narrative.beginning);
-        if (structure.narrative.middle) parts.push(structure.narrative.middle);
-        if (structure.narrative.end) parts.push(structure.narrative.end);
+        if (data.narrative.beginning) parts.push(data.narrative.beginning);
+        if (data.narrative.middle) parts.push(data.narrative.middle);
+        if (data.narrative.end) parts.push(data.narrative.end);
         actionText = parts.join('. ');
-      } else if (structure.temporal?.segments) {
+      } else if (temporal) {
         // Convert temporal segments to narrative
-        actionText = structure.temporal.segments
-          .map(seg => seg.description)
-          .join('. ');
+        if (Array.isArray(temporal)) {
+          // Phase 2 format
+          actionText = temporal.map(seg => seg.description).join('. ');
+        } else if (temporal.segments) {
+          // Phase 1 format
+          actionText = temporal.segments.map(seg => seg.description).join('. ');
+        }
       }
 
       if (actionText) {
@@ -62,26 +70,26 @@ export const veo3Transformer: Transformer = {
     }
 
     // 4. Style (visual aesthetic)
-    if (structure.visual?.style || structure.visual?.colors) {
+    if (data.visual?.style || data.visual?.colors) {
       const parts: string[] = [];
-      if (structure.visual.style) parts.push(structure.visual.style);
-      if (structure.visual.colors) parts.push(`Color palette: ${structure.visual.colors}`);
+      if (data.visual.style) parts.push(data.visual.style);
+      if (data.visual.colors) parts.push(`Color palette: ${data.visual.colors}`);
 
       output += `style: "${parts.join('. ')}"\n\n`;
     }
 
     // 5. Camera Motion (movement and angles)
-    if (structure.camera?.movement || structure.camera?.angles) {
+    if (data.camera?.movement || data.camera?.angles) {
       const parts: string[] = [];
-      if (structure.camera.movement) parts.push(structure.camera.movement);
-      if (structure.camera.angles) parts.push(structure.camera.angles);
+      if (data.camera.movement) parts.push(data.camera.movement);
+      if (data.camera.angles) parts.push(data.camera.angles);
 
       output += `camera_motion: "${parts.join('. ')}"\n\n`;
     }
 
-    // 6. Audio Elements (CRITICAL for Veo 3 - audio-first model)
-    if (structure.audio) {
-      const audio = structure.audio;
+    // 6. Audio Elements (Optional - Veo 3 can infer if not specified)
+    if (data.audio) {
+      const audio = data.audio;
       const elements: string[] = [];
 
       // Dialogue (with quotation marks per Veo 3 requirements)
@@ -104,33 +112,26 @@ export const veo3Transformer: Transformer = {
         elements.push(`Music: ${audio.music}`);
       }
 
+      // Only include audio_elements if we have actual content
       if (elements.length > 0) {
         output += `audio_elements: "${elements.join('; ')}"\n\n`;
-      } else {
-        // Audio is REQUIRED for Veo 3 - add placeholder warning
-        output += `audio_elements: "WARNING: Audio required for Veo 3 - add dialogue, ambient sounds, or music"\n\n`;
       }
-    } else {
-      // No audio structure at all
-      output += `audio_elements: "WARNING: Audio required for Veo 3 - add dialogue, ambient sounds, or music"\n\n`;
     }
 
     // 7. Lighting Mood (lighting + emotional tone)
-    if (structure.visual?.lighting) {
-      output += `lighting_mood: "${structure.visual.lighting}"\n\n`;
+    if (data.visual?.lighting) {
+      output += `lighting_mood: "${data.visual.lighting}"\n\n`;
     }
 
     // 8. Background Setting (detailed environment)
-    if (structure.visual?.environment) {
-      output += `background_setting: "${structure.visual.environment}"\n\n`;
+    if (data.visual?.environment) {
+      output += `background_setting: "${data.visual.environment}"\n\n`;
     }
 
     // 9. Composition (framing, visual hierarchy)
-    if (structure.visual?.composition) {
-      output += `composition: "${structure.visual.composition}"\n`;
+    if (data.visual?.composition) {
+      output += `composition: "${data.visual.composition}"\n`;
     }
-
-    output += '```';
 
     return output;
   },
@@ -143,15 +144,14 @@ export const veo3Transformer: Transformer = {
     const errors: any[] = [];
     const warnings: any[] = [];
 
-    // Audio is REQUIRED for Veo 3
+    // Audio is OPTIONAL for Veo 3 (model can infer), but recommended
     if (!structure.audio ||
         (!structure.audio.dialogue &&
          !structure.audio.ambient &&
          !structure.audio.soundEffects)) {
-      errors.push({
+      warnings.push({
         field: 'audio',
-        message: 'Audio elements required for Veo 3 (dialogue, ambient sounds, or sound effects)',
-        severity: 'error',
+        message: 'Audio elements recommended for Veo 3 (dialogue, ambient sounds, or sound effects) - model will infer if not specified',
       });
     }
 

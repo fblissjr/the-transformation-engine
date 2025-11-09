@@ -13,76 +13,104 @@ export const genericTransformer: Transformer = {
       ? parseMarkdownIntermediate(intermediate.structure.content)
       : intermediate.structure as StructuredFormat;
 
-    let output = '```yaml\n';
+    // Handle 'sections' wrapper (Phase 2 format)
+    const data = (structure as any).sections || structure;
 
-    // Simple key-value structure covering all sections
+    let output = '';
 
-    // Scene overview
-    if (intermediate.sources.text) {
-      output += `scene: "${intermediate.sources.text}"\n\n`;
-    }
+    // Visual Elements (attribute-value style)
+    if (data.visual) {
+      const v = data.visual;
 
-    // Visuals (combined)
-    if (structure.visual) {
-      const v = structure.visual;
-      const visual_parts: string[] = [];
-
-      if (v.setting) visual_parts.push(`Setting: ${v.setting}`);
       if (v.subjects) {
         const subjectsStr = Array.isArray(v.subjects) ? v.subjects.join(', ') : v.subjects;
-        visual_parts.push(`Subjects: ${subjectsStr}`);
+        output += `Subject: ${subjectsStr}\n\n`;
       }
-      if (v.environment) visual_parts.push(v.environment);
-      if (v.colors) visual_parts.push(`Colors: ${v.colors}`);
-      if (v.lighting) visual_parts.push(`Lighting: ${v.lighting}`);
-      if (v.composition) visual_parts.push(`Composition: ${v.composition}`);
-      if (v.style) visual_parts.push(`Style: ${v.style}`);
 
-      if (visual_parts.length > 0) {
-        output += `visuals: "${visual_parts.join('. ')}"\n\n`;
+      if (v.setting) {
+        output += `Setting: ${v.setting}\n\n`;
       }
-    }
 
-    // Audio (combined)
-    if (structure.audio) {
-      const a = structure.audio;
-      const audio_parts: string[] = [];
-
-      if (a.dialogue) audio_parts.push(`Dialogue: ${a.dialogue}`);
-      if (a.ambient) audio_parts.push(`Ambient: ${a.ambient}`);
-      if (a.soundEffects) audio_parts.push(`SFX: ${a.soundEffects}`);
-      if (a.music) audio_parts.push(`Music: ${a.music}`);
-
-      if (audio_parts.length > 0) {
-        output += `audio: "${audio_parts.join('; ')}"\n\n`;
+      if (v.environment) {
+        output += `Environment: ${v.environment}\n\n`;
       }
-    }
 
-    // Camera (combined)
-    if (structure.camera) {
-      const c = structure.camera;
-      const camera_parts: string[] = [];
+      if (v.colors) {
+        output += `Colors: ${v.colors}\n\n`;
+      }
 
-      if (c.movement) camera_parts.push(c.movement);
-      if (c.angles) camera_parts.push(`Angles: ${c.angles}`);
-      if (c.techniques) camera_parts.push(c.techniques);
+      if (v.lighting) {
+        output += `Lighting: ${v.lighting}\n\n`;
+      }
 
-      if (camera_parts.length > 0) {
-        output += `camera: "${camera_parts.join('. ')}"\n\n`;
+      if (v.composition) {
+        output += `Composition: ${v.composition}\n\n`;
+      }
+
+      if (v.style) {
+        output += `Style: ${v.style}\n\n`;
       }
     }
 
-    // Temporal (if present)
-    if (structure.temporal?.segments) {
-      output += 'timeline: |\n';
-      for (const seg of structure.temporal.segments) {
-        output += `  ${seg.startTime}s-${seg.endTime}s: ${seg.description}\n`;
+    // Temporal Progression (handle both array and segments format)
+    const temporal = data.temporal;
+    if (temporal) {
+      if (Array.isArray(temporal)) {
+        // Phase 2 format: array of time segments
+        output += 'Timeline:\n';
+        for (const seg of temporal) {
+          output += `  ${seg.time}: ${seg.description}\n`;
+        }
+        output += '\n';
+      } else if (temporal.segments) {
+        // Phase 1 format: segments array
+        output += 'Timeline:\n';
+        for (const seg of temporal.segments) {
+          output += `  ${seg.startTime}s-${seg.endTime}s: ${seg.description}\n`;
+        }
+        output += '\n';
       }
-      output += '\n';
     }
 
-    output += '```';
-    return output;
+    // Camera
+    if (data.camera) {
+      const c = data.camera;
+
+      if (c.movement) {
+        output += `Camera Movement: ${c.movement}\n\n`;
+      }
+
+      if (c.angles) {
+        output += `Camera Angles: ${c.angles}\n\n`;
+      }
+
+      if (c.techniques) {
+        output += `Camera Techniques: ${c.techniques}\n\n`;
+      }
+    }
+
+    // Audio (optional)
+    if (data.audio) {
+      const a = data.audio;
+
+      if (a.dialogue) {
+        output += `Dialogue: ${a.dialogue}\n\n`;
+      }
+
+      if (a.ambient) {
+        output += `Ambient Sound: ${a.ambient}\n\n`;
+      }
+
+      if (a.soundEffects) {
+        output += `Sound Effects: ${a.soundEffects}\n\n`;
+      }
+
+      if (a.music) {
+        output += `Music: ${a.music}\n\n`;
+      }
+    }
+
+    return output.trim();
   },
 
   validate(intermediate: IntermediatePrompt) {

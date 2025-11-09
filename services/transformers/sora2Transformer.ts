@@ -13,15 +13,35 @@ export const sora2Transformer: Transformer = {
       ? parseMarkdownIntermediate(intermediate.structure.content)
       : intermediate.structure as StructuredFormat;
 
-    let output = '```yaml\n';
+    // Handle 'sections' wrapper (Phase 2 format)
+    const data = (structure as any).sections || structure;
+
+    let output = '';
 
     // 1. Temporal Progression (CRITICAL - embedded timestamps)
-    if (structure.temporal?.segments) {
+    const temporal = data.temporal;
+    if (temporal?.segments || Array.isArray(temporal)) {
       output += 'temporal_progression: |\n';
 
-      for (const seg of structure.temporal.segments) {
-        const start = formatTime(seg.startTime);
-        const end = formatTime(seg.endTime);
+      const segments = Array.isArray(temporal) ? temporal : temporal.segments;
+      for (const seg of segments) {
+        // Handle both Phase 1 (startTime/endTime) and Phase 2 (time string) formats
+        let start, end;
+        if (seg.time) {
+          // Phase 2 format: "0-3s"
+          const match = seg.time.match(/(\d+)-(\d+)s/);
+          if (match) {
+            start = formatTime(parseInt(match[1]));
+            end = formatTime(parseInt(match[2]));
+          } else {
+            start = seg.time;
+            end = seg.time;
+          }
+        } else {
+          // Phase 1 format
+          start = formatTime(seg.startTime);
+          end = formatTime(seg.endTime);
+        }
 
         output += `  [${start}-${end}] ${seg.description}`;
 
@@ -40,8 +60,8 @@ export const sora2Transformer: Transformer = {
     }
 
     // 2. Visual Description (comprehensive detail)
-    if (structure.visual) {
-      const visual = structure.visual;
+    if (data.visual) {
+      const visual = data.visual;
       const parts: string[] = [];
 
       if (visual.setting) parts.push(visual.setting);
@@ -55,27 +75,27 @@ export const sora2Transformer: Transformer = {
     }
 
     // 3. Camera Movement (specific techniques)
-    if (structure.camera?.movement) {
-      output += `camera_movement: "${structure.camera.movement}"\n\n`;
+    if (data.camera?.movement) {
+      output += `camera_movement: "${data.camera.movement}"\n\n`;
     }
 
     // 4. Cinematography (framing, composition)
-    if (structure.camera?.techniques || structure.visual?.composition) {
+    if (data.camera?.techniques || data.visual?.composition) {
       const parts: string[] = [];
-      if (structure.visual?.composition) parts.push(structure.visual.composition);
-      if (structure.camera?.techniques) parts.push(structure.camera.techniques);
+      if (data.visual?.composition) parts.push(data.visual.composition);
+      if (data.camera?.techniques) parts.push(data.camera.techniques);
 
       output += `cinematography: "${parts.join('. ')}"\n\n`;
     }
 
     // 5. Lighting (detailed lighting setup)
-    if (structure.visual?.lighting) {
-      output += `lighting: "${structure.visual.lighting}"\n\n`;
+    if (data.visual?.lighting) {
+      output += `lighting: "${data.visual.lighting}"\n\n`;
     }
 
     // 6. Audio Design (optional but recommended for Sora 2)
-    if (structure.audio) {
-      const audio = structure.audio;
+    if (data.audio) {
+      const audio = data.audio;
       const parts: string[] = [];
 
       if (audio.ambient) parts.push(audio.ambient);
@@ -88,11 +108,9 @@ export const sora2Transformer: Transformer = {
     }
 
     // 7. Style (visual aesthetic)
-    if (structure.visual?.style) {
-      output += `style: "${structure.visual.style}"\n`;
+    if (data.visual?.style) {
+      output += `style: "${data.visual.style}"\n`;
     }
-
-    output += '```';
 
     // Check character limit (2500 chars is HARD LIMIT for Sora 2)
     if (output.length > 2500) {

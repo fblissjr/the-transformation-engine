@@ -52,6 +52,12 @@ const CenterPanel: React.FC = () => {
     conversationHistory,
     answerRevisionRequest,
     clearRevisionRequest,
+    // Phase 2.1: UX Redesign - Final Output State
+    finalOutput,
+    genericFinalOutput,
+    systemSpecificFinalOutput,
+    structuredViewData,
+    handleExportFormatChange,
   } = useGeneration();
 
   // Load blob URLs for media references
@@ -505,51 +511,25 @@ const CenterPanel: React.FC = () => {
 
         {/* Primary Action Buttons - Prominent Section */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-          {/* Model Selector (shown after generation) */}
-          {generatedIntermediate && (
-            <div className="mb-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Export Format:
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={selectedExportModel}
-                  onChange={(e) => {
-                    const newModel = e.target.value as 'sora2' | 'veo3' | 'generic';
-                    setSelectedExportModel(newModel);
-                    // Re-transform intermediate to new format
-                    const transformed = transformToModel(generatedIntermediate, newModel);
-                    setStructuredOutput(transformed);
-                  }}
-                  className="flex-1 bg-gray-900 border border-gray-600 text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                >
-                  <option value="sora2">Sora 2 (OpenAI)</option>
-                  <option value="veo3">Veo 3 (Google)</option>
-                  <option value="generic">Generic</option>
-                </select>
-                <button
-                  onClick={async () => {
-                    // Save intermediate as prompt with current format
-                    const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
-                      title: generatedIntermediate.title,
-                      naturalLanguageInput: generatedIntermediate.sources.text || '',
-                      structuredOutput: structuredOutput,
-                      normalizedOutput: '',
-                      settingsSnapshot: JSON.stringify(settings),
-                      tags: '[]',
-                      isFavorite: false,
-                    };
-                    const savedPrompt = await addPrompt(newPromptData);
-                    selectPrompt(savedPrompt);
-                    alert('Saved to library!');
-                  }}
-                  className="bg-green-600 hover:bg-green-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors whitespace-nowrap"
-                >
-                  Save to Library
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Export Format Selector - ABOVE Generate Button */}
+          <div className="mb-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Export Format:
+            </label>
+            <select
+              value={selectedExportModel}
+              onChange={(e) => handleExportFormatChange(e.target.value as 'sora2' | 'veo3' | 'generic')}
+              disabled={isLoading}
+              className="w-full bg-gray-900 border border-gray-600 text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50"
+            >
+              <option value="sora2">Sora 2 (OpenAI) - 2,500 char limit</option>
+              <option value="veo3">Veo 3 (Google) - 3,000 char limit</option>
+              <option value="generic">Generic - No limit</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Select which format to generate. You can change this later without regenerating.
+            </p>
+          </div>
 
           {(isLoading || isDescribing) && (
             <div className="mb-3">
@@ -590,6 +570,78 @@ const CenterPanel: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Phase 2.1: Final Output Display */}
+        {finalOutput && (
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
+              <h3 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+                Final Output
+                <span className={`text-xs px-2 py-1 rounded ${
+                  selectedExportModel === 'sora2' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/50' :
+                  selectedExportModel === 'veo3' ? 'bg-green-500/20 text-green-300 border border-green-500/50' :
+                  'bg-gray-500/20 text-gray-400 border border-gray-500/50'
+                }`}>
+                  {selectedExportModel === 'sora2' && 'Sora 2'}
+                  {selectedExportModel === 'veo3' && 'Veo 3'}
+                  {selectedExportModel === 'generic' && 'Generic'}
+                </span>
+              </h3>
+
+              {/* Format Quick Switcher */}
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <span className="text-gray-400">Switch:</span>
+                <button
+                  onClick={() => handleExportFormatChange(selectedExportModel === 'sora2' ? 'veo3' : selectedExportModel === 'veo3' ? 'generic' : 'sora2')}
+                  className="bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1 rounded transition-colors"
+                >
+                  {selectedExportModel === 'sora2' ? 'Veo 3' : selectedExportModel === 'veo3' ? 'Generic' : 'Sora 2'}
+                </button>
+              </div>
+            </div>
+
+            {/* Output Display */}
+            <div className="relative">
+              <pre className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 sm:p-4 overflow-x-auto font-mono text-xs sm:text-sm text-gray-300 whitespace-pre-wrap min-h-[200px] sm:min-h-[300px] max-h-[400px] sm:max-h-[500px] overflow-y-auto">
+                <code>{finalOutput}</code>
+              </pre>
+
+              {/* Character Count */}
+              <CharacterCount
+                content={finalOutput}
+                model={selectedExportModel}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3">
+              <CopyButton
+                content={finalOutput}
+                format={selectedExportModel}
+              />
+              <button
+                onClick={async () => {
+                  // Save to library with current format
+                  const newPromptData: Omit<Prompt, 'id' | 'createdAt'> = {
+                    title: naturalLanguageInput.substring(0, 40) + '...',
+                    naturalLanguageInput: naturalLanguageInput,
+                    structuredOutput: finalOutput,
+                    normalizedOutput: '',
+                    settingsSnapshot: JSON.stringify(settings),
+                    tags: '[]',
+                    isFavorite: false,
+                  };
+                  const savedPrompt = await addPrompt(newPromptData);
+                  selectPrompt(savedPrompt);
+                  alert('Saved to library!');
+                }}
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                Save to Library
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Template Selection - Prominent Section */}
         <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-2 border-purple-500/50 rounded-lg p-4">
@@ -1196,5 +1248,100 @@ const CompactSlider: React.FC<{
     </div>
   );
 }
+
+// Phase 2.1: Character Count Component
+const CharacterCount: React.FC<{
+  content: string;
+  model: 'sora2' | 'veo3' | 'generic';
+}> = ({ content, model }) => {
+  const charCount = content.length;
+
+  const MODEL_LIMITS = {
+    sora2: 2500,
+    veo3: 3000,
+    generic: Infinity,
+  };
+
+  const maxChars = MODEL_LIMITS[model];
+  const percentage = maxChars === Infinity ? 0 : (charCount / maxChars) * 100;
+
+  const getColor = () => {
+    if (maxChars === Infinity) return 'text-gray-400';
+    if (percentage > 100) return 'text-red-400';
+    if (percentage > 80) return 'text-yellow-400';
+    return 'text-green-400';
+  };
+
+  const getIcon = () => {
+    if (maxChars === Infinity) return '';
+    if (percentage > 100) return '✗';
+    if (percentage > 80) return '⚠';
+    return '✓';
+  };
+
+  return (
+    <div className="absolute bottom-2 right-2 flex items-center gap-2 bg-gray-800/90 px-2 py-1 rounded text-xs">
+      <span className={`font-mono font-semibold ${getColor()}`}>
+        {charCount.toLocaleString()}
+        {maxChars !== Infinity && ` / ${maxChars.toLocaleString()}`}
+        {' chars '}
+        {getIcon()}
+      </span>
+      {percentage > 100 && (
+        <span className="text-red-400 text-xs">
+          Exceeds limit
+        </span>
+      )}
+    </div>
+  );
+};
+
+// Phase 2.1: Copy Button Component
+const CopyButton: React.FC<{
+  content: string;
+  format: 'sora2' | 'veo3' | 'generic';
+}> = ({ content, format }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const formatLabel = {
+    sora2: 'Sora 2',
+    veo3: 'Veo 3',
+    generic: 'Generic',
+  }[format];
+
+  return (
+    <button
+      onClick={handleCopy}
+      className={`flex-1 flex items-center justify-center gap-2 font-medium px-4 py-2 rounded-lg text-sm transition-all ${
+        copied
+          ? 'bg-green-600 text-white'
+          : 'bg-blue-600 hover:bg-blue-500 text-white'
+      }`}
+      aria-label={`Copy ${formatLabel} formatted prompt to clipboard`}
+    >
+      {copied ? (
+        <>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Copied {formatLabel} Prompt!</span>
+        </>
+      ) : (
+        <>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          <span>Copy {formatLabel} Prompt</span>
+        </>
+      )}
+    </button>
+  );
+};
 
 export default CenterPanel;

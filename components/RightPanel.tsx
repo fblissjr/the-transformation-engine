@@ -14,7 +14,7 @@ interface RightPanelProps {
   onClearLogs: () => void;
 }
 
-type Tab = 'intermediate' | 'structured' | 'normalized' | 'history' | 'debug';
+type Tab = 'structuredView' | 'finalOutput' | 'history' | 'debug';
 
 const RightPanel: React.FC<RightPanelProps> = ({ 
   logs,
@@ -36,8 +36,14 @@ const RightPanel: React.FC<RightPanelProps> = ({
     restoreVersion,
   } = usePrompts();
 
-  const { generatedIntermediate } = useGeneration();
-  const [activeTab, setActiveTab] = useState<Tab>('intermediate');
+  const {
+    generatedIntermediate,
+    finalOutput,
+    structuredViewData,
+    selectedExportModel,
+    handleExportFormatChange,
+  } = useGeneration();
+  const [activeTab, setActiveTab] = useState<Tab>('finalOutput'); // Default to Final Output
   const [editedStructuredOutput, setEditedStructuredOutput] = useState('');
   const [editedNormalizedOutput, setEditedNormalizedOutput] = useState('');
   const [showTransformInput, setShowTransformInput] = useState(false);
@@ -150,19 +156,14 @@ const RightPanel: React.FC<RightPanelProps> = ({
       <div>
         <div className="flex flex-wrap border-b border-gray-800 overflow-x-auto">
           <TabButton
-            label="Intermediate"
-            isActive={activeTab === 'intermediate'}
-            onClick={() => setActiveTab('intermediate')}
+            label="Structured View"
+            isActive={activeTab === 'structuredView'}
+            onClick={() => setActiveTab('structuredView')}
           />
           <TabButton
-            label="Structured"
-            isActive={activeTab === 'structured'}
-            onClick={() => setActiveTab('structured')}
-          />
-          <TabButton
-            label="Plain"
-            isActive={activeTab === 'normalized'}
-            onClick={() => setActiveTab('normalized')}
+            label="Final Output"
+            isActive={activeTab === 'finalOutput'}
+            onClick={() => setActiveTab('finalOutput')}
           />
           <TabButton
             label="History"
@@ -177,28 +178,16 @@ const RightPanel: React.FC<RightPanelProps> = ({
         </div>
       </div>
       <div className="flex-1 min-h-0 flex flex-col gap-3">
-        {/* Character Counter - Show on structured tab */}
-        {activeTab === 'structured' && structuredOutput && (() => {
-          const charCount = structuredOutput.length;
+        {/* Character Counter - Show on finalOutput tab */}
+        {activeTab === 'finalOutput' && finalOutput && (() => {
+          const charCount = finalOutput.length;
           const MODEL_PRESETS = {
-            generic: { maxInputChars: 2000 },
+            generic: { maxInputChars: Infinity },
             sora2: { maxInputChars: 2500 },
             veo3: { maxInputChars: 3000 },
-            wan: { maxInputChars: 2000 }
           };
 
-          // Detect model from schema keys
-          const keySet = new Set(settings.schemaKeys);
-          const veo3Keys = ['audio_elements', 'dialogue', 'voiceover_script', 'ambient_audio', 'subject'];
-          const sora2Keys = ['temporal_progression', 'cinematography', 'visual_description'];
-          const veo3Score = veo3Keys.filter(k => keySet.has(k)).length;
-          const sora2Score = sora2Keys.filter(k => keySet.has(k)).length;
-
-          let detectedModel = 'generic';
-          if (veo3Score > sora2Score || (veo3Score === sora2Score && veo3Score > 0)) detectedModel = 'veo3';
-          else if (sora2Score > 0) detectedModel = 'sora2';
-
-          const maxChars = MODEL_PRESETS[detectedModel as keyof typeof MODEL_PRESETS]?.maxInputChars || 2000;
+          const maxChars = MODEL_PRESETS[selectedExportModel]?.maxInputChars || 2000;
           const percentage = (charCount / maxChars) * 100;
           const isWarning = percentage > 80;
           const isDanger = percentage > 100;
@@ -219,20 +208,20 @@ const RightPanel: React.FC<RightPanelProps> = ({
               </div>
               {isDanger && (
                 <p className="text-xs text-red-400 mt-1">
-                  Prompt exceeds {detectedModel === 'sora2' ? 'Sora 2' : detectedModel === 'veo3' ? 'Veo 3' : 'model'} input limit. Will be truncated by API.
+                  Prompt exceeds {selectedExportModel === 'sora2' ? 'Sora 2' : selectedExportModel === 'veo3' ? 'Veo 3' : 'model'} input limit. Will be truncated by API.
                 </p>
               )}
               {isWarning && !isDanger && (
                 <p className="text-xs text-yellow-400 mt-1">
-                  Approaching {detectedModel === 'sora2' ? 'Sora 2' : detectedModel === 'veo3' ? 'Veo 3' : 'model'} input limit.
+                  Approaching {selectedExportModel === 'sora2' ? 'Sora 2' : selectedExportModel === 'veo3' ? 'Veo 3' : 'model'} input limit.
                 </p>
               )}
             </div>
           );
         })()}
 
-        {/* Transform Actions - Only show on structured tab */}
-        {activeTab === 'structured' && structuredOutput && (
+        {/* Transform Actions - Only show on structuredView tab */}
+        {activeTab === 'structuredView' && structuredViewData && (
           <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-2">
               <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -377,45 +366,81 @@ const RightPanel: React.FC<RightPanelProps> = ({
           </div>
         )}
 
-        {activeTab === 'intermediate' && (
+        {activeTab === 'structuredView' && (
           <div className="flex-1 min-h-0 overflow-hidden">
-            <IntermediateRefinementPanel
-              intermediate={generatedIntermediate}
-              onUpdate={(updated) => {
-                // TODO: Implement update handler to save refined intermediate
-                console.log('Updated intermediate:', updated);
-              }}
-            />
+            {structuredViewData ? (
+              <IntermediateRefinementPanel
+                intermediate={structuredViewData}
+                onUpdate={(updated) => {
+                  // TODO: Implement update handler to save refined intermediate and regenerate outputs
+                  console.log('Updated intermediate:', updated);
+                }}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-center p-4 border border-gray-700 rounded-lg">
+                <svg className="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-gray-300 mb-1">No structured view yet</p>
+                  <p className="text-xs text-gray-500">
+                    Generate a prompt to see the model-agnostic intermediate representation.
+                  </p>
+                  <p className="text-xs text-gray-600 mt-2">
+                    Power users: Edit this structure to refine your prompt before export.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {activeTab === 'structured' && (
+        {activeTab === 'finalOutput' && (
           <div className="flex-1 min-h-0">
-            <OutputDisplay
-              content={editedStructuredOutput}
-              onEdit={setEditedStructuredOutput}
-              onCopy={() => copyToClipboard(editedStructuredOutput)}
-              isLoading={isLoading}
-            />
-          </div>
-        )}
-        {activeTab === 'normalized' && (
-          <div className="flex-1 min-h-0">
-            {normalizedOutput ? (
-              <OutputDisplay
-                content={editedNormalizedOutput}
-                onEdit={setEditedNormalizedOutput}
-                onCopy={() => copyToClipboard(editedNormalizedOutput)}
-                isLoading={isNormalizing}
-              />
+            {finalOutput ? (
+              <div className="h-full flex flex-col gap-3">
+                {/* Format Selector */}
+                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                  <label className="block text-xs font-medium text-gray-300 mb-2">
+                    Export Format:
+                  </label>
+                  <select
+                    value={selectedExportModel}
+                    onChange={(e) => handleExportFormatChange(e.target.value as 'sora2' | 'veo3' | 'generic')}
+                    className="w-full bg-gray-900 border border-gray-600 text-gray-200 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="sora2">Sora 2 (2,500 chars)</option>
+                    <option value="veo3">Veo 3 (3,000 chars)</option>
+                    <option value="generic">Generic</option>
+                  </select>
+                </div>
+
+                {/* Output Display */}
+                <div className="flex-1 min-h-0 relative">
+                  <pre className="w-full h-full bg-gray-900 border border-gray-800 rounded-lg p-4 overflow-auto font-mono text-sm text-gray-300 whitespace-pre-wrap">
+                    <code>{finalOutput}</code>
+                  </pre>
+                </div>
+
+                {/* Copy Button */}
+                <button
+                  onClick={() => copyToClipboard(finalOutput)}
+                  className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>Copy {selectedExportModel === 'sora2' ? 'Sora 2' : selectedExportModel === 'veo3' ? 'Veo 3' : 'Generic'} Prompt</span>
+                </button>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-center p-4">
                 <svg className="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">No transformation yet</p>
-                  <p className="text-xs text-gray-600">Use the transform buttons on the Structured tab</p>
+                  <p className="text-sm text-gray-400 mb-1">No final output yet</p>
+                  <p className="text-xs text-gray-600">Generate a prompt to see the formatted output</p>
                 </div>
               </div>
             )}
