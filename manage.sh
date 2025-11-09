@@ -4,12 +4,13 @@
 # Management Script for The Transformation Engine (React/Vite)
 #
 # USAGE:
-#   ./manage.sh dev      - Starts the local development server
+#   ./manage.sh dev      - Starts the local development server (HTTPS)
 #   ./manage.sh build    - Creates a production build
-#   ./manage.sh start    - Serves the production build with PM2
-#   ./manage.sh stop     - Stops the PM2 process
-#   ./manage.sh logs     - Shows logs for the PM2 process
-#   ./manage.sh status   - Shows the status of the PM2 process
+#   ./manage.sh start    - Serves the production build with PM2 (HTTP)
+#   ./manage.sh nginx    - Starts nginx with HTTPS (production)
+#   ./manage.sh stop     - Stops the PM2 or nginx process
+#   ./manage.sh logs     - Shows logs for the PM2 or nginx process
+#   ./manage.sh status   - Shows the status of the PM2 or nginx process
 #
 # ENVIRONMENT VARIABLES:
 #   APP_NAME=myapp ./manage.sh start       - Custom PM2 process name
@@ -117,11 +118,94 @@ start_pm2() {
   echo "2. pm2 save"
 }
 
+# Function to start nginx with HTTPS
+start_nginx() {
+  echo -e "${GREEN}Starting nginx with HTTPS...${NC}"
+
+  # Check if the build directory exists
+  if [ ! -d "$BUILD_DIR" ]; then
+    echo -e "${RED}Error: '${BUILD_DIR}' directory not found.${NC}"
+    echo "Please run './manage.sh build' first."
+    exit 1
+  fi
+
+  # Check if SSL certificates exist
+  if [ ! -f "localhost+2.pem" ] || [ ! -f "localhost+2-key.pem" ]; then
+    echo -e "${RED}Error: SSL certificates not found.${NC}"
+    echo "Please run 'mkcert localhost 127.0.0.1 ::1' first."
+    exit 1
+  fi
+
+  # Check nginx config
+  if [ ! -f "nginx.conf" ]; then
+    echo -e "${RED}Error: nginx.conf not found.${NC}"
+    exit 1
+  fi
+
+  # Test nginx configuration
+  echo "Testing nginx configuration..."
+  nginx -t -c "$(pwd)/nginx.conf"
+  if [ $? -ne 0 ]; then
+    echo -e "${RED}nginx configuration test failed.${NC}"
+    exit 1
+  fi
+
+  # Stop any existing nginx process using this config
+  pkill -f "nginx.*$(pwd)/nginx.conf" 2>/dev/null
+
+  # Start nginx
+  echo "Starting nginx on https://localhost:1847/"
+  nginx -c "$(pwd)/nginx.conf"
+
+  if [ $? -eq 0 ]; then
+    echo -e "${GREEN}nginx started successfully!${NC}"
+    echo "  HTTPS: https://localhost:1847/"
+    echo "  HTTP:  http://localhost:7392/ (redirects to HTTPS)"
+    echo ""
+    echo "To stop: ./manage.sh stop"
+    echo "To view logs: ./manage.sh logs"
+  else
+    echo -e "${RED}Failed to start nginx.${NC}"
+    exit 1
+  fi
+}
+
+# Function to stop nginx
+stop_nginx() {
+  echo -e "${YELLOW}Stopping nginx...${NC}"
+  pkill -f "nginx.*$(pwd)/nginx.conf"
+  if [ $? -eq 0 ]; then
+    echo -e "${GREEN}nginx stopped successfully.${NC}"
+  else
+    echo -e "${YELLOW}No nginx process found.${NC}"
+  fi
+}
+
+# Function to show nginx logs
+show_nginx_logs() {
+  echo -e "${GREEN}Showing nginx logs...${NC}"
+
+  # Detect OS and set log paths
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    LOG_DIR="/opt/homebrew/var/log/nginx"
+  else
+    # Linux
+    LOG_DIR="/var/log/nginx"
+  fi
+
+  echo "Access log:"
+  tail -f "$LOG_DIR/tte_access.log" &
+  echo ""
+  echo "Error log:"
+  tail -f "$LOG_DIR/tte_error.log"
+}
+
 # --- Main Logic ---
 # Check if an argument was provided
 if [ -z "$1" ]; then
   echo -e "${RED}Error: No command specified.${NC}"
-  echo -e "Usage: $0 {dev|build|start|stop|logs|status}"
+  echo -e "Usage: $0 {dev|build|start|nginx|stop|logs|status}"
   exit 1
 fi
 
@@ -136,21 +220,39 @@ case "$1" in
   start)
     start_pm2
     ;;
+  nginx)
+    start_nginx
+    ;;
   stop)
+    # Try to stop both PM2 and nginx
     echo "Stopping PM2 process: $APP_NAME"
-    pm2 stop "$APP_NAME"
+    pm2 stop "$APP_NAME" 2>/dev/null
+    stop_nginx
     ;;
   logs)
-    echo "Showing logs for PM2 process: $APP_NAME"
-    pm2 logs "$APP_NAME"
+    # Check if nginx is running, otherwise show PM2 logs
+    if pgrep -f "nginx.*$(pwd)/nginx.conf" > /dev/null; then
+      show_nginx_logs
+    else
+      echo "Showing logs for PM2 process: $APP_NAME"
+      pm2 logs "$APP_NAME"
+    fi
     ;;
   status)
-    echo "Showing status for PM2 process: $APP_NAME"
+    echo "=== PM2 Status ==="
     pm2 list
+    echo ""
+    echo "=== nginx Status ==="
+    if pgrep -f "nginx.*$(pwd)/nginx.conf" > /dev/null; then
+      echo -e "${GREEN}nginx is running${NC}"
+      echo "  HTTPS: https://localhost:1847/"
+    else
+      echo -e "${YELLOW}nginx is not running${NC}"
+    fi
     ;;
   *)
     echo -e "${RED}Error: Invalid command '$1'.${NC}"
-    echo -e "Usage: $0 {dev|build|start|stop|logs|status}"
+    echo -e "Usage: $0 {dev|build|start|nginx|stop|logs|status}"
     exit 1
     ;;
 esac

@@ -67,12 +67,27 @@ Real-time network monitoring, audit logs, and privacy verification.
 
 ## Quick Start
 
+### Development (with HTTPS)
+
 ```bash
-npm install
+# One-time setup
+./setup.sh
+
+# Development server with HTTPS
 npm run dev
 ```
 
-Open http://localhost:1847 (or custom port via `npm run dev -- --port 12345`)
+Open https://localhost:1847 (HTTPS enabled by default)
+
+### Production (with nginx)
+
+```bash
+# Build and serve with nginx (HTTPS)
+npm run build
+./manage.sh nginx
+```
+
+Open https://localhost:1847
 
 **API Key Setup**: Add providers in Settings → Providers tab (keys stored encrypted with configurable TTL)
 
@@ -107,6 +122,20 @@ Data only sent to configured provider APIs when you explicitly trigger generatio
 - Node.js 18+
 - Modern browser
 - API key for at least one provider (OpenRouter, OpenAI, Gemini, or local server)
+
+## HTTPS Setup
+
+This project uses HTTPS by default for development and production:
+
+- **Development**: Vite dev server with mkcert SSL certificates
+- **Production**: nginx with SSL termination
+
+**Automated Setup** (macOS and Linux):
+```bash
+./setup.sh
+```
+
+See [HTTPS_SETUP.md](./docs/HTTPS_SETUP.md) for detailed instructions, troubleshooting, and platform-specific notes.
 
 ## License
 
