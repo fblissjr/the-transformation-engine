@@ -29,6 +29,8 @@ Visit: **https://localhost:1847/**
 
 - ✅ **macOS** (Homebrew)
 - ✅ **Linux** (apt, yum, dnf)
+- ✅ **Windows** (WSL, Git Bash, or native with manual setup)
+- ✅ **WSL** (Windows Subsystem for Linux)
 
 ## Manual Setup
 
@@ -57,6 +59,33 @@ curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
 chmod +x mkcert-v*-linux-amd64
 sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert
 ```
+
+**Windows (WSL - Recommended):**
+```bash
+# WSL uses Linux commands - follow Ubuntu/Debian instructions above
+sudo apt-get update
+sudo apt-get install -y nginx libnss3-tools
+curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
+chmod +x mkcert-v*-linux-amd64
+sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+```
+
+**Windows (Native - Chocolatey):**
+```powershell
+# Run PowerShell as Administrator
+choco install mkcert nginx
+```
+
+**Windows (Native - Manual):**
+1. **mkcert**:
+   - Download from: https://github.com/FiloSottile/mkcert/releases
+   - Get `mkcert-v*-windows-amd64.exe`
+   - Rename to `mkcert.exe` and add to PATH
+
+2. **nginx**:
+   - Download from: http://nginx.org/en/download.html
+   - Extract to `C:\nginx`
+   - Add `C:\nginx` to PATH
 
 ### 2. Generate SSL Certificates
 
@@ -183,6 +212,65 @@ ls -la /opt/homebrew/var/log/nginx/
 ```bash
 ls -la /var/log/nginx/
 sudo mkdir -p /var/log/nginx  # Create if missing
+```
+
+**Windows:**
+```bash
+ls -la /c/nginx/logs/         # Git Bash
+dir C:\nginx\logs\            # CMD
+```
+
+### Windows-Specific Issues
+
+#### Git Bash Path Issues
+
+If you see "nginx: command not found":
+```bash
+# Add nginx to PATH in Git Bash
+export PATH="$PATH:/c/nginx"
+
+# Or use full path
+/c/nginx/nginx.exe -c $(pwd)/nginx.conf.local
+```
+
+#### nginx Won't Start on Windows
+
+**Option 1: Run as Administrator**
+```bash
+# Git Bash - right-click, "Run as Administrator"
+./manage.sh nginx
+```
+
+**Option 2: Change Ports**
+
+Windows may restrict ports below 1024. Edit `nginx.conf`:
+```nginx
+listen 8443 ssl;      # Instead of 1847
+listen 8080;          # Instead of 7392
+```
+
+#### WSL vs Native Windows
+
+**Use WSL (Recommended):**
+- Better compatibility with Unix tools
+- Easier package management
+- Same commands as Linux
+
+**Native Windows:**
+- Requires manual setup
+- Use Git Bash or MSYS2
+- Some commands may differ
+
+#### Path Format Issues
+
+Windows uses backslashes, but scripts use forward slashes. If you see path errors:
+
+```bash
+# Git Bash automatically converts
+/c/nginx/conf  →  C:\nginx\conf
+
+# If issues persist, use Windows-style paths in nginx.conf.local
+C:/nginx/conf  # Forward slashes work in nginx config
 ```
 
 ## Files

@@ -4,11 +4,17 @@
 # Setup Script for The Transformation Engine
 #
 # This script:
-# 1. Detects your operating system (macOS or Linux)
+# 1. Detects your operating system (macOS, Linux, Windows, or WSL)
 # 2. Installs required dependencies (mkcert, nginx)
 # 3. Generates SSL certificates for local HTTPS
 # 4. Configures nginx with the correct paths for your OS
 # 5. Installs Node.js dependencies
+#
+# Supported Platforms:
+# - macOS (Homebrew)
+# - Linux (apt, yum, dnf)
+# - Windows (WSL recommended, Git Bash with manual install)
+# - WSL (Windows Subsystem for Linux)
 #
 # USAGE:
 #   ./setup.sh           - Run full setup
@@ -26,7 +32,37 @@ NC='\033[0m' # No Color
 
 # --- Detect Operating System ---
 detect_os() {
-  if [[ "$OSTYPE" == "darwin"* ]]; then
+  # Detect Windows (Git Bash, MSYS2, or WSL)
+  if [[ "$OSTYPE" == "msys"* ]] || [[ "$OSTYPE" == "win32"* ]] || [[ "$OSTYPE" == "cygwin"* ]]; then
+    OS="windows"
+    PACKAGE_MANAGER="manual"
+
+    # Check if running in WSL
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+      OS="wsl"
+      PACKAGE_MANAGER="apt"
+      NGINX_CONF_DIR="/etc/nginx"
+      NGINX_LOG_DIR="/var/log/nginx"
+      MIME_TYPES_PATH="/etc/nginx/mime.types"
+    else
+      # Native Windows (Git Bash/MSYS2)
+      # Try to find nginx installation
+      if [ -d "/c/nginx" ]; then
+        NGINX_CONF_DIR="/c/nginx/conf"
+        NGINX_LOG_DIR="/c/nginx/logs"
+        MIME_TYPES_PATH="/c/nginx/conf/mime.types"
+      elif [ -d "/c/Program Files/nginx" ]; then
+        NGINX_CONF_DIR="/c/Program Files/nginx/conf"
+        NGINX_LOG_DIR="/c/Program Files/nginx/logs"
+        MIME_TYPES_PATH="/c/Program Files/nginx/conf/mime.types"
+      else
+        # Default paths - user needs to install nginx manually
+        NGINX_CONF_DIR="C:/nginx/conf"
+        NGINX_LOG_DIR="C:/nginx/logs"
+        MIME_TYPES_PATH="C:/nginx/conf/mime.types"
+      fi
+    fi
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
     OS="macos"
     PACKAGE_MANAGER="brew"
     NGINX_CONF_DIR="/opt/homebrew/etc/nginx"
@@ -82,6 +118,15 @@ install_dependencies() {
       curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
       chmod +x mkcert-v*-linux-amd64
       sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+    elif [[ "$PACKAGE_MANAGER" == "manual" ]] && [[ "$OS" == "windows" ]]; then
+      echo -e "${YELLOW}Please install mkcert manually on Windows:${NC}"
+      echo "  1. Download from: https://github.com/FiloSottile/mkcert/releases"
+      echo "  2. Get mkcert-v*-windows-amd64.exe"
+      echo "  3. Rename to mkcert.exe and add to PATH"
+      echo "  OR use Chocolatey: choco install mkcert"
+      echo ""
+      echo "After installing, run this script again."
+      exit 1
     fi
     echo -e "${GREEN}mkcert installed successfully.${NC}"
   else
@@ -97,6 +142,14 @@ install_dependencies() {
       sudo apt-get install -y nginx
     elif [[ "$PACKAGE_MANAGER" == "yum" ]] || [[ "$PACKAGE_MANAGER" == "dnf" ]]; then
       sudo $PACKAGE_MANAGER install -y nginx
+    elif [[ "$PACKAGE_MANAGER" == "manual" ]] && [[ "$OS" == "windows" ]]; then
+      echo -e "${YELLOW}Please install nginx manually on Windows:${NC}"
+      echo "  1. Download from: http://nginx.org/en/download.html"
+      echo "  2. Extract to C:\\nginx"
+      echo "  OR use Chocolatey: choco install nginx"
+      echo ""
+      echo "After installing, run this script again."
+      exit 1
     fi
     echo -e "${GREEN}nginx installed successfully.${NC}"
   else
