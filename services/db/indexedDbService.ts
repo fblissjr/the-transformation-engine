@@ -2,7 +2,7 @@
 import { openDB, IDBPDatabase } from 'idb';
 import { Prompt, PromptVersion, SystemPromptConfig, AppSettings, MediaBlob } from '../../types';
 import { DB_NAME, DB_VERSION, STORE_NAMES } from '../../config/database';
-import { applySchema } from './migrations/schema_v9';
+import { createFreshSchema } from './schema';
 
 const PROMPTS_STORE_NAME = STORE_NAMES.prompts;
 const VERSIONS_STORE_NAME = STORE_NAMES.versions;
@@ -28,13 +28,19 @@ export async function initDB() {
   console.log(`[IndexedDB] Opening ${DB_NAME} (schema v${DB_VERSION})...`);
   db = await openDB(DB_NAME, DB_VERSION, {
     upgrade(db, oldVersion, newVersion, tx) {
-      console.log(`[IndexedDB] Upgrading schema from v${oldVersion} to v${newVersion}`);
+      // ONLY allow fresh database creation
+      if (oldVersion !== 0) {
+        throw new Error(
+          `Database version mismatch. Found v${oldVersion}, expected fresh install.\n` +
+          `Please export your data, delete the database, and import after fresh initialization.`
+        );
+      }
 
-      // Apply clean schema (handles both fresh installs and upgrades)
-      applySchema(db, oldVersion, newVersion, tx);
+      // Create fresh schema (only runs on first install)
+      createFreshSchema(db);
     },
   });
-  console.log(`[IndexedDB] Database ready (schema v${db.version})`);
+  console.log(`[IndexedDB] Database ready (v${db.version})`);
   return db;
 }
 

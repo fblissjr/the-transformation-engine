@@ -404,14 +404,15 @@ function extractTitleFromInput(input: string): string {
 /**
  * Generate intermediate representation from natural language
  * Uses primary_intermediate.md template to get semantic JSON structure
+ * Routes through taskRouter for provider/model handling
  *
  * @param input - Natural language description of the scene
  * @param options - Generation options (model, temperature, etc.)
+ * @param settings - Prompt settings (schema keys, format, etc.)
  * @returns IntermediatePrompt object ready to save to IndexedDB
  */
 export async function generateIntermediate(
   input: string,
-  apiKey: string,
   options?: {
     modelName?: string;
     temperature?: number;
@@ -432,22 +433,15 @@ export async function generateIntermediate(
   });
 
   // Use taskRouter with JSON mode for structured output (v2.0)
-  const turn = await taskRouter.executeTaskJson(
+  // executeTaskJson returns the parsed JSON directly, not a turn object
+  const structuredOutput = await taskRouter.executeTaskJson(
     TASK_IDS.INTERMEDIATE_GENERATION,
     input,
     systemPrompt
   );
 
-  const response = turn.response;
-
-  // Parse JSON response
-  let structuredOutput;
-  try {
-    structuredOutput = JSON.parse(response);
-  } catch (error) {
-    throw new Error(
-      `Failed to parse JSON response from LLM. Got: ${response.substring(0, 200) || '(empty response)'}`,
-    );
+  if (!structuredOutput) {
+    throw new Error('No response from LLM (executeTaskJson returned null/undefined)');
   }
 
   // Validate with Zod schema

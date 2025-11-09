@@ -148,7 +148,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, onSettingsChange 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Model Selection Tab */}
           {activeTab === 'model' && (
-            <ModelSelectionTab settings={settings} onSettingsChange={onSettingsChange} />
+            <ModelSelectionTab
+              settings={settings}
+              onSettingsChange={onSettingsChange}
+              onSwitchToProviders={() => setActiveTab('providers')}
+            />
           )}
 
           {/* Providers Tab */}

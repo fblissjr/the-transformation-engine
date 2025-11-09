@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-11-08 | **Status**: Phase 2 Complete (v2.0 Structured JSON Intermediates)
+> **Last Updated**: 2025-11-09 | **Status**: Phase 2 Complete (v2.0.2 - Generation Bug Fixed)
 
 ---
 
@@ -36,9 +36,12 @@ The living-docs contain 16 modular files covering:
 - API integration
 - Privacy & security
 - Phase history
-- Troubleshooting
+- **Troubleshooting** (including known bugs)
 - File structure
 - Roadmap & next steps
+
+### Version History
+**[CHANGELOG.md](./CHANGELOG.md)** - Version history and notable changes
 
 ### For Users
 **[docs/user_guide.md](./docs/user_guide.md)** - User-facing guide
@@ -73,17 +76,44 @@ The living-docs contain 16 modular files covering:
 4. **NO GIT COMMITS**: Never commit anything to git or stage it, always rely on the developer for this
 5. **ZERO Legacy Code**: All generation routes through taskRouter
 6. **JSON Mode**: Native JSON generation for structured outputs
+7. **NO MIGRATIONS**: Database v9 is fresh-install only - users must export/import for schema changes
 
 ---
 
 ## Tech Stack
 
 - **Frontend**: React 19 + TypeScript + Vite + Tailwind v4
-- **Storage**: IndexedDB v9 (multi-provider architecture)
+- **Storage**: IndexedDB v9 (multi-provider architecture, no migrations)
 - **LLM Providers**: Gemini 2.5 Flash (default), OpenRouter (with OpenAI + local servers ready)
 - **Testing**: Vitest (setup, minimal coverage)
 
 ---
 
 **Always read this file to get up to speed. For detailed info, see [living-docs](./internal/living-docs/). This is a hobbyist project - aim for simplicity and extensibility.**
-- No migration scripts from prior versions.
+
+## Recent Changes (v2.0.2)
+
+- **CRITICAL BUG FIX**: Fixed "No provider configured" error that blocked generation
+  - Removed obsolete `apiKey` check from `GenerationContext`
+  - `generateIntermediate()` already routes through `taskRouter` (handles API keys internally)
+  - Generation now works immediately after adding a provider
+- **New Feature**: "Set as Default" provider management
+  - Checkbox when adding providers (auto-assigns to all tasks)
+  - "Set Default" button for existing providers
+  - No need to navigate to Model Selection tab
+
+## Previous Changes (v2.0.1)
+
+- **Migration Code Removed**: All database migration code removed per project philosophy
+  - Fresh database creation only (IndexedDB v9)
+  - Users with old databases must export → clear DB → import
+  - Archived migration files: `internal/archived/migrations/`
+
+See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
+
+---
+- Always update our @internal docs after code changes are complete and tested, according to our guiding principles, and ensuring no migration related code is created or exists. Then update @CLAUDE.md with any links that are needed. All docs should be created within @internal in an organized manner, then propagated down to @CLAUDE.md as the index / starting point for Claude.
+
+Then finally, propagated down to the @README.md and @docs folder.
+
+Both @internal and @docs markdown docs should be consolidated when it makes sense to avoid duplication of docs. Modularity is important, but not to an extreme level.

@@ -991,7 +991,6 @@ const CenterPanel: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
               <span className="text-sm font-medium text-white">Preview Prompt</span>
-              <span className="text-xs text-gray-500">(Full transparency)</span>
               <span className={`text-xs px-2 py-0.5 rounded ${
                 detectedTemplate === 'sora2' ? 'bg-blue-500/20 text-blue-300' :
                 detectedTemplate === 'veo3' ? 'bg-purple-500/20 text-purple-300' :

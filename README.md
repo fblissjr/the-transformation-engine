@@ -8,7 +8,7 @@ LLM-powered structured prompts and transformations and other random wackiness fo
 
 ## Features
 
-- **Multi-Provider Architecture**: Use any LLM (OpenRouter 100+ models, OpenAI, Gemini, local servers) for any task
+- **Multi-Provider Architecture**: Use any LLM (OpenRouter 100+ models, OpenAI, Gemini, Local LLM Servers) for any task
 - **Intermediate-First Generation**: Create model-agnostic semantic prompts, instantly export to Sora 2, Veo 3, or Generic formats
 - **Task-Level Granularity**: Assign different providers/models per task (generate, mix, transform, etc.)
 - **Streaming Support**: Live token streaming with tok/s metrics, cancel generation mid-stream
@@ -21,7 +21,33 @@ LLM-powered structured prompts and transformations and other random wackiness fo
 - **Media**: Image/video conditioning via vision API
 - **Transparency**: Preview and edit all prompts before sending, customize system prompts, view intermediate representations
 - **Settings**: 7 tabs (Providers, Tasks, API Key, Model, System Prompts, Tokens, Data)
-- **Privacy**: 100% client-side, encrypted API keys per provider, network monitoring, audit logs
+- **Privacy**: Client-side processing, encrypted API keys per provider, network monitoring, audit logs
+
+## Quick Start
+
+### macOS & Linux (with HTTPS)
+
+```bash
+# One-time setup
+./setup.sh
+```
+
+#### Platform Agnostic - Quick Local Host Setup with npm
+
+```bash
+#Development server with HTTPS
+npm run dev
+```
+#### # For Production/Server Usage, Build and serve with nginx (HTTPS)
+```bash
+
+npm run build
+./manage.sh nginx
+```
+
+Open https://localhost:1847 (HTTPS enabled by default)
+
+**API Key Setup**: Add providers in Settings → Providers tab (keys stored encrypted with configurable TTL)
 
 ## Screenshots
 
@@ -41,7 +67,7 @@ Upload images/videos, mix multiple prompts, and use AI vision analysis.
 <img src="assets/media-conditioning.png" alt="Media Conditioning" width="800">
 
 ### Model Selection
-Choose from all available Gemini models with real-time availability.
+Multi-provider model selection with task-level granularity (OpenRouter, OpenAI, Gemini, local servers).
 
 <img src="assets/model-selector.png" alt="Model Selector" width="800">
 
@@ -61,60 +87,26 @@ Manage storage and clear cached API responses.
 <img src="assets/settings-data.png" alt="Data Management" width="600">
 
 ### Privacy Dashboard
-Real-time network monitoring, audit logs, and privacy verification.
+Real-time network monitoring, audit logs, and privacy stats.
 
 <img src="assets/privacy-dashboard.png" alt="Privacy Dashboard" width="800">
 
-## Quick Start
-
-### Development (with HTTPS)
-
-```bash
-# One-time setup
-./setup.sh
-
-# Development server with HTTPS
-npm run dev
-```
-
-Open https://localhost:1847 (HTTPS enabled by default)
-
-### Production (with nginx)
-
-```bash
-# Build and serve with nginx (HTTPS)
-npm run build
-./manage.sh nginx
-```
-
-Open https://localhost:1847
-
-**API Key Setup**: Add providers in Settings → Providers tab (keys stored encrypted with configurable TTL)
-
-Get API keys:
-- **OpenRouter**: [OpenRouter](https://openrouter.ai/) (100+ models, single key)
-- **OpenAI**: [OpenAI Platform](https://platform.openai.com/api-keys)
-- **Gemini**: [Google AI Studio](https://aistudio.google.com/app/apikey)
-- **Local**: Run [heylookitsanllm](https://github.com/fredbliss/heylookitsanllm) or any OpenAI-compatible server
-
-**Documentation:** [User Guide](./docs/USER_GUIDE.md) - includes installation, features, and advanced usage
-
 ## Storage
 
-- **Prompts/intermediates/versions/media/providers/tasks**: IndexedDB (browser-local, **DB v8**)
+- **Prompts/intermediates/versions/media/providers/tasks**: IndexedDB (browser-local)
 - **API keys**: Encrypted per-provider storage (AES-GCM, configurable TTL, default 7 days)
 - **Cache & custom system prompts**: localStorage (models list, API responses, edited prompts)
 
 **Multi-Provider Architecture**: Task-level granularity - assign any provider/model to any task (generate, mix, transform, etc.)
 
-**Intermediate Architecture**: Prompts stored as model-agnostic Markdown, transformed on-demand to any format (zero extra API calls)
+**Intermediate Architecture (Phase 2 Complete)**: Prompts stored as model-agnostic structured JSON (v2.0), transformed on-demand to any format (Sora 2, Veo 3, Generic) with zero extra API calls.
 
-Data only sent to configured provider APIs when you explicitly trigger generation/transformation.
+Data is sent only to configured provider APIs when you explicitly trigger generation/transformation.
 
 ## Tech Stack
 
 - React 19 + TypeScript + Vite + Tailwind v4
-- IndexedDB (idb library) - DB v8
+- IndexedDB (idb library)
 - Multi-provider LLM support: OpenRouter, OpenAI, Gemini, local servers
 
 ## Requirements
@@ -129,13 +121,6 @@ This project uses HTTPS by default for development and production:
 
 - **Development**: Vite dev server with mkcert SSL certificates
 - **Production**: nginx with SSL termination
-
-**Automated Setup** (macOS and Linux):
-```bash
-./setup.sh
-```
-
-See [HTTPS_SETUP.md](./docs/HTTPS_SETUP.md) for detailed instructions, troubleshooting, and platform-specific notes.
 
 ## License
 

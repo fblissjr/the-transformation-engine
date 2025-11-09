@@ -74,10 +74,6 @@ const GenerationContext = createContext<GenerationContextType | undefined>(undef
 
 export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const { providers } = useProviders();
-  const apiKey = useMemo(() => {
-    const defaultProvider = providers.find(p => p.enabled);
-    return defaultProvider?.apiKeys?.[0]?.key || null;
-  }, [providers]);
   const {
     naturalLanguageInput,
     settings,
@@ -120,10 +116,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       setError("Please enter a creative idea.");
       return;
     }
-    if (!apiKey) {
-      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
-      return;
-    }
 
     // Create new AbortController for this request
     const controller = new AbortController();
@@ -146,7 +138,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       // Generate intermediate structure
       const intermediate = await generateIntermediate(
         naturalLanguageInput,
-        apiKey,
         {
           modelName: modelSettings?.modelName,
           temperature: 0.7,
@@ -205,10 +196,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   const normalize = async (transformInstruction?: string) => {
     if (!structuredOutput) {
       setError("No structured output to transform.");
-      return;
-    }
-    if (!apiKey) {
-      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
 
@@ -532,7 +519,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       // Regenerate with enhanced context using intermediate-first approach
       const intermediate = await generateIntermediate(
         enhancedInput,
-        apiKey,
         {
           modelName: settings.modelName,
           temperature: 0.7,

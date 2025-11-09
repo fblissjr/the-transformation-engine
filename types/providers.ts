@@ -165,7 +165,7 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresVision: false,
     requiresVideo: false,
     requiresJsonMode: false,
-    defaultTemperature: 0.7,
+    defaultTemperature: 1.0,
     defaultMaxTokens: 4096,
   },
   [TASK_IDS.INTERMEDIATE_GENERATION]: {
@@ -175,7 +175,7 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresVision: false,
     requiresVideo: false,
     requiresJsonMode: false,
-    defaultTemperature: 0.7,
+    defaultTemperature: 1.0,
     defaultMaxTokens: 3072,
   },
   [TASK_IDS.MIX_PROMPTS]: {
@@ -185,7 +185,7 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresVision: false,
     requiresVideo: false,
     requiresJsonMode: false,
-    defaultTemperature: 0.8,
+    defaultTemperature: 1.0,
     defaultMaxTokens: 4096,
   },
   [TASK_IDS.NORMALIZE]: {
@@ -195,7 +195,7 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresVision: false,
     requiresVideo: false,
     requiresJsonMode: false,
-    defaultTemperature: 0.5,
+    defaultTemperature: 1.0,
     defaultMaxTokens: 2048,
   },
   [TASK_IDS.SCHEMA_INFERENCE]: {
@@ -205,7 +205,7 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresVision: false,
     requiresVideo: false,
     requiresJsonMode: true,
-    defaultTemperature: 0.3,
+    defaultTemperature: 1.0,
     defaultMaxTokens: 1024,
   },
   [TASK_IDS.MEDIA_DESCRIPTION]: {
@@ -215,7 +215,7 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresVision: true,
     requiresVideo: true,
     requiresJsonMode: false,
-    defaultTemperature: 0.5,
+    defaultTemperature: 1.0,
     defaultMaxTokens: 2048,
   },
   [TASK_IDS.TRANSFORM]: {
@@ -225,7 +225,7 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresVision: false,
     requiresVideo: false,
     requiresJsonMode: false,
-    defaultTemperature: 0.5,
+    defaultTemperature: 1.0,
     defaultMaxTokens: 2048,
   },
   [TASK_IDS.MODEL_CONVERSION]: {
@@ -235,7 +235,7 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresVision: false,
     requiresVideo: false,
     requiresJsonMode: false,
-    defaultTemperature: 0.5,
+    defaultTemperature: 1.0,
     defaultMaxTokens: 4096,
   },
   [TASK_IDS.PROMPT_REWRITE]: {
@@ -245,7 +245,7 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresVision: false,
     requiresVideo: false,
     requiresJsonMode: false,
-    defaultTemperature: 0.7,
+    defaultTemperature: 1.0,
     defaultMaxTokens: 4096,
   },
 };

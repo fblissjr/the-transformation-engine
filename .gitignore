@@ -16,7 +16,10 @@ dist-ssr/
 
 # Other
 .claude/*
-#internal/*
+internal/*
+
+# External reference symlinks (local machine paths)
+internal/reference/
 
 # Editor directories and files
 .vscode/*

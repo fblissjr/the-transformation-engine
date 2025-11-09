@@ -169,7 +169,7 @@ export const STRINGS = {
   ERROR_MODAL_TITLE: "Error",
 };
 
-export const GEMINI_MODEL_NAME = "gemini-2.5-flash-latest";
+export const GEMINI_MODEL_NAME = "gemini-flash-latest";
 
 // Veo 3.1 Model Names (Google DeepMind)
 export const VEO_31_GENERATE = "veo-3.1-generate-preview";
@@ -225,7 +225,7 @@ export const BUILT_IN_MIX_OPTIONS: MixOption[] = [
 ];
 
 export const DEFAULT_MODEL_SETTINGS: ModelSettings = {
-  modelName: "gemini-2.5-flash-latest",
+  modelName: "gemini-flash-latest",
   maxTokens: 2048,
   temperature: 1.0,
   topP: 0.95,

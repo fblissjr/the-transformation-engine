@@ -8,9 +8,10 @@ import type { PromptSettings } from '../../types';
 interface ModelSelectionTabProps {
   settings: PromptSettings;
   onSettingsChange: (settings: PromptSettings) => void;
+  onSwitchToProviders?: () => void;
 }
 
-export const ModelSelectionTab: React.FC<ModelSelectionTabProps> = ({ settings, onSettingsChange }) => {
+export const ModelSelectionTab: React.FC<ModelSelectionTabProps> = ({ settings, onSettingsChange, onSwitchToProviders }) => {
   const { providers, fetchModels } = useProviders();
   const [globalDefault, setGlobalDefault] = useState<{
     providerId: string;
@@ -129,9 +130,19 @@ export const ModelSelectionTab: React.FC<ModelSelectionTabProps> = ({ settings, 
           <p className="text-sm text-gray-400 mb-4">
             You need to add at least one provider before you can select a model.
           </p>
-          <p className="text-sm text-gray-400">
-            Go to the <strong>Providers</strong> tab to add OpenRouter, Gemini, OpenAI, or a local server.
-          </p>
+          {onSwitchToProviders && (
+            <button
+              onClick={onSwitchToProviders}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+            >
+              Go to Providers Tab
+            </button>
+          )}
+          {!onSwitchToProviders && (
+            <p className="text-sm text-gray-400">
+              Go to the <strong>Providers</strong> tab to add OpenRouter, Gemini, OpenAI, or a local server.
+            </p>
+          )}
         </div>
       </div>
     );

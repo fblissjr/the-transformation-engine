@@ -43,7 +43,7 @@ export class TaskAssignmentService {
       enableStreaming: false,
       temperature: metadata.defaultTemperature,
       maxTokens: metadata.defaultMaxTokens,
-      topP: 1.0,
+      topP: 0.95,
       updatedAt: Date.now(),
     };
 
@@ -126,7 +126,7 @@ export class TaskAssignmentService {
       enableStreaming: false,
       temperature: metadata.defaultTemperature,
       maxTokens: metadata.defaultMaxTokens,
-      topP: 1.0,
+      topP: 0.95,
       updatedAt: Date.now(),
     };
 
@@ -168,7 +168,7 @@ export class TaskAssignmentService {
         enableStreaming,
         temperature: metadata.defaultTemperature,
         maxTokens: metadata.defaultMaxTokens,
-        topP: 1.0,
+        topP: 0.95,
         updatedAt: Date.now(),
       };
 

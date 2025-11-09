@@ -9,8 +9,9 @@ export const DB_CONFIG = {
   // Database name (NEVER change this - would lose all user data)
   name: 'TransformationEngineDB',
 
-  // Current schema version (increment when schema changes required)
-  version: 9, // Clean slate from v9 onwards
+  // Schema version (NEVER increment - breaking changes require manual export/import)
+  // If schema needs changes, users must export data, clear DB, and import
+  version: 9,
 
   // Store names
   stores: {

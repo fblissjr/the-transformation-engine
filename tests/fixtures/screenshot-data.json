@@ -1,0 +1,308 @@
+{
+  "_comment": "Mock data fixture for screenshot automation - creates realistic app state without real API calls",
+  "version": "1.0.0",
+  "dbVersion": 9,
+  "providers": [
+    {
+      "id": "provider_gemini_1731139200000",
+      "name": "Gemini (Google)",
+      "type": "gemini",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+      "enabled": true,
+      "createdAt": 1731139200000,
+      "updatedAt": 1731139200000
+    }
+  ],
+  "providerKeys": [
+    {
+      "id": "key_1731139200000_mock123",
+      "providerId": "provider_gemini_1731139200000",
+      "encryptedKey": "mock_encrypted_key_for_testing_purposes_only",
+      "label": "Test Key",
+      "ttl": 604800000,
+      "createdAt": 1731139200000,
+      "expiresAt": 1731744000000
+    }
+  ],
+  "taskAssignments": [
+    {
+      "taskId": "primary_generation",
+      "providerId": "provider_gemini_1731139200000",
+      "modelId": "gemini-2.0-flash-exp",
+      "enableRewrite": false,
+      "enableStreaming": true,
+      "temperature": 1.0,
+      "maxTokens": 4096,
+      "topP": 0.95,
+      "updatedAt": 1731139200000
+    },
+    {
+      "taskId": "intermediate_generation",
+      "providerId": "provider_gemini_1731139200000",
+      "modelId": "gemini-2.0-flash-exp",
+      "enableRewrite": false,
+      "enableStreaming": true,
+      "temperature": 1.0,
+      "maxTokens": 3072,
+      "topP": 0.95,
+      "updatedAt": 1731139200000
+    },
+    {
+      "taskId": "mix_prompts",
+      "providerId": "provider_gemini_1731139200000",
+      "modelId": "gemini-2.0-flash-exp",
+      "enableRewrite": false,
+      "enableStreaming": true,
+      "temperature": 1.0,
+      "maxTokens": 4096,
+      "topP": 0.95,
+      "updatedAt": 1731139200000
+    },
+    {
+      "taskId": "normalize",
+      "providerId": "provider_gemini_1731139200000",
+      "modelId": "gemini-2.0-flash-exp",
+      "enableRewrite": false,
+      "enableStreaming": true,
+      "temperature": 1.0,
+      "maxTokens": 2048,
+      "topP": 0.95,
+      "updatedAt": 1731139200000
+    },
+    {
+      "taskId": "schema_inference",
+      "providerId": "provider_gemini_1731139200000",
+      "modelId": "gemini-2.0-flash-exp",
+      "enableRewrite": false,
+      "enableStreaming": false,
+      "temperature": 1.0,
+      "maxTokens": 1024,
+      "topP": 0.95,
+      "updatedAt": 1731139200000
+    },
+    {
+      "taskId": "media_description",
+      "providerId": "provider_gemini_1731139200000",
+      "modelId": "gemini-2.0-flash-exp",
+      "enableRewrite": false,
+      "enableStreaming": true,
+      "temperature": 1.0,
+      "maxTokens": 2048,
+      "topP": 0.95,
+      "updatedAt": 1731139200000
+    },
+    {
+      "taskId": "transform",
+      "providerId": "provider_gemini_1731139200000",
+      "modelId": "gemini-2.0-flash-exp",
+      "enableRewrite": false,
+      "enableStreaming": true,
+      "temperature": 1.0,
+      "maxTokens": 2048,
+      "topP": 0.95,
+      "updatedAt": 1731139200000
+    },
+    {
+      "taskId": "model_conversion",
+      "providerId": "provider_gemini_1731139200000",
+      "modelId": "gemini-2.0-flash-exp",
+      "enableRewrite": false,
+      "enableStreaming": true,
+      "temperature": 1.0,
+      "maxTokens": 4096,
+      "topP": 0.95,
+      "updatedAt": 1731139200000
+    },
+    {
+      "taskId": "prompt_rewrite",
+      "providerId": "provider_gemini_1731139200000",
+      "modelId": "gemini-2.0-flash-exp",
+      "enableRewrite": false,
+      "enableStreaming": true,
+      "temperature": 1.0,
+      "maxTokens": 4096,
+      "topP": 0.95,
+      "updatedAt": 1731139200000
+    }
+  ],
+  "appSettings": [
+    {
+      "id": "app_settings_main",
+      "defaultProviderId": "provider_gemini_1731139200000",
+      "defaultModelId": "gemini-2.0-flash-exp",
+      "theme": "system",
+      "updatedAt": "2025-11-09T12:00:00.000Z"
+    }
+  ],
+  "intermediates": [
+    {
+      "id": "intermediate_mock_001",
+      "version": "2.0.0",
+      "created": "2025-11-09T12:00:00.000Z",
+      "modified": "2025-11-09T12:00:00.000Z",
+      "title": "A British man named William eats spaghetti",
+      "description": "Tense, dramatic dining scene with surprising satisfaction",
+      "tags": ["cinematic", "drama", "food"],
+      "sources": {
+        "text": "A British man named William eats spaghetti in a tense, dramatic, and oddly surprising and satisfying way"
+      },
+      "structure": {
+        "format": "structured",
+        "version": "2.0.0",
+        "sceneType": "cinematic",
+        "sections": {
+          "visual": {
+            "subject": ["British man named William", "plate of spaghetti"],
+            "setting": "indoor dining table",
+            "environment": "intimate and slightly confined space, focused on the act of eating, with a plate of spaghetti and simple cutlery",
+            "colors": "deep, moody reds and browns for the food and table, with cooler, desaturated background tones",
+            "lighting": "low-key, directed lighting creating strong shadows and highlights on the man's face and hands, enhancing the dramatic mood",
+            "composition": "medium close-up, slightly off-center to create visual tension, emphasizing the man's expression and the interaction with the spaghetti",
+            "style": "cinematic realism with a focus on psychological drama and visceral detail, conveying tension and subtle satisfaction"
+          },
+          "temporal": [
+            {
+              "time": "0-3s",
+              "description": "William sits at the table, staring at the plate of spaghetti with intense focus",
+              "camera": "slow push-in on his face",
+              "visual": "his expression is serious, almost anxious"
+            },
+            {
+              "time": "3-7s",
+              "description": "He carefully twirls the spaghetti on his fork with deliberate precision",
+              "camera": "close-up on hands and fork",
+              "visual": "the spaghetti wraps around the fork in slow motion"
+            },
+            {
+              "time": "7-10s",
+              "description": "William brings the fork to his mouth and takes the bite, his eyes closing with unexpected satisfaction",
+              "camera": "return to medium close-up of face",
+              "visual": "tension releases from his shoulders, subtle smile appears"
+            }
+          ],
+          "audio": {
+            "ambient": ["quiet restaurant ambiance", "distant clinking of cutlery"],
+            "soundEffects": ["fork scraping plate", "subtle slurping sound", "satisfied exhale"]
+          },
+          "camera": {
+            "movement": "slow push-in, then pull-out",
+            "angles": ["medium close-up", "extreme close-up on hands", "medium close-up on face"],
+            "techniques": "shallow depth of field, natural camera shake for realism",
+            "lensDetails": "50mm lens, f/2.8 aperture for bokeh background"
+          }
+        }
+      }
+    },
+    {
+      "id": "intermediate_mock_002",
+      "version": "2.0.0",
+      "created": "2025-11-08T10:30:00.000Z",
+      "modified": "2025-11-08T10:30:00.000Z",
+      "title": "Cyberpunk city at night with neon rain",
+      "description": "Atmospheric establishing shot of futuristic cityscape",
+      "tags": ["cyberpunk", "establishing", "sci-fi", "atmospheric"],
+      "sources": {
+        "text": "A sprawling cyberpunk city at night, rain falling through neon-lit streets, holographic advertisements flickering in the mist"
+      },
+      "structure": {
+        "format": "structured",
+        "version": "2.0.0",
+        "sceneType": "establishing",
+        "sections": {
+          "visual": {
+            "subject": ["cyberpunk cityscape", "neon signs", "rain"],
+            "setting": "futuristic city at night",
+            "environment": "dense urban environment with towering skyscrapers, narrow streets filled with steam and fog, holographic billboards floating in the air",
+            "colors": "electric blues, hot pinks, acid greens, and deep purples from neon lights, contrasting with dark blacks and grays of the buildings",
+            "lighting": "neon lights reflecting off wet surfaces, rim lighting on edges of buildings, volumetric light beams cutting through rain and fog",
+            "composition": "wide establishing shot from elevated perspective, layers of depth showing multiple levels of the city",
+            "style": "Blade Runner-inspired neo-noir aesthetic, highly detailed with rich atmospheric effects"
+          },
+          "camera": {
+            "movement": "slow crane down from sky level to street level",
+            "angles": ["high-angle wide shot", "descending crane shot"],
+            "techniques": "long exposure look with motion blur on moving vehicles, anamorphic lens flares from neon lights",
+            "lensDetails": "24mm wide-angle, f/1.4 for bokeh on distant lights"
+          }
+        }
+      }
+    },
+    {
+      "id": "intermediate_mock_003",
+      "version": "2.0.0",
+      "created": "2025-11-07T15:45:00.000Z",
+      "modified": "2025-11-07T15:45:00.000Z",
+      "title": "Product showcase: minimalist watch",
+      "description": "Clean product shot with elegant reveal",
+      "tags": ["product", "commercial", "minimalist"],
+      "sources": {
+        "text": "Luxury minimalist watch rotating on white pedestal with dramatic lighting"
+      },
+      "structure": {
+        "format": "structured",
+        "version": "2.0.0",
+        "sceneType": "product",
+        "sections": {
+          "visual": {
+            "subject": ["luxury minimalist watch", "white pedestal"],
+            "setting": "clean studio environment",
+            "environment": "pure white cyc wall background, single white pedestal in center, no visible horizon line",
+            "colors": "monochromatic white and silver palette, black watch face provides contrast",
+            "lighting": "key light from 45 degrees creating defined shadows, rim light highlighting edges of watch case, subtle fill light to soften shadows",
+            "composition": "centered product with pedestal, rule of thirds for vertical placement, plenty of negative space",
+            "style": "high-end commercial photography aesthetic, ultra-clean and modern"
+          },
+          "temporal": [
+            {
+              "time": "0-2s",
+              "description": "Watch sits still on pedestal, camera slowly orbits around it",
+              "camera": "slow circular dolly movement",
+              "visual": "watch face clearly visible, reflections catching light"
+            },
+            {
+              "time": "2-5s",
+              "description": "Watch begins rotating on pedestal, showing all angles",
+              "camera": "camera continues orbit in opposite direction for dynamic effect",
+              "visual": "metal case catches light, leather strap texture visible"
+            },
+            {
+              "time": "5-7s",
+              "description": "Watch completes rotation, settling back to hero angle",
+              "camera": "camera settles to frontal position",
+              "visual": "final frame perfectly centered and composed"
+            }
+          ],
+          "camera": {
+            "movement": "smooth circular dolly with motorized slider",
+            "angles": ["eye-level medium shot", "slight high-angle for final frame"],
+            "techniques": "macro lens for detail, high shutter speed to freeze watch hands",
+            "lensDetails": "100mm macro, f/8 for optimal depth of field on product"
+          }
+        }
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "id": "prompt_mock_001",
+      "title": "William's Spaghetti Scene",
+      "createdAt": "2025-11-09T12:00:00.000Z",
+      "title_lowercase": "william's spaghetti scene",
+      "intermediateId": "intermediate_mock_001"
+    },
+    {
+      "id": "prompt_mock_002",
+      "title": "Cyberpunk City Establishing Shot",
+      "createdAt": "2025-11-08T10:30:00.000Z",
+      "title_lowercase": "cyberpunk city establishing shot",
+      "intermediateId": "intermediate_mock_002"
+    },
+    {
+      "id": "prompt_mock_003",
+      "title": "Minimalist Watch Product Shot",
+      "createdAt": "2025-11-07T15:45:00.000Z",
+      "title_lowercase": "minimalist watch product shot",
+      "intermediateId": "intermediate_mock_003"
+    }
+  ]
+}

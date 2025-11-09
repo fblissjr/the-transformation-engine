@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProviders } from '../../context/ProviderContext';
 import type { Provider, ProviderType } from '../../types/providers';
+import { taskAssignmentService } from '../../services/taskAssignmentService';
 
 export const ProvidersTab: React.FC = () => {
   const {
@@ -10,15 +11,18 @@ export const ProvidersTab: React.FC = () => {
     deleteProvider,
     addApiKey,
     testConnection,
+    fetchModels,
   } = useProviders();
 
   const [isAddingProvider, setIsAddingProvider] = useState(false);
   const [newProviderName, setNewProviderName] = useState('');
-  const [newProviderType, setNewProviderType] = useState<ProviderType>('openrouter');
-  const [newProviderBaseUrl, setNewProviderBaseUrl] = useState('https://openrouter.ai/api/v1');
+  const [newProviderType, setNewProviderType] = useState<ProviderType>('gemini');
+  const [newProviderBaseUrl, setNewProviderBaseUrl] = useState('https://generativelanguage.googleapis.com/v1beta');
   const [newApiKeyValue, setNewApiKeyValue] = useState('');
+  const [setAsDefault, setSetAsDefault] = useState(true); // Default to true for convenience
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, any>>({});
+  const [confirmingDefaultFor, setConfirmingDefaultFor] = useState<string | null>(null);
 
   const handleAddProvider = async () => {
     if (!newProviderName.trim() || !newProviderBaseUrl.trim() || !newApiKeyValue.trim()) {
@@ -30,9 +34,19 @@ export const ProvidersTab: React.FC = () => {
       const provider = await addProvider(newProviderName, newProviderType, newProviderBaseUrl);
       await addApiKey(provider.id, newApiKeyValue);
 
+      // If "Set as Default" is checked, set this provider as global default for all tasks
+      if (setAsDefault) {
+        const models = await fetchModels(provider.id);
+        if (models && models.length > 0) {
+          // Use first model as default
+          await taskAssignmentService.setGlobalDefault(provider.id, models[0].id);
+        }
+      }
+
       setIsAddingProvider(false);
       setNewProviderName('');
       setNewApiKeyValue('');
+      setSetAsDefault(true); // Reset to default checked
     } catch (error: any) {
       alert(`Failed to add provider: ${error.message}`);
     }
@@ -61,6 +75,29 @@ export const ProvidersTab: React.FC = () => {
         alert(`Failed to delete provider: ${error.message}`);
       }
     }
+  };
+
+  const handleSetAsDefault = async (providerId: string) => {
+    // Show confirmation UI instead of executing immediately
+    setConfirmingDefaultFor(providerId);
+  };
+
+  const handleConfirmSetDefault = async (providerId: string) => {
+    try {
+      const models = await fetchModels(providerId);
+      if (models && models.length > 0) {
+        await taskAssignmentService.setGlobalDefault(providerId, models[0].id);
+        setConfirmingDefaultFor(null);
+      } else {
+        alert('No models found for this provider');
+      }
+    } catch (error: any) {
+      alert(`Failed to set as default: ${error.message}`);
+    }
+  };
+
+  const handleCancelSetDefault = () => {
+    setConfirmingDefaultFor(null);
   };
 
   const getProviderIcon = (type: ProviderType): string => {
@@ -118,14 +155,14 @@ export const ProvidersTab: React.FC = () => {
                   setNewProviderType(e.target.value as ProviderType);
                   // Update default base URL based on type
                   switch (e.target.value) {
+                    case 'gemini':
+                      setNewProviderBaseUrl('https://generativelanguage.googleapis.com/v1beta');
+                      break;
                     case 'openrouter':
                       setNewProviderBaseUrl('https://openrouter.ai/api/v1');
                       break;
                     case 'openai':
                       setNewProviderBaseUrl('https://api.openai.com/v1');
-                      break;
-                    case 'gemini':
-                      setNewProviderBaseUrl('https://generativelanguage.googleapis.com/v1beta');
                       break;
                     case 'local':
                       setNewProviderBaseUrl('http://localhost:8080/v1');
@@ -134,9 +171,9 @@ export const ProvidersTab: React.FC = () => {
                 }}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded"
               >
+                <option value="gemini">Google Gemini</option>
                 <option value="openrouter">OpenRouter (100+ models)</option>
                 <option value="openai">OpenAI (GPT-4, o-series)</option>
-                <option value="gemini">Google Gemini</option>
                 <option value="local">Local Server (OpenAI-compatible)</option>
                 <option value="custom">Custom</option>
               </select>
@@ -169,6 +206,18 @@ export const ProvidersTab: React.FC = () => {
                 placeholder="sk-..."
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded font-mono text-sm"
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="setAsDefault"
+                checked={setAsDefault}
+                onChange={(e) => setSetAsDefault(e.target.checked)}
+                className="w-4 h-4 bg-gray-700 border-gray-600 rounded"
+              />
+              <label htmlFor="setAsDefault" className="text-sm cursor-pointer">
+                Set as default provider for all tasks
+              </label>
             </div>
             <div className="flex gap-2">
               <button
@@ -237,6 +286,13 @@ export const ProvidersTab: React.FC = () => {
                     {testingProvider === provider.id ? 'Testing...' : 'Test'}
                   </button>
                   <button
+                    onClick={() => handleSetAsDefault(provider.id)}
+                    className="px-4 py-2.5 min-h-11 bg-green-900/50 hover:bg-green-900 text-sm rounded transition-colors"
+                    title="Set as default provider for all tasks"
+                  >
+                    Set Default
+                  </button>
+                  <button
                     onClick={() => handleDeleteProvider(provider.id)}
                     className="px-4 py-2.5 min-h-11 bg-red-900/50 hover:bg-red-900 text-sm rounded transition-colors"
                   >
@@ -244,6 +300,40 @@ export const ProvidersTab: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Inline confirmation panel */}
+              {confirmingDefaultFor === provider.id && (
+                <div className="mt-3 p-4 bg-amber-900/30 border-2 border-amber-600/50 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-6 h-6 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-white mb-1">Set as Global Default?</h4>
+                      <p className="text-sm text-gray-300 mb-3">
+                        This will override <strong>all 9 task assignments</strong> (Primary Generation, Intermediate Generation, Mix Prompts, Normalize, Schema Inference, Media Description, Transform, Model Conversion, Prompt Rewrite) to use <strong>{provider.name}</strong> with its first available model.
+                      </p>
+                      <p className="text-xs text-amber-400 mb-3">
+                        You can customize individual tasks later in the <strong>Task Assignment</strong> tab if needed.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleConfirmSetDefault(provider.id)}
+                          className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white text-sm rounded transition-colors"
+                        >
+                          Confirm - Set as Default
+                        </button>
+                        <button
+                          onClick={handleCancelSetDefault}
+                          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}

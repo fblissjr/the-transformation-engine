@@ -72,40 +72,40 @@ export const PrivacyDashboard: React.FC<PrivacyDashboardProps> = ({ isOpen, onCl
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Privacy Guarantees */}
+          {/* Privacy Features */}
           <section className="bg-slate-800 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-white mb-3">Privacy Guarantees</h3>
+            <h3 className="text-lg font-semibold text-white mb-3">Privacy Features</h3>
             <div className="space-y-2 text-sm text-slate-300">
               <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg className="w-5 h-5 text-blue-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
                 <div>
-                  <strong>100% Client-Side:</strong> All processing happens in your browser. No data passes through this host's servers.
+                  <strong>Client-Side Processing:</strong> This application is designed to process data in your browser using IndexedDB and browser APIs.
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg className="w-5 h-5 text-blue-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
                 <div>
-                  <strong>Local Storage Only:</strong> All prompts, images, and data stored in your browser's IndexedDB. Never uploaded.
+                  <strong>Local Storage:</strong> Prompts, images, and data are stored locally in your browser's IndexedDB, not uploaded to external servers.
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg className="w-5 h-5 text-blue-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
                 <div>
-                  <strong>Direct API Calls:</strong> Your browser communicates directly with Google Gemini API. Host cannot see your requests.
+                  <strong>Direct API Calls:</strong> Your browser communicates directly with configured LLM providers (Gemini, OpenRouter, etc.).
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg className="w-5 h-5 text-blue-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
                 <div>
-                  <strong>Encrypted API Key:</strong> Your API key is encrypted in browser storage (AES-GCM). {apiKey ? 'Active' : 'Not configured'}
+                  <strong>Encrypted API Keys:</strong> API keys are encrypted using AES-GCM before storage in your browser. {apiKey ? 'Active' : 'Not configured'}
                 </div>
               </div>
             </div>
