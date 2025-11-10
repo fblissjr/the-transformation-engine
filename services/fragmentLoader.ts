@@ -150,7 +150,9 @@ class FragmentLoader {
         this.loadedFragments.add(fragmentPath); // Track this fragment
 
         // Interpolate variables in the fragment content before replacing
-        const interpolatedContent = this.interpolateVariables(fragment.content, fragmentVars);
+        // Merge fragmentVars with parent variables (fragmentVars takes precedence)
+        const mergedVars = { ...variables, ...fragmentVars };
+        const interpolatedContent = this.interpolateVariables(fragment.content, mergedVars);
         output = output.replace(match[0], interpolatedContent);
       } catch (error) {
         console.warn(`Failed to include fragment: ${fragmentPath}`, error);

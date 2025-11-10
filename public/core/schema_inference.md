@@ -3,7 +3,6 @@ version: 2.0
 type: schema_inference
 purpose: Intelligent schema key suggestion based on creative input analysis
 ---
-
 @include[roles/expert_role_template.md | expertise="semantic analysis and structured prompt design for text-to-video AI systems" | capabilities="analyze creative concepts and suggest optimal schema keys that capture visual, temporal, audio, and narrative elements" | domain="Sora 2, Veo 3, and general text-to-video models"]
 
 ## Your Task

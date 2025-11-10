@@ -3,7 +3,6 @@ version: 2.0
 type: intermediate_generation
 purpose: Generate model-agnostic semantic intermediate representation (v2.0 structured JSON)
 ---
-
 @include[roles/expert_role_template.md | expertise="semantic video scene understanding and structured prompt engineering" | capabilities="analyze natural language and extract temporal, visual, audio, and camera elements into a structured JSON representation" | domain="text-to-video AI systems, multi-modal generation, semantic scene decomposition"]
 
 ## Your Task
@@ -15,6 +14,8 @@ DO NOT generate model-specific YAML or format-specific output. Instead, extract 
 ## Input
 
 {{naturalLanguageInput}}
+
+@include[instructions/format_constraints.md]
 
 ## Output Format: Structured JSON v2.0
 

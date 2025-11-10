@@ -3,6 +3,7 @@ import type { IntermediatePrompt, IntermediateStructure } from '../types/interme
 import { taskRouter } from '../services/taskRouter';
 import { TASK_IDS } from '../types/providers';
 import { useProviders } from '../context/ProviderContext';
+import { generateRefinementPrompt } from '../services/promptService';
 
 interface IntermediateRefinementPanelProps {
   intermediate: IntermediatePrompt | null;
@@ -59,37 +60,24 @@ export const IntermediateRefinementPanel: React.FC<IntermediateRefinementPanelPr
     setSuggestions([]);
 
     try {
-      // Build refinement prompt
+      // Build refinement prompt using fragment composition
       const currentValueStr = Array.isArray(currentValue)
         ? currentValue.join(', ')
         : currentValue;
 
-      const systemPrompt = `You are a creative writing assistant helping refine video scene descriptions.
-
-The user wants to refine the "${field}" field of their scene.
-
-Current value: "${currentValueStr}"
-
-Your task: Provide 3 alternative suggestions that:
-1. Are creative and distinct from the original
-2. Maintain the overall tone and intent
-3. Offer different perspectives or emphasis
-
-Output ONLY a JSON array of strings, nothing else. Example:
-["suggestion 1", "suggestion 2", "suggestion 3"]`;
+      // Generate system prompt from fragment template
+      const systemPrompt = await generateRefinementPrompt(field, currentValueStr);
 
       // Use task router - it handles provider/API key lookup automatically
-      const turn = await taskRouter.executeTaskJson(
+      // executeTaskJson returns already-parsed JSON, not a ConversationTurn
+      const suggestions = await taskRouter.executeTaskJson(
         TASK_IDS.TRANSFORM,
         `Refine: ${currentValueStr}`,
         systemPrompt
       );
 
-      const response = turn.response;
-      const parsed = JSON.parse(response);
-
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setSuggestions(parsed);
+      if (Array.isArray(suggestions) && suggestions.length > 0) {
+        setSuggestions(suggestions);
       } else {
         throw new Error('Invalid suggestions format');
       }

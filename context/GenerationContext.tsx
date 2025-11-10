@@ -144,16 +144,11 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       setLoadingMessage('Generating semantic intermediate...');
       setProgress(20);
 
-      const modelSettings = settings.modelName ? { modelName: settings.modelName } : undefined;
       const apiStartTime = Date.now();
 
       // Generate intermediate structure
       const intermediate = await generateIntermediate(
         naturalLanguageInput,
-        {
-          modelName: modelSettings?.modelName,
-          temperature: 0.7,
-        },
         settings
       );
       const apiLatencyMs = Date.now() - apiStartTime;
@@ -236,16 +231,19 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     setLoadingMessage('Preparing transformation...');
 
     try {
-      let transformPrompt: string;
+      let systemPrompt: string;
+      let userPrompt: string;
 
       if (transformInstruction) {
-        // Custom transformation
+        // Custom transformation - use inline system prompt
         setLoadingMessage('Building custom transformation prompt...');
-        transformPrompt = `Transform the following structured prompt according to these instructions:\n\n**Instructions:** ${transformInstruction}\n\n**Structured Prompt:**\n\`\`\`\n${structuredOutput}\n\`\`\`\n\nProvide the transformed output.`;
+        systemPrompt = `You are a helpful assistant that transforms structured prompts according to user instructions.`;
+        userPrompt = `Transform the following structured prompt according to these instructions:\n\n**Instructions:** ${transformInstruction}\n\n**Structured Prompt:**\n\`\`\`\n${structuredOutput}\n\`\`\`\n\nProvide the transformed output.`;
       } else {
-        // Default: normalize to plain English
+        // Default: normalize to plain English using fragment-composed system prompt
         setLoadingMessage('Composing normalization prompt...');
-        transformPrompt = await generateNormalizePrompt(structuredOutput, 'English');
+        systemPrompt = await generateNormalizePrompt(structuredOutput, 'English');
+        userPrompt = `Normalize this structured prompt to plain English prose:\n\n${structuredOutput}`;
       }
 
       setLoadingMessage('Sending transformation request to AI provider...');
@@ -253,8 +251,8 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       // Use taskRouter for multi-provider support
       const turn = await taskRouter.executeTask(
         TASK_IDS.NORMALIZE,
-        transformPrompt,
-        '', // No system prompt needed for normalization
+        userPrompt,
+        systemPrompt,
         {
           enableStreaming,
           onProgress: enableStreaming ? (state) => {
@@ -296,10 +294,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   const mixPrompts = async () => {
     if (selectedPromptIds.length < 2) {
       setError("Please select at least two prompts to mix.");
-      return;
-    }
-    if (!apiKey) {
-      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
       return;
     }
     const guidance = prompt(STRINGS.MIX_PROMPTS_GUIDANCE_PROMPT, STRINGS.MIX_PROMPTS_GUIDANCE_DEFAULT);
@@ -406,10 +400,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       setError("Please enter a creative idea before inferring a schema.");
       return;
     }
-    if (!apiKey) {
-      setError("No provider configured. Please configure a provider in Settings → Providers tab.");
-      return;
-    }
     setIsLoading(true);
     setError(null);
     setProgress(0);
@@ -461,11 +451,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   const refineLastOutput = async (refinementInstruction: string) => {
     if (!currentConversation || currentConversation.length === 0) {
       setError('No conversation to refine. Please generate a prompt first.');
-      return;
-    }
-
-    if (!apiKey) {
-      setError('No provider configured. Please configure a provider in Settings → Providers tab.');
       return;
     }
 
@@ -522,11 +507,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       return;
     }
 
-    if (!apiKey) {
-      setError('No provider configured. Please configure a provider in Settings → Providers tab.');
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
     setProgress(0);
@@ -551,10 +531,6 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
       // Regenerate with enhanced context using intermediate-first approach
       const intermediate = await generateIntermediate(
         enhancedInput,
-        {
-          modelName: settings.modelName,
-          temperature: 0.7,
-        },
         settings
       );
 

@@ -305,6 +305,132 @@ export class TaskRouter {
   }
 
   /**
+   * Execute a vision task with images/videos
+   */
+  async executeVisionTask(
+    taskId: TaskId,
+    userPrompt: string,
+    media: Array<{ data: string; mimeType: string }>,
+    systemPrompt: string = "",
+    options: ExecuteTaskOptions = {}
+  ): Promise<ConversationTurn> {
+    const startTime = Date.now();
+
+    try {
+      // 1. Get task assignment
+      const assignment = await taskAssignmentService.getOrCreateAssignment(taskId);
+
+      // 2. Get provider instance
+      const provider = await this.providerRegistry.getProvider(assignment.providerId);
+
+      if (!provider) {
+        throw new Error(`Provider ${assignment.providerId} not found`);
+      }
+
+      // 3. Check if provider supports vision
+      if (!provider.supportsVision) {
+        throw new Error(
+          `Provider ${assignment.providerId} does not support vision. Please select a vision-capable model (e.g., Gemini Flash, GPT-4 Vision, Claude 3.5 Sonnet) in Settings → Task Assignment → Media Description.`
+        );
+      }
+
+      // 4. Get API key
+      const apiKey = await providerService.getFirstValidKey(assignment.providerId);
+
+      if (!apiKey) {
+        throw new Error(`No valid API key found for provider ${assignment.providerId}`);
+      }
+
+      // 5. Build multimodal request
+      const samplerSettings = {
+        temperature: assignment.temperature,
+        maxTokens: assignment.maxTokens,
+        topP: assignment.topP,
+        topK: assignment.topK,
+        repetitionPenalty: assignment.repetitionPenalty,
+        minP: assignment.minP,
+        ...options.overrideSampler,
+      };
+
+      // Build multimodal content: text + images
+      const multimodalContent: Array<{ type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string }> = [
+        { type: 'text', text: userPrompt }
+      ];
+
+      for (const item of media) {
+        multimodalContent.push({
+          type: 'image',
+          data: item.data,
+          mimeType: item.mimeType
+        });
+      }
+
+      const request = {
+        model: assignment.modelId,
+        messages: [
+          ...(systemPrompt ? [{ role: "system" as const, content: systemPrompt }] : []),
+          { role: "user" as const, content: multimodalContent }
+        ],
+        temperature: samplerSettings.temperature,
+        maxTokens: samplerSettings.maxTokens,
+        topP: samplerSettings.topP,
+      };
+
+      // 6. Execute generation (vision models don't stream typically)
+      const response = await provider.generate(request);
+
+      // 7. Calculate latency
+      const latencyMs = Date.now() - startTime;
+
+      // 8. Create or get conversation
+      let conversationId = options.conversationId;
+      if (!conversationId) {
+        const conversation = await conversationService.createConversation(taskId);
+        conversationId = conversation.id;
+      }
+
+      // 9. Create conversation turn
+      const turn = await conversationService.addTurn(conversationId, {
+        conversationId,
+        taskId,
+        userPrompt,
+        systemPrompt,
+        response: response.content,
+        providerId: assignment.providerId,
+        modelId: response.model,
+        temperature: samplerSettings.temperature,
+        maxTokens: samplerSettings.maxTokens,
+        topP: samplerSettings.topP,
+        usage: {
+          promptTokens: response.usage.promptTokens,
+          completionTokens: response.usage.completionTokens,
+          totalTokens: response.usage.totalTokens,
+        },
+        latencyMs,
+        parentTurnId: options.parentTurnId,
+        refinementInstruction: options.refinementInstruction,
+      });
+
+      // 10. Track token usage
+      await tokenTrackingService.recordUsage({
+        taskId,
+        providerId: assignment.providerId,
+        modelId: response.model,
+        inputTokens: response.usage.promptTokens,
+        outputTokens: response.usage.completionTokens,
+        cost: this.calculateCost(response, assignment.providerId),
+      });
+
+      return turn;
+    } catch (error) {
+      if (options.onError) {
+        options.onError(error as Error);
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Refine an existing turn (creates new turn with parentTurnId)
    */
   async refineTurn(

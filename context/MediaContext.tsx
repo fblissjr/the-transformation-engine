@@ -1,12 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useState, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { MediaReference } from '../types';
-import * as geminiService from '../services/geminiService';
 import * as dbService from '../services/dbService';
-import { useProviders } from './ProviderContext';
-import { useActivePrompt } from './ActivePromptContext';
-// TODO: Migrate to taskRouter once multimodal support is added to IProvider interface
-// Currently media description still uses geminiService.describeMedia() directly
+import { taskRouter } from '../services/taskRouter';
+import { TASK_IDS } from '../types/providers';
 
 interface MediaContextType {
   mediaReferences: MediaReference[];
@@ -21,12 +18,6 @@ interface MediaContextType {
 const MediaContext = createContext<MediaContextType | undefined>(undefined);
 
 export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const { providers } = useProviders();
-  const apiKey = useMemo(() => {
-    const defaultProvider = providers.find(p => p.enabled);
-    return defaultProvider?.apiKeys?.[0]?.key || null;
-  }, [providers]);
-  const { settings } = useActivePrompt();
   const [mediaReferences, setMediaReferences] = useState<MediaReference[]>([]);
   const [isDescribing, setIsDescribing] = useState(false);
   const [describingMessage, setDescribingMessage] = useState('');
@@ -63,49 +54,64 @@ export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => 
     if (mediaReferences.length === 0) {
       throw new Error("No media to describe.");
     }
-    if (!apiKey) {
-      throw new Error("No provider configured. Please configure a provider in Settings → Providers tab.");
-    }
 
     setIsDescribing(true);
     setDescribingMessage('Loading media files...');
     try {
-      // Convert blob references to data URLs for API call
-      const referencesWithDataUrls = await Promise.all(
-        mediaReferences.map(async (ref) => {
-          if (ref.dataUrl) {
-            // Legacy reference already has dataUrl
-            return ref;
-          } else if (ref.blobId) {
-            // Convert blob to dataUrl for API
-            const blob = await dbService.getMediaBlob(ref.blobId);
-            if (blob) {
-              const dataUrl = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              });
-              return { ...ref, dataUrl };
-            }
+      // Convert blob references to data URLs for vision API
+      const mediaData: Array<{ data: string; mimeType: string }> = [];
+
+      for (const ref of mediaReferences) {
+        let dataUrl: string;
+
+        if (ref.dataUrl) {
+          // Legacy reference already has dataUrl
+          dataUrl = ref.dataUrl;
+        } else if (ref.blobId) {
+          // Convert blob to dataUrl
+          const blob = await dbService.getMediaBlob(ref.blobId);
+          if (blob) {
+            dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          } else {
+            throw new Error(`Failed to load media blob: ${ref.blobId}`);
           }
-          return ref;
-        })
-      );
+        } else {
+          throw new Error('Media reference has no dataUrl or blobId');
+        }
+
+        mediaData.push({
+          data: dataUrl,
+          mimeType: ref.mimeType
+        });
+      }
 
       setDescribingMessage(`Analyzing ${mediaReferences.length} media file${mediaReferences.length > 1 ? 's' : ''} with AI...`);
-      // Pass model settings to use user's selected model (not hardcoded default)
-      const modelSettings = {
-        modelName: settings.modelName,
-        maxTokens: 2048,
-        temperature: 1.0,
-        topP: 0.95,
-      };
-      const description = await geminiService.describeMedia(apiKey, referencesWithDataUrls, undefined, modelSettings);
+
+      // Build vision prompt
+      const visionPrompt = `Analyze this ${mediaData.length === 1 ? mediaReferences[0].type : 'media'} and provide a detailed, vivid description suitable for a text-to-video model prompt. Focus on:
+- Visual style, composition, and mood
+- Key subjects, characters, or objects
+- Lighting, color palette, and atmosphere
+- Motion or action (if video)
+- Sound or audio that would match the scene
+
+Be specific and cinematic in your description. This will be used to generate similar video content.`;
+
+      // Use taskRouter with MEDIA_DESCRIPTION task
+      const turn = await taskRouter.executeVisionTask(
+        TASK_IDS.MEDIA_DESCRIPTION,
+        visionPrompt,
+        mediaData
+      );
 
       setDescribingMessage('Complete!');
       setTimeout(() => setDescribingMessage(''), 500);
-      return description;
+      return turn.response;
     } catch (e: any) {
       throw new Error(`Failed to describe media: ${e.message}`);
     } finally {

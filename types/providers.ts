@@ -44,11 +44,25 @@ export interface Model {
   tags?: string[];
 }
 
+// Multimodal content support for vision models
+export interface TextContent {
+  type: 'text';
+  text: string;
+}
+
+export interface ImageContent {
+  type: 'image';
+  data: string; // base64 data URL or URL
+  mimeType: string; // e.g., "image/jpeg", "image/png"
+}
+
+export type MessageContent = string | Array<TextContent | ImageContent>;
+
 export interface GenerateRequest {
   model: string;
   messages: Array<{
     role: "system" | "user" | "assistant";
-    content: string;
+    content: MessageContent;
   }>;
   temperature?: number;
   maxTokens?: number;

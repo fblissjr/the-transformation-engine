@@ -310,6 +310,26 @@ Generate a *complete* new schema that best represents the user's idea from scrat
 }
 
 /**
+ * Generate refinement suggestions prompt using fragment composition
+ */
+export async function generateRefinementPrompt(
+  field: string,
+  currentValue: string,
+): Promise<string> {
+  // Load template
+  const template = await loadPromptTemplate("refinement_suggestions");
+
+  // Build variables map
+  const variables: Record<string, string> = {
+    field,
+    currentValue,
+  };
+
+  // Compose prompt
+  return await fragmentLoader.composePrompt(template, variables);
+}
+
+/**
  * Helper: Generate text direction instruction from settings
  */
 function generateTextDirectionInstruction(settings: PromptSettings): string {
@@ -407,16 +427,14 @@ function extractTitleFromInput(input: string): string {
  * Routes through taskRouter for provider/model handling
  *
  * @param input - Natural language description of the scene
- * @param options - Generation options (model, temperature, etc.)
  * @param settings - Prompt settings (schema keys, format, etc.)
  * @returns IntermediatePrompt object ready to save to IndexedDB
+ *
+ * NOTE: Model selection is handled by task assignment system (TASK_IDS.INTERMEDIATE_GENERATION)
+ * Configure in Settings → Task Assignment tab
  */
 export async function generateIntermediate(
   input: string,
-  options?: {
-    modelName?: string;
-    temperature?: number;
-  },
   settings?: PromptSettings,
 ): Promise<any> {
   // Load intermediate generation template
@@ -425,11 +443,17 @@ export async function generateIntermediate(
   );
   const template = typeof fragment === "string" ? fragment : fragment.content;
 
-  // Compose prompt with user input
+  // Compose prompt with user input and format constraints
   const systemPrompt = await fragmentLoader.composePrompt(template, {
     naturalLanguageInput: input,
-    schemaKeys: settings?.schemaKeys?.join(", ") || "",
-    format: settings?.format || "Standard YAML",
+    // Format constraints variables (for format_constraints.md include)
+    format: "JSON (structured v2.0 format)",
+    formatGuidance: "Follow the exact JSON structure specified in the template above.",
+    schemaKeys: "N/A (JSON uses predefined sections: visual, temporal, audio, camera)",
+    textDirectionInstruction: settings?.mixOptions && settings.mixOptions.length > 0
+      ? generateTextDirectionInstruction(settings)
+      : "Output sections in normal order as specified.",
+    lengthGuidance: "Comprehensive detail for all applicable sections.",
   });
 
   // Use taskRouter with JSON mode for structured output (v2.0)

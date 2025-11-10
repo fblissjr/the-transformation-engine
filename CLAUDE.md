@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-11-09 | **Status**: Phase 2 Complete (v2.0.2 - Generation Bug Fixed)
+> **Last Updated**: 2025-11-10 | **Status**: Phase 2 Complete (v2.0.4 - Vision Support + Dead Code Cleanup)
 
 ---
 
@@ -91,23 +91,27 @@ The living-docs contain 16 modular files covering:
 
 **Always read this file to get up to speed. For detailed info, see [living-docs](./internal/living-docs/). This is a hobbyist project - aim for simplicity and extensibility.**
 
-## Recent Changes (v2.0.2)
+## Recent Changes (v2.0.4)
 
-- **CRITICAL BUG FIX**: Fixed "No provider configured" error that blocked generation
-  - Removed obsolete `apiKey` check from `GenerationContext`
-  - `generateIntermediate()` already routes through `taskRouter` (handles API keys internally)
-  - Generation now works immediately after adding a provider
-- **New Feature**: "Set as Default" provider management
-  - Checkbox when adding providers (auto-assigns to all tasks)
-  - "Set Default" button for existing providers
-  - No need to navigate to Model Selection tab
+- **Vision/Multimodal Support**: Media analysis now fully integrated with task assignment system
+  - `MEDIA_DESCRIPTION` task configurable in Task Assignment tab
+  - Checks if selected model supports vision, throws helpful error if not
+  - All 9 tasks now route through taskRouter with proper provider/model selection
+- **"Assign to All Tasks" Button**: Fixes model selection not taking effect
+  - One-click button in Model Selection tab to apply global default to all tasks
+  - Solves task assignment caching issue
+- **Dead Code Cleanup**: Removed ~500 lines of unused legacy code
+  - Deleted `services/geminiService.ts` (superseded by multi-provider architecture)
+  - Removed hardcoded model fallbacks and unused parameters
+  - All generation paths now validated to use task assignments
+- **Default Model Selection**: New Gemini providers default to `gemini-flash-latest` instead of preview models
 
-## Previous Changes (v2.0.1)
+## Previous Changes (v2.0.2-v2.0.3)
 
-- **Migration Code Removed**: All database migration code removed per project philosophy
-  - Fresh database creation only (IndexedDB v9)
-  - Users with old databases must export → clear DB → import
-  - Archived migration files: `internal/archived/migrations/`
+- Fixed remaining obsolete `apiKey` checks blocking generation
+- Removed "Set Default" button from Providers tab (was causing unintended overrides)
+- Updated default temperature/top-P for all tasks
+- Privacy dashboard improvements
 
 See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 
@@ -117,3 +121,4 @@ See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
 Then finally, propagated down to the @README.md and @docs folder.
 
 Both @internal and @docs markdown docs should be consolidated when it makes sense to avoid duplication of docs. Modularity is important, but not to an extreme level.
+- All transformations should happen in the intermediate / structured layer. The final output layer is for formatting for models (veo3.1, sora, etc) or for post-processing or ad-hoc things.

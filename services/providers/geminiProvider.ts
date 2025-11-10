@@ -186,23 +186,55 @@ export class GeminiProvider implements IProvider {
   // Private helper methods
 
   private convertMessagesToPrompt(
-    messages: Array<{ role: string; content: string }>
-  ): string {
-    // Gemini API expects a single prompt string for simple cases
-    // For multi-turn, we'd use the chat API, but for now we'll concatenate
-    const systemMessages = messages
-      .filter((m) => m.role === "system")
-      .map((m) => m.content)
-      .join("\n\n");
-    const userMessages = messages
-      .filter((m) => m.role === "user")
-      .map((m) => m.content)
-      .join("\n\n");
+    messages: Array<{ role: string; content: any }>
+  ): any {
+    // Check if any message has multimodal content
+    const hasMultimodal = messages.some(m => Array.isArray(m.content));
 
-    if (systemMessages) {
-      return `${systemMessages}\n\n${userMessages}`;
+    if (!hasMultimodal) {
+      // Simple text-only case - return string
+      const systemMessages = messages
+        .filter((m) => m.role === "system")
+        .map((m) => m.content as string)
+        .join("\n\n");
+      const userMessages = messages
+        .filter((m) => m.role === "user")
+        .map((m) => m.content as string)
+        .join("\n\n");
+
+      if (systemMessages) {
+        return `${systemMessages}\n\n${userMessages}`;
+      }
+      return userMessages;
     }
-    return userMessages;
+
+    // Multimodal case - build Gemini parts format
+    const parts: any[] = [];
+
+    for (const message of messages) {
+      if (typeof message.content === 'string') {
+        // Text-only message
+        parts.push({ text: message.content });
+      } else if (Array.isArray(message.content)) {
+        // Multimodal message
+        for (const item of message.content) {
+          if (item.type === 'text') {
+            parts.push({ text: item.text });
+          } else if (item.type === 'image') {
+            // Extract base64 data from data URL
+            const base64Data = item.data.split(',')[1] || item.data;
+            parts.push({
+              inlineData: {
+                mimeType: item.mimeType,
+                data: base64Data
+              }
+            });
+          }
+        }
+      }
+    }
+
+    return { role: 'user', parts };
   }
 
   private parseCapabilities(model: any): ModelCapabilities {

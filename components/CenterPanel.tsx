@@ -5,7 +5,6 @@ import { useGeneration } from '../context/GenerationContext';
 import { SparklesIcon, WandIcon, EditIcon } from './icons';
 import { ConversationThread } from './ConversationThread';
 import { ModelInfoDisplay } from './ModelInfoDisplay';
-import * as geminiService from '../services/geminiService';
 import * as configService from '../services/configService';
 import * as promptService from '../services/promptService';
 import { taskRouter } from '../services/taskRouter';
@@ -13,7 +12,7 @@ import { TASK_IDS } from '../types/providers';
 import { transformToModel } from '../services/transformers';
 import { useMediaBlobUrls } from '../hooks/useMediaBlobUrls';
 import { MediaReference, MixOption, Prompt } from '../types';
-import { GEMINI_MODEL_NAME, BUILT_IN_MIX_OPTIONS, DEFAULT_MODEL_SETTINGS } from '../constants';
+import { BUILT_IN_MIX_OPTIONS } from '../constants';
 
 const CenterPanel: React.FC = () => {
   const {
@@ -64,7 +63,6 @@ const CenterPanel: React.FC = () => {
   const mediaBlobUrls = useMediaBlobUrls(mediaReferences);
 
   const [newKey, setNewKey] = useState('');
-  const [availableModels, setAvailableModels] = useState<geminiService.GeminiModel[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [showAddCustomMixOption, setShowAddCustomMixOption] = useState(false);
   const [customMixOptionName, setCustomMixOptionName] = useState('');
@@ -79,8 +77,8 @@ const CenterPanel: React.FC = () => {
   const configFileInputRef = useRef<HTMLInputElement>(null);
 
   // Collapsible sections state
-  const [showMixOptions, setShowMixOptions] = useState(false);
-  const [showSchemaDesigner, setShowSchemaDesigner] = useState(false);
+  const [showMixOptions, setShowMixOptions] = useState(true);
+  const [showSchemaDesigner, setShowSchemaDesigner] = useState(true);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   // Detect which template will be used based on schema keys
@@ -110,41 +108,6 @@ const CenterPanel: React.FC = () => {
 
   const detectedTemplate = detectTemplateModel();
 
-  // Fetch available models when API key is available (with caching)
-  useEffect(() => {
-    if (apiKey && availableModels.length === 0) {
-      // Check cache first
-      const cachedData = localStorage.getItem('gemini_models_cache');
-      if (cachedData) {
-        try {
-          const { models, timestamp } = JSON.parse(cachedData);
-          const cacheAge = Date.now() - timestamp;
-          const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-
-          if (cacheAge < CACHE_TTL) {
-            setAvailableModels(models);
-            return;
-          }
-        } catch (err) {
-          console.error('Failed to parse cached models:', err);
-        }
-      }
-
-      // Fetch from API if no valid cache
-      setIsLoadingModels(true);
-      geminiService.listAvailableModels(apiKey)
-        .then(models => {
-          setAvailableModels(models);
-          // Store in cache
-          localStorage.setItem('gemini_models_cache', JSON.stringify({
-            models,
-            timestamp: Date.now()
-          }));
-        })
-        .catch(err => console.error('Failed to load models:', err))
-        .finally(() => setIsLoadingModels(false));
-    }
-  }, [apiKey, availableModels.length]);
 
   // Initialize mixOptions with built-in options if not set
   useEffect(() => {
@@ -152,14 +115,6 @@ const CenterPanel: React.FC = () => {
       setSettings(s => ({
         ...s,
         mixOptions: BUILT_IN_MIX_OPTIONS.map(opt => ({ ...opt })),
-        // Set default model if not set
-        modelName: s.modelName || GEMINI_MODEL_NAME,
-      }));
-    } else if (!settings.modelName) {
-      // Ensure modelName is set
-      setSettings(s => ({
-        ...s,
-        modelName: GEMINI_MODEL_NAME,
       }));
     }
   }, []);
@@ -272,9 +227,16 @@ const CenterPanel: React.FC = () => {
   // Export/Import handlers
   const handleExportConfig = () => {
     try {
+      // Legacy export - model settings now managed via task assignments
+      const legacyModelSettings = {
+        modelName: '', // Deprecated - use Settings → Task Assignment
+        maxTokens: 2048,
+        temperature: 1.0,
+        topP: 0.95,
+      };
       const configJson = configService.exportConfig(
         settings,
-        DEFAULT_MODEL_SETTINGS, // Using default for now, could fetch from app settings
+        legacyModelSettings,
         [],
         undefined
       );
@@ -861,7 +823,7 @@ const CenterPanel: React.FC = () => {
         </div>
 
         {/* Schema Designer - Collapsible */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden flex-shrink-0">
           <button
             onClick={() => setShowSchemaDesigner(!showSchemaDesigner)}
             className="w-full p-3 sm:p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
@@ -886,7 +848,7 @@ const CenterPanel: React.FC = () => {
             </svg>
           </button>
           {showSchemaDesigner && (
-            <div className="p-3 sm:p-4 pt-0 border-t border-gray-800">
+            <div className="p-3 sm:p-4 pt-0 border-t border-gray-800 max-h-[400px] overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <button

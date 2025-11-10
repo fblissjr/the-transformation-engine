@@ -233,6 +233,31 @@ export const ModelSelectionTab: React.FC<ModelSelectionTabProps> = ({ settings, 
                 <p className="text-xs text-gray-500 mt-2">
                   The specific AI model to use. Different models have different capabilities and costs.
                 </p>
+
+                {/* Assign to All Tasks Button */}
+                {globalDefault && (
+                  <div className="mt-4 pt-4 border-t border-gray-800">
+                    <button
+                      onClick={async () => {
+                        if (confirm('Apply this model to ALL tasks (Primary Generation, Mixing, Normalization, etc.)? This will override any custom task assignments.')) {
+                          try {
+                            await taskAssignmentService.applyToAllTasks(globalDefault.providerId, globalDefault.modelId);
+                            alert('Model applied to all tasks successfully');
+                          } catch (error) {
+                            console.error('Failed to apply to all tasks:', error);
+                            alert('Failed to apply model to all tasks');
+                          }
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Assign to All Tasks
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Click this after changing models to apply your selection to all 9 tasks immediately
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
