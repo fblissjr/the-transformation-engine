@@ -35,6 +35,29 @@ All notable changes to The Transformation Engine will be documented in this file
   - Smart preservation defaults per method
   - Method-specific placeholders for user input
   - Preservation checkboxes with tooltips
+- Added `components/IntermediatesView.tsx` - Scene library view
+  - Lists all saved intermediates sorted by date
+  - "Extend This Scene" button on each scene
+  - Parent/child indicators (↳ S2, orphaned warnings)
+  - Delete with children checking
+- Added `components/DeleteWithChildrenDialog.tsx` - Safe deletion modal
+  - Shows list of child scenes that will be affected
+  - Options: Orphan children or cascade delete
+  - Visual warnings about irreversible actions
+- Added `components/Toast.tsx` - Toast notifications
+  - Success/error/info types
+  - Auto-dismiss after 3 seconds
+  - Slide-up animation
+
+**UI Integration**:
+- Updated `components/LeftPanel.tsx` - Added Scenes tab
+  - Tab switcher: Prompts | Scenes
+  - Scenes tab shows IntermediatesView
+  - Import/Export section only visible on Prompts tab
+  - Tab counts for easy reference
+- Added CSS animations to `index.css`
+  - `animate-slide-up` for toast notifications
+  - `animate-fadeIn` for suggestion panels
 
 **Veo 3.1 Reference Guides**:
 - Added `internal/veo3/TRANSITION_PROMPT_PATTERNS.md` - 20 transition techniques for scene extensions

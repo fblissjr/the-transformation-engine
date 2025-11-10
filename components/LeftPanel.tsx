@@ -4,6 +4,7 @@ import { LogoIcon, PlusIcon, ImportIcon, ExportIcon, SettingsIcon, MixIcon, Tras
 import * as dbService from '../services/dbService';
 import ShareModal from './ShareModal';
 import { PrivacyDashboard } from './PrivacyDashboard';
+import { IntermediatesView } from './IntermediatesView';
 import { Prompt } from '../types';
 
 interface LeftPanelProps {
@@ -362,9 +363,14 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
           </div>
         )}
       </div>
+    ) : (
+      // Scenes view
+      <IntermediatesView />
+    )}
 
-      {/* Import/Export Section - Moved to bottom above Settings */}
-      <div className="px-4 pt-3 pb-2 border-t border-gray-800 shrink-0">
+      {/* Import/Export Section - Prompts tab only */}
+      {activeTab === 'prompts' && (
+        <div className="px-4 pt-3 pb-2 border-t border-gray-800 shrink-0">
         <div className="flex gap-2">
           <button
             onClick={handleImport}
@@ -382,7 +388,8 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
             {selectedPromptIds.length > 0 && <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">{selectedPromptIds.length}</span>}
           </button>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Privacy & Settings - At the very bottom */}
       <div className="px-4 pb-4 pt-2 border-t border-gray-800 shrink-0 space-y-2">
