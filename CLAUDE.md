@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-11-10 | **Status**: Phase 2 Complete (v2.0.4 - Vision Support + Dead Code Cleanup) <-- note from me: this has not been updated in awhile, what's going on?
+> **Last Updated**: 2025-11-10 | **Status**: Phase 2 Complete (v2.0.5 - Documentation Sprint)
 
 ---
 
@@ -33,16 +33,44 @@ npm run build  # Production build
 ### For Claude and Myself
 **[internal/living-docs/00_INDEX.md](./internal/living-docs/00_INDEX.md)** - Complete technical documentation
 
-The living-docs contain 16 modular files covering:
-- Architecture & system design
-- Features & capabilities
-- Development guidelines
-- API integration
-- Privacy & security
-- Phase history
-- **Troubleshooting** (including known bugs)
-- File structure
-- Roadmap & next steps
+The living-docs contain modular files covering:
+- **Architecture & system design** (5-layer model, prompting system)
+- **Features & capabilities** (generation, transformations, multi-provider)
+- **Development guidelines** (fragment development, best practices)
+- **API integration** (multi-provider architecture, task routing)
+- **Privacy & security** (client-side, no backend)
+- **Phase history** (v1.0 → v2.0 evolution)
+- **Troubleshooting** (known bugs, solutions)
+- **UX Design** (center panel, scene classification, scene extension)
+- **Prompting System** (fragments, templates, schema keys)
+- **File structure** (organized codebase map)
+- **Roadmap** (Phase 3+ features)
+
+#### Recent Documentation Updates (2025-11-10)
+
+**Comprehensive Veo 3.1 Research**:
+- **[internal/veo3/VEO31_COMPREHENSIVE_PROMPTING_GUIDE.md](./internal/veo3/VEO31_COMPREHENSIVE_PROMPTING_GUIDE.md)** - Definitive Veo 3.1 prompting guide
+  - All generation methods (text-to-video, first frame, interpolation, ingredients, extend)
+  - Timestamp vs continuous narrative strategies
+  - Nano Banana + Imagen 4 integration
+  - Scene type optimization
+  - 50+ example prompts
+
+**Prompting System Architecture**:
+- **[internal/living-docs/17_PROMPTING_SYSTEM.md](./internal/living-docs/17_PROMPTING_SYSTEM.md)** - Fragment-based architecture
+- **[internal/living-docs/18_FRAGMENT_DEVELOPMENT.md](./internal/living-docs/18_FRAGMENT_DEVELOPMENT.md)** - Creating fragments guide
+- **[internal/living-docs/19_BEST_PRACTICES_DERIVATION.md](./internal/living-docs/19_BEST_PRACTICES_DERIVATION.md)** - Research methodology
+
+**UX Design Specifications**:
+- **[internal/living-docs/21_CENTER_PANEL_UX_REDESIGN.md](./internal/living-docs/21_CENTER_PANEL_UX_REDESIGN.md)** - Center panel improvements
+- **[internal/living-docs/22_SCENE_CLASSIFICATION_UX.md](./internal/living-docs/22_SCENE_CLASSIFICATION_UX.md)** - Multi-dimensional scene classification (5 dimensions × 100+ tags)
+- **[internal/living-docs/23_SCENE_EXTENSION_PHASE1_UX.md](./internal/living-docs/23_SCENE_EXTENSION_PHASE1_UX.md)** - Scene extension Phase 1 MVP
+
+**Schema Key Architecture**:
+- **[internal/living-docs/19_SCHEMA_KEY_ARCHITECTURE.md](./internal/living-docs/19_SCHEMA_KEY_ARCHITECTURE.md)** - Global presets, custom sets, auto-suggestion
+
+**Updated Guiding Principles**:
+- **[internal/living-docs/02_GUIDING_PRINCIPLES.md](./internal/living-docs/02_GUIDING_PRINCIPLES.md)** - Added Principle #13: Intermediate is Model-Agnostic and Unconstrained
 
 ### Version History
 **[CHANGELOG.md](./CHANGELOG.md)** - Version history and notable changes
@@ -100,7 +128,23 @@ The living-docs contain 16 modular files covering:
 
 **Always read this file to get up to speed. For detailed info, see [living-docs](./internal/living-docs/). This is a hobbyist project - aim for simplicity and extensibility.**
 
-## Recent Changes (v2.0.4)
+## Recent Changes (v2.0.5 - Documentation Sprint)
+
+**Major Documentation Overhaul** (2025-11-10):
+- **Comprehensive Veo 3.1 Research**: Complete prompting guide with 50+ examples, all generation methods, scene type optimization
+- **Prompting System Documentation**: Fragment architecture, development guide, best practices derivation methodology
+- **UX Design Specifications**: Center panel redesign, multi-dimensional scene classification (5D taxonomy with 100+ tags), scene extension Phase 1
+- **Schema Key Architecture**: Global presets (Veo 3.1 Standard/Timestamp, Sora 2, Generic), custom sets, auto-suggestion system
+- **Updated Guiding Principles**: Added Principle #13 (Intermediate is Model-Agnostic and Unconstrained)
+- **Living Docs Expansion**: 7 new documentation files, comprehensive cross-referencing
+
+**Key Features Designed** (implementation pending):
+- Multi-dimensional scene classification with preset + custom tag combinations
+- Scene extension (Continue/Cut To/Transition methods) with smart preservation
+- Schema key auto-suggestion based on scene type + output format
+- Timestamp vs continuous narrative prompting strategies
+
+## Previous Changes (v2.0.4)
 
 - **Vision/Multimodal Support**: Media analysis now fully integrated with task assignment system
   - `MEDIA_DESCRIPTION` task configurable in Task Assignment tab

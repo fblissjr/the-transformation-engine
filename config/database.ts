@@ -11,7 +11,7 @@ export const DB_CONFIG = {
 
   // Schema version (NEVER increment - breaking changes require manual export/import)
   // If schema needs changes, users must export data, clear DB, and import
-  version: 9,
+  version: 10,
 
   // Store names
   stores: {

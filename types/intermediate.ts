@@ -164,6 +164,55 @@ export interface NarrativeStructure {
   arc?: string;
 }
 
+// ==================== Scene Extension Types ====================
+
+/**
+ * PreservationOptions
+ * Controls what elements to preserve when extending a scene
+ */
+export interface PreservationOptions {
+  characters: boolean;        // Keep character identity, appearance, clothing
+  environment: boolean;       // Keep location, setting, weather
+  visualStyle: boolean;       // Keep colors, lighting, aesthetic
+  audio: boolean;            // Continue music, ambient sounds
+}
+
+/**
+ * ParentSceneSummary
+ * Cached summary of parent scene for extension context
+ */
+export interface ParentSceneSummary {
+  characters: string[];      // ["Detective Harris", "Suspect"]
+  location: string;          // "Dark interrogation room"
+  lastMoment: string;        // "Detective leans forward..."
+  visualStyle: string;       // "High-contrast noir lighting"
+  audioState: string;        // "Fluorescent buzz, no music"
+}
+
+/**
+ * ExtensionMetadata
+ * Metadata for scenes created via extension
+ */
+export interface ExtensionMetadata {
+  parentSceneId: string;                           // ID of parent intermediate
+  method: 'continue' | 'cutTo' | 'transition';     // Extension method used
+  userDescription?: string;                        // User's "what happens next" input
+  preservation: PreservationOptions;               // What was preserved
+  sceneNumber?: number;                            // Assigned scene number (S1, S2, etc.)
+  parentSummary?: ParentSceneSummary;             // Cached parent summary
+}
+
+/**
+ * OrphanMetadata
+ * Metadata for scenes whose parent was deleted
+ */
+export interface OrphanMetadata {
+  isOrphaned: boolean;
+  originalParentId: string;
+  originalParentTitle: string;
+  orphanedAt: string;  // ISO timestamp
+}
+
 // ==================== Container Types ====================
 
 /**
@@ -188,6 +237,10 @@ export interface IntermediatePrompt {
 
   // Relationships (for version control / branching)
   relationships?: IntermediateRelationships;
+
+  // Scene Extension (Phase 1 MVP)
+  extensionMetadata?: ExtensionMetadata;
+  orphanMetadata?: OrphanMetadata;
 }
 
 /**

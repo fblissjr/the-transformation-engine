@@ -2,8 +2,159 @@
 
 All notable changes to The Transformation Engine will be documented in this file.
 
+## [Unreleased]
+
+### Added - Scene Extension Phase 1 (In Progress)
+**Data Models & Database**:
+- Added scene extension types to `types/intermediate.ts`
+  - `PreservationOptions` - Controls what elements to preserve (characters, environment, visual style, audio)
+  - `ParentSceneSummary` - Cached LLM-generated summary for extension context
+  - `ExtensionMetadata` - Tracks extension method, scene number, preservation choices
+  - `OrphanMetadata` - Handles scenes whose parent was deleted
+- Added Zod validation schemas for all new types
+- Updated IndexedDB schema v10 with indexes for parent/child queries
+  - `extensionMetadata.parentSceneId` index for efficient child scene lookups
+  - `extensionMetadata.sceneNumber` index for scene numbering
+
+**Services**:
+- Added `services/sceneExtensionService.ts` - Complete scene extension business logic
+  - `generateSceneExtension()` - Generate scene extensions with 3 methods (Continue/Cut To/Transition)
+  - `getParentSummary()` - LLM-powered parent scene summary with caching
+  - `buildExtensionPrompt()` - Method-specific system prompt generation
+  - `getNextSceneNumber()` - Automatic scene numbering (S1, S2, S3...)
+  - `getChildScenes()` - Query children of a parent scene
+  - `markChildrenAsOrphaned()` - Orphan handling when parent deleted
+  - `deleteSceneWithChildren()` - Cascade vs orphan deletion
+
+**React Components**:
+- Added `components/ParentSceneSummary.tsx` - Collapsible parent scene context
+  - LLM summary loading with loading/error states
+  - Displays characters, location, last moment, visual style, audio state
+- Added `components/SceneExtensionDialog.tsx` - Full extension workflow
+  - 3 extension methods (Continue Scene, Cut To, Transition)
+  - Smart preservation defaults per method
+  - Method-specific placeholders for user input
+  - Preservation checkboxes with tooltips
+
+**Veo 3.1 Reference Guides**:
+- Added `internal/veo3/TRANSITION_PROMPT_PATTERNS.md` - 20 transition techniques for scene extensions
+  - Camera-based (whip pan, zoom, orbital, dolly through)
+  - Natural elements (water, smoke, light flare)
+  - Match cuts (shape, movement, color matching)
+  - Environmental (time-of-day, weather, seasonal)
+  - Creative (reflection, silhouette, foreground wipe)
+  - Integration guide for Scene Extension dialog
+- Added `internal/veo3/NANO_BANANA_EDITING_GUIDE.md` - Imagen 4 + Nano Banana editing techniques
+  - Text annotation editing ("Follow instructions in annotation, remove annotation")
+  - Doodle path editing for adding objects/characters
+  - Masking + inpainting for region replacement
+  - Outpainting for frame extension
+  - Integration with Veo 3.1 first-frame and ingredients modes
+- Added `internal/veo3/CAMERA_MOVEMENTS_REFERENCE.md` - Complete camera movement terminology
+  - 8 position types (stationary, zoom, pan, tilt, orbit, dolly, crane, handheld)
+  - Compound movements (dolly+zoom vertigo effect, tracking+pan, etc.)
+  - Speed terminology and schema key structure
+  - Movement selection guide by narrative goal
+
+### Status
+- **Completed**: Data models, database schema, service layer, dialog components, Veo 3.1 reference guides
+- **In Progress**: UI integration with intermediates library, scene tree view, toast notifications
+- **Pending**: Testing, orphan handling dialog
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project uses x.x.x versioning.
+
+---
+
+## [2.0.5] - 2025-11-10 - Documentation Sprint
+
+### Documentation - Major Overhaul
+**Comprehensive Veo 3.1 Research**:
+- Added VEO31_COMPREHENSIVE_PROMPTING_GUIDE.md - Definitive Veo 3.1 prompting guide
+  - All generation methods (text-to-video, first frame, interpolation, ingredients, extend)
+  - Timestamp vs continuous narrative strategies with examples
+  - Nano Banana + Imagen 4 integration for image creation/editing
+  - Scene type optimization (dialogue, cinematic, animation, music video, documentary)
+  - 50+ example prompts across all methods and scene types
+  - Known failure cases and avoidance strategies
+  - Audio/visual continuity strategies for multi-scene workflows
+
+**Prompting System Architecture**:
+- Added 17_PROMPTING_SYSTEM.md - Fragment-based architecture documentation
+  - End-to-end flow (user input → fragments → LLM → intermediate → final output)
+  - FragmentLoader deep dive (caching, @include directives, {{variables}}, recursive includes)
+  - PromptService architecture (all 6 generation methods)
+  - TaskRouter integration (multi-provider routing, JSON mode, streaming)
+  - Template composition patterns and fragment categories
+- Added 18_FRAGMENT_DEVELOPMENT.md - Fragment creation guide
+  - Fragment structure (YAML frontmatter + markdown content)
+  - Naming conventions and organization
+  - Testing strategies and versioning
+  - When to use @include vs inline content
+- Added 19_BEST_PRACTICES_DERIVATION.md - Research methodology
+  - How Veo 3/3.1 best practices were derived (official docs, veo-studio code, community research)
+  - How Sora 2 best practices were derived
+  - Source hierarchy and verification (5-tier trust levels)
+  - Update process when new sources emerge
+
+**UX Design Specifications**:
+- Added 21_CENTER_PANEL_UX_REDESIGN.md - Center panel improvements
+  - Template system investigation (keep but move to Advanced Settings)
+  - Generation parameter inline editor design (temperature/top_p/max_tokens)
+  - Structured Output default with formatted ↔ raw JSON toggle
+  - Character limit clarifications (API limits, not app limits)
+  - 6 proposed improvements with mockups
+- Added 22_SCENE_CLASSIFICATION_UX.md - Multi-dimensional scene classification
+  - 5-dimensional taxonomy (Genre, Format, Visual Style, Camera, Narrative)
+  - 100+ total tags across all dimensions
+  - Preset system (global + custom tag combinations)
+  - Auto-detection + manual override
+  - Tag → schema key integration
+  - Progressive disclosure (4 levels: beginner → intermediate → power → expert)
+  - Mobile responsive design
+- Added 23_SCENE_EXTENSION_PHASE1_UX.md - Scene extension MVP
+  - "Extend This Scene" button placement and interaction design
+  - Extension dialog with three methods: Continue, Cut To, Transition
+  - Parent scene summary component with LLM-generated context
+  - Smart preservation defaults (characters, environment, visual style, audio)
+  - Library tree view with parent/child relationships
+  - Orphan handling with user-choice confirmation
+  - Progressive disclosure for advanced options
+  - Mobile-responsive design with bottom sheet pattern
+
+**Schema Key Architecture**:
+- Added 19_SCHEMA_KEY_ARCHITECTURE.md - Global presets, custom sets, auto-suggestion
+  - Data model (SchemaKeyDefinition, SchemaKeySet)
+  - Global presets: Veo 3.1 Standard (9-element), Veo 3.1 Timestamp, Sora 2 Comprehensive, Generic Narrative
+  - Custom schema set creation workflow
+  - Scene type → schema key mapping logic
+  - Auto-suggestion system with confidence scoring
+  - Transformer integration (how transformers consume schema keys)
+  - UI specifications for preset management
+
+**Updated Guiding Principles**:
+- Updated 02_GUIDING_PRINCIPLES.md - Added Principle #13: Intermediate is Model-Agnostic and Unconstrained
+  - Intermediate contains ALL details without model-specific constraints
+  - Optimization happens only at final output layer
+  - Schema keys + transformers handle compression
+  - Decision framework updated with #11: "Does this constrain intermediate data?"
+
+**Updated Index**:
+- Updated 00_INDEX.md - Added entries for all new documentation files
+- Cross-referenced all new docs with related living-docs
+
+### Features Designed (Implementation Pending)
+- Multi-dimensional scene classification with 5D taxonomy
+- Scene extension Phase 1 (Continue/Cut To/Transition methods)
+- Schema key auto-suggestion based on scene type + output format
+- Timestamp vs continuous narrative prompting selection
+- Center panel UX improvements (inline parameter editor, structured output default)
+
+### Status
+- Research: Complete (Veo 3.1 comprehensive analysis)
+- Design: Complete (UX specifications for 3 major features)
+- Documentation: Complete (7 new files, updated guiding principles)
+- Implementation: Pending (features designed but not yet coded)
 
 ---
 

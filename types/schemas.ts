@@ -90,6 +90,55 @@ export const IntermediateStructureSchema = z.object({
   }).optional(),
 });
 
+// ==================== Scene Extension Schemas ====================
+
+/**
+ * PreservationOptions Schema
+ * Validates preservation settings for scene extension
+ */
+export const PreservationOptionsSchema = z.object({
+  characters: z.boolean(),
+  environment: z.boolean(),
+  visualStyle: z.boolean(),
+  audio: z.boolean(),
+});
+
+/**
+ * ParentSceneSummary Schema
+ * Validates cached parent scene summary
+ */
+export const ParentSceneSummarySchema = z.object({
+  characters: z.array(z.string()),
+  location: z.string(),
+  lastMoment: z.string(),
+  visualStyle: z.string(),
+  audioState: z.string(),
+});
+
+/**
+ * ExtensionMetadata Schema
+ * Validates scene extension metadata
+ */
+export const ExtensionMetadataSchema = z.object({
+  parentSceneId: z.string(),
+  method: z.enum(['continue', 'cutTo', 'transition']),
+  userDescription: z.string().optional(),
+  preservation: PreservationOptionsSchema,
+  sceneNumber: z.number().optional(),
+  parentSummary: ParentSceneSummarySchema.optional(),
+});
+
+/**
+ * OrphanMetadata Schema
+ * Validates orphaned scene metadata
+ */
+export const OrphanMetadataSchema = z.object({
+  isOrphaned: z.boolean(),
+  originalParentId: z.string(),
+  originalParentTitle: z.string(),
+  orphanedAt: z.string(),
+});
+
 // ==================== Container Schemas ====================
 
 /**
@@ -130,6 +179,8 @@ export const IntermediatePromptSchema = z.object({
   sources: PromptSourcesSchema,
   structure: IntermediateStructureSchema, // v2.0 only (strict validation)
   relationships: IntermediateRelationshipsSchema.optional(),
+  extensionMetadata: ExtensionMetadataSchema.optional(),
+  orphanMetadata: OrphanMetadataSchema.optional(),
 });
 
 // ==================== Legacy Format Schemas (for migration) ====================

@@ -5,7 +5,7 @@
  * If schema version changes, users must export/import their data manually.
  *
  * Database name: TransformationEngineDB (NEVER changes)
- * Schema version: 9 (NEVER increment - breaking changes require manual export/import)
+ * Schema version: 10 (NEVER increment - breaking changes require manual export/import)
  */
 
 import { IDBPDatabase } from 'idb';
@@ -17,7 +17,7 @@ import { IDBPDatabase } from 'idb';
  * @param db - The IndexedDB database instance
  */
 export function createFreshSchema(db: IDBPDatabase) {
-  console.log('[IndexedDB] Creating fresh database schema v9');
+  console.log('[IndexedDB] Creating fresh database schema v10');
 
   // Core Stores (Phases 1-9)
   const prompts = db.createObjectStore('prompts', { keyPath: 'id' });
@@ -29,6 +29,9 @@ export function createFreshSchema(db: IDBPDatabase) {
   intermediates.createIndex('modified', 'modified', { unique: false });
   intermediates.createIndex('tags', 'tags', { unique: false, multiEntry: true });
   intermediates.createIndex('title', 'title', { unique: false });
+  // Scene Extension Phase 1 indexes
+  intermediates.createIndex('extensionMetadata.parentSceneId', 'extensionMetadata.parentSceneId', { unique: false });
+  intermediates.createIndex('extensionMetadata.sceneNumber', 'extensionMetadata.sceneNumber', { unique: false });
 
   const versions = db.createObjectStore('versions', { keyPath: 'versionId' });
   versions.createIndex('promptId', 'promptId', { unique: false });
@@ -65,5 +68,5 @@ export function createFreshSchema(db: IDBPDatabase) {
   tokenUsage.createIndex('taskId', 'taskId', { unique: false });
   tokenUsage.createIndex('timestamp', 'timestamp', { unique: false });
 
-  console.log('[IndexedDB] Schema v9 created successfully');
+  console.log('[IndexedDB] Schema v10 created successfully');
 }

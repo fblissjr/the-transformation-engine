@@ -10,7 +10,10 @@ interface LeftPanelProps {
   onDeleteRequest?: (promptId: string, promptTitle: string) => void; // Now optional
 }
 
+type LeftPanelTab = 'prompts' | 'scenes';
+
 const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
+  const [activeTab, setActiveTab] = useState<LeftPanelTab>('prompts');
   const {
     prompts,
     activePrompt,
@@ -178,6 +181,31 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
           <p className="text-xs text-gray-400">Your Local Prompt IDE</p>
         </div>
       </div>
+
+      {/* Tab Switcher */}
+      <div className="flex border-b border-gray-800 shrink-0">
+        <button
+          onClick={() => setActiveTab('prompts')}
+          className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+            activeTab === 'prompts'
+              ? 'bg-gray-800 text-amber-500 border-b-2 border-amber-500'
+              : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+          }`}
+        >
+          Prompts ({prompts.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('scenes')}
+          className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+            activeTab === 'scenes'
+              ? 'bg-gray-800 text-amber-500 border-b-2 border-amber-500'
+              : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+          }`}
+        >
+          Scenes
+        </button>
+      </div>
+
       <div className="p-3 sm:p-4 border-b border-gray-800 flex items-center gap-2 shrink-0">
         {getHeaderButton()}
       </div>
@@ -185,15 +213,15 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
       <div className="p-3 sm:p-4 shrink-0">
         <input
           type="text"
-          placeholder="Search prompts..."
+          placeholder={activeTab === 'prompts' ? 'Search prompts...' : 'Search scenes...'}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
         />
       </div>
 
-      {/* Multi-action toolbar - shows when items are selected */}
-      {selectedPromptIds.length > 0 && (
+      {/* Multi-action toolbar - shows when items are selected (Prompts only for now) */}
+      {activeTab === 'prompts' && selectedPromptIds.length > 0 && (
         <div className="px-3 sm:px-4 pb-3 shrink-0">
           {deleteConfirmIds.length > 0 ? (
             <div className="bg-red-900/30 border border-red-600 rounded-md p-3 flex flex-col gap-2">
@@ -241,8 +269,11 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
           </button>
         </div>
       )}
-      <div className="flex-1 overflow-y-auto">
-        {sortedPrompts.length > 0 ? (
+
+      {/* Content Area - Conditional based on active tab */}
+      {activeTab === 'prompts' ? (
+        <div className="flex-1 overflow-y-auto">
+          {sortedPrompts.length > 0 ? (
           <ul>
             {sortedPrompts.map(prompt => {
               const isDeleteConfirm = deleteConfirmIds.includes(prompt.id) && deleteConfirmIds.length === 1;
