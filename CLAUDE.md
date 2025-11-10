@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-11-10 | **Status**: Phase 2 Complete (v2.0.4 - Vision Support + Dead Code Cleanup)
+> **Last Updated**: 2025-11-10 | **Status**: Phase 2 Complete (v2.0.4 - Vision Support + Dead Code Cleanup) <-- note from me: this has not been updated in awhile, what's going on?
 
 ---
 
@@ -8,7 +8,11 @@
 
 A **local-first, client-side web application** for engineering multi-modal prompts for text-to-video AI models. Built with React + TypeScript + Vite, using IndexedDB for storage and multi-provider LLM support.
 
-**Key Philosophy**: Privacy-first, no backend, no accounts, modular LLM providers. Everything runs in the browser.
+**Key Philosophy**: Privacy-first, no accounts, modular LLM providers. All transformations should happen in the intermediate / structured layer. The final output layer is for formatting for models (veo3.1, sora, etc) or for post-processing or ad-hoc things.
+
+## Guiding Principles
+
+The most important document for our project: **[internal/living-docs/00_INDEX.md](./internal/living-docs/02_GUIDING_PRINCIPLES.md)** - Read it, understand it, and follow it.
 
 ---
 
@@ -26,7 +30,7 @@ npm run build  # Production build
 
 ## Documentation
 
-### For Developers (Start Here)
+### For Claude and Myself
 **[internal/living-docs/00_INDEX.md](./internal/living-docs/00_INDEX.md)** - Complete technical documentation
 
 The living-docs contain 16 modular files covering:
@@ -51,6 +55,11 @@ The living-docs contain 16 modular files covering:
 - **[OPERATIONS.md](./docs/OPERATIONS.md)** - Operations guide
 - **[TESTING_CHECKLIST.md](./docs/TESTING_CHECKLIST.md)** - Testing procedures
 - **[AUTOMATED_TESTING.md](./docs/AUTOMATED_TESTING.md)** - Test automation
+
+### Maintaining Internal Documentation and User Documentation
+1. Always update our `./internal` docs after code changes are complete and tested, according to our guiding principles, and ensuring no migration related code is created or exists. Then update @CLAUDE.md with any links that are needed. All docs should be created within `./internal` in an organized manner, then propagated down to `CLAUDE.md` as the index / starting point for Claude.
+2. Then finally, propagated down to the `README.md` and `./docs` folder.
+3. Both `./internal` (internal docs for Claude and myself) and `./docs` (user-facing documentation for end users) markdown docs should be consolidated when it makes sense to avoid duplication of docs. Modularity is important, but not to an extreme level.
 
 ---
 
@@ -114,11 +123,3 @@ The living-docs contain 16 modular files covering:
 - Privacy dashboard improvements
 
 See [CHANGELOG.md](./CHANGELOG.md) for complete version history.
-
----
-- Always update our @internal docs after code changes are complete and tested, according to our guiding principles, and ensuring no migration related code is created or exists. Then update @CLAUDE.md with any links that are needed. All docs should be created within @internal in an organized manner, then propagated down to @CLAUDE.md as the index / starting point for Claude.
-
-Then finally, propagated down to the @README.md and @docs folder.
-
-Both @internal and @docs markdown docs should be consolidated when it makes sense to avoid duplication of docs. Modularity is important, but not to an extreme level.
-- All transformations should happen in the intermediate / structured layer. The final output layer is for formatting for models (veo3.1, sora, etc) or for post-processing or ad-hoc things.
