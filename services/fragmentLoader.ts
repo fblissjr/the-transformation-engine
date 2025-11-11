@@ -118,7 +118,7 @@ class FragmentLoader {
    */
   async composePrompt(
     template: string,
-    variables: Record<string, string> = {}
+    variables: Record<string, string | null> = {}
   ): Promise<string> {
     // Reset fragment tracking for new composition
     this.loadedFragments.clear();
@@ -182,15 +182,30 @@ class FragmentLoader {
 
   /**
    * Replace {{variable}} placeholders with values
+   * Also handles {{#if variable}}...{{/if}} conditionals
    */
   private interpolateVariables(
     template: string,
-    variables: Record<string, string>
+    variables: Record<string, string | null>
   ): string {
-    return template.replace(/\{\{([^}|]+)(?:\|([^}]+))?\}\}/g, (match, varName, defaultValue) => {
+    let output = template;
+
+    // Handle {{#if variable}}...{{/if}} conditionals
+    const conditionalPattern = /\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
+    output = output.replace(conditionalPattern, (match, varName, content) => {
+      const value = variables[varName.trim()];
+      // Include content if variable exists and is not null/empty
+      if (value !== null && value !== undefined && value !== '') {
+        return content;
+      }
+      return ''; // Remove conditional block if variable is falsy
+    });
+
+    // Handle simple {{variable}} replacements
+    output = output.replace(/\{\{([^}|#\/]+)(?:\|([^}]+))?\}\}/g, (match, varName, defaultValue) => {
       const value = variables[varName.trim()];
 
-      if (value !== undefined) {
+      if (value !== undefined && value !== null) {
         return value;
       }
 
@@ -201,6 +216,8 @@ class FragmentLoader {
       console.warn(`Unresolved variable: ${varName}`);
       return match; // Leave unresolved for debugging
     });
+
+    return output;
   }
 
   /**

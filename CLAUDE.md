@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-11-10 | **Status**: Phase 2 Complete (v2.0.5 - Documentation Sprint)
+> **Last Updated**: 2025-11-11 | **Status**: v2.1.0-alpha (Veo 3.1 Integration In Progress)
 
 ---
 
@@ -127,6 +127,54 @@ The living-docs contain modular files covering:
 ---
 
 **Always read this file to get up to speed. For detailed info, see [living-docs](./internal/living-docs/). This is a hobbyist project - aim for simplicity and extensibility.**
+
+---
+
+## Current Implementation Status (v2.1.0-alpha)
+
+### Completed Features (100%)
+
+**Veo 3.1 Backend Integration**:
+- 8 schema key presets (Veo 3.1 Standard/Timestamp/Dialogue/Cinematic/Animation, Sora 2, Generic)
+- 20 transition patterns across 6 categories (Camera-Based, Natural, Match-Cut, Environmental, Creative, Compound)
+- 5D scene classification system (Genre, Format, Visual Style, Camera, Narrative - 100+ tags)
+- Auto-suggestion engine with 7 rules (scene type to optimal preset)
+- Fragment-based transition system (26 fragment files in `/public/veo3/`)
+
+**Services** (3 new, 273+355+189 lines):
+- `services/schemaKeyService.ts` - Preset management, auto-suggestion, custom preset CRUD (273 lines)
+- `services/transitionPatternService.ts` - Pattern search, fragment loading, 20 patterns (355 lines)
+- `contexts/SceneClassificationContext.tsx` - React state management, localStorage persistence (189 lines)
+
+**UI Components** (5 new, 83% complete):
+- `TransitionPatternSelector` - Pattern browser with search/preview (350 lines)
+- `SchemaKeyPresetSelector` - Preset management with auto-suggestions (420 lines)
+- `SceneClassificationPanel` - 5D accordion with 100+ tags (380 lines)
+- `TimestampPromptToggle` - Prompting strategy selector (200 lines)
+- `SceneTree` - Hierarchical scene visualization (280 lines)
+
+**Fragment Files** (26 total):
+- 20 transition patterns (`/public/veo3/transitions/01-20_*.md`)
+- 1 timestamp template (`timestamp_template_8s.md`)
+- 3 scene type templates (dialogue, cinematic, animation)
+- 1 schema presets JSON (`schema_presets.json`)
+
+### In Progress (Integration Work Pending)
+
+**UI Integration** (4 chunks remaining):
+- Update `IntermediateCard` with "Extend This Scene" button
+- Integrate components into `CenterPanel` Advanced Settings section
+- Integrate `SceneTree` into `LeftPanel` Scenes tab
+- Integrate `TransitionPatternSelector` into `SceneExtensionDialog`
+- Replace component mock data with real services
+
+**Phase 3** (Not Started):
+- Automated testing suite (E2E + integration, 45% coverage target)
+- One-shot generation (intermediate + final output simultaneously)
+- Clean YAML output (remove code fences from transformers)
+- Documentation updates (user guide, implementation notes)
+
+**Implementation Roadmap**: `/docs/plans/2025-11-11-complete-implementation-roadmap.md`
 
 ---
 

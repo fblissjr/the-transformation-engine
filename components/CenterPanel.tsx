@@ -13,6 +13,10 @@ import { transformToModel } from '../services/transformers';
 import { useMediaBlobUrls } from '../hooks/useMediaBlobUrls';
 import { MediaReference, MixOption, Prompt } from '../types';
 import { BUILT_IN_MIX_OPTIONS } from '../constants';
+import { SceneClassificationPanel } from './SceneClassificationPanel';
+import { TimestampPromptToggle } from './TimestampPromptToggle';
+import { SchemaKeyPresetSelector } from './SchemaKeyPresetSelector';
+import { useSceneClassification } from '../contexts/SceneClassificationContext';
 
 const CenterPanel: React.FC = () => {
   const {
@@ -58,6 +62,19 @@ const CenterPanel: React.FC = () => {
     structuredViewData,
     handleExportFormatChange,
   } = useGeneration();
+
+  // Scene classification and schema key presets
+  const {
+    classification,
+    setClassification,
+    selectedPresetId,
+    customPresets,
+    selectPreset,
+    promptingStrategy,
+    setPromptingStrategy,
+    autoSuggestedPresetId,
+    suggestionReasoning
+  } = useSceneClassification();
 
   // Load blob URLs for media references
   const mediaBlobUrls = useMediaBlobUrls(mediaReferences);
@@ -991,6 +1008,33 @@ const CenterPanel: React.FC = () => {
                   </svg>
                   Import
                 </button>
+              </div>
+
+              {/* Scene Classification & Prompting Strategy */}
+              <div className="border-t border-gray-700 pt-3 space-y-4">
+                <SceneClassificationPanel
+                  classification={classification}
+                  onClassificationChange={setClassification}
+                  autoDetect={true}
+                  showPresets={true}
+                />
+
+                <TimestampPromptToggle
+                  strategy={promptingStrategy}
+                  onStrategyChange={setPromptingStrategy}
+                  disabled={selectedPresetId === 'veo31-timestamp'}
+                  disabledReason="Veo 3.1 Timestamp preset enforces timestamp strategy"
+                />
+
+                <SchemaKeyPresetSelector
+                  presets={customPresets}
+                  selectedPresetId={selectedPresetId}
+                  suggestedPresetId={autoSuggestedPresetId}
+                  suggestionReasoning={suggestionReasoning}
+                  onPresetSelect={selectPreset}
+                  onCustomize={() => {}}
+                  onManagePresets={() => {}}
+                />
               </div>
 
         {/* Prompt Preview Section */}

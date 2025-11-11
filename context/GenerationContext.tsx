@@ -93,7 +93,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
     newPrompt: clearActivePrompt,
     setNaturalLanguageInput,
   } = useActivePrompt();
-  const { mediaReferences } = useMedia();
+  const { mediaReferences, mediaDescription } = useMedia();
   const { addPrompt, prompts, selectedPromptIds, clearSelection } = usePromptLibrary();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -104,7 +104,7 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
   // Intermediate mode state (always enabled)
   const [generatedIntermediate, setGeneratedIntermediate] = useState<any | null>(null);
-  const [selectedExportModel, setSelectedExportModel] = useState<'sora2' | 'veo3' | 'generic'>('sora2');
+  const [selectedExportModel, setSelectedExportModel] = useState<'sora2' | 'veo3' | 'generic'>('generic');
 
   // Phase 2.1: UX Redesign - Final Output State
   const [finalOutput, setFinalOutput] = useState<string>('');
@@ -146,10 +146,11 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
 
       const apiStartTime = Date.now();
 
-      // Generate intermediate structure
+      // Generate intermediate structure (with media context if available)
       const intermediate = await generateIntermediate(
         naturalLanguageInput,
-        settings
+        settings,
+        mediaDescription // Pass media description for auto-integration
       );
       const apiLatencyMs = Date.now() - apiStartTime;
 

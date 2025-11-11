@@ -2,7 +2,86 @@
 
 All notable changes to The Transformation Engine will be documented in this file.
 
-## [Unreleased]
+## [Unreleased] - v2.1.0-alpha
+
+### In Progress - Veo 3.1 Integration (Option C: Everything)
+
+**Backend Foundation** - COMPLETE (100%):
+- Added `services/schemaKeyService.ts` (273 lines)
+  - 8 global presets: Veo 3.1 Standard/Timestamp/Dialogue/Cinematic/Animation, Sora 2, Generic Versatile
+  - Auto-suggestion engine with 7 rules (scene type to optimal preset)
+  - Custom preset CRUD (IndexedDB storage)
+  - Global preset loading from `/public/veo3/schema_presets.json`
+- Added `services/transitionPatternService.ts` (355 lines)
+  - 20 transition patterns across 6 categories
+  - Pattern search, filtering by category, difficulty indicators
+  - Fragment loading via FragmentLoader
+  - Categories: Camera-Based, Natural, Match-Cut, Environmental, Creative, Compound
+- Added `contexts/SceneClassificationContext.tsx` (189 lines)
+  - 5D scene classification state management (Genre, Format, Visual Style, Camera, Narrative)
+  - Schema preset selection and auto-suggestion triggers
+  - Prompting strategy toggle (timestamp vs continuous)
+  - localStorage persistence for UI preferences
+- Created 26 Veo 3.1 fragment files in `/public/veo3/`
+  - 20 transition patterns (`transitions/01_whip_pan_blur.md` through `20_compound_dolly_reflection_swap.md`)
+  - 1 timestamp template (`timestamp_template_8s.md`)
+  - 3 scene type templates (`scene_type_dialogue_sound_effects.md`, `scene_type_cinematic_realism.md`, `scene_type_creative_animation.md`)
+  - 1 schema presets JSON (`schema_presets.json`)
+- Updated `types/intermediate.ts`
+  - Added `SceneClassification` interface (5 dimensions)
+  - Added `SchemaKeyPreset` interface (global + custom presets)
+  - Added `SchemaKey` interface (individual key definitions)
+  - Added metadata fields to `IntermediateMetadata`
+- Updated `types/schemas.ts` - Added Zod validation schemas for all new types
+- Updated `services/sceneExtensionService.ts`
+  - Integrated transition pattern loading
+  - Added `transitionPatternId` parameter to `generateSceneExtension()`
+  - Inject transition fragment into scene extension prompts
+
+**UI Components** - 83% COMPLETE (5/9 chunks):
+- Created `components/TransitionPatternSelector.tsx` (350 lines)
+  - 20 patterns with search functionality
+  - Category filtering (6 categories)
+  - Preview panel with example and use case
+  - Difficulty indicators (beginner/intermediate/advanced)
+  - Mobile responsive with bottom sheet pattern
+- Created `components/SchemaKeyPresetSelector.tsx` (420 lines)
+  - Preset dropdown with 8 global presets
+  - Auto-suggestion card with reasoning
+  - Preview modal showing all keys in preset
+  - Custom preset management (create, edit, delete)
+  - Prompting strategy indicator
+- Created `components/SceneClassificationPanel.tsx` (380 lines)
+  - 5D accordion with 100+ tags
+  - Preset combinations (Noir Detective, Action Sequence, Documentary, etc.)
+  - Search per dimension (300ms debounce)
+  - Mobile responsive with collapsible sections
+  - Tag selection with visual feedback
+- Created `components/TimestampPromptToggle.tsx` (200 lines)
+  - Strategy toggle (timestamp vs continuous)
+  - Word count guidance (200-300 vs 300-400 words)
+  - Disabled state support (when preset enforces strategy)
+  - Tooltip explanations
+- Created `components/SceneTree.tsx` (280 lines)
+  - Hierarchical scene tree visualization
+  - Parent/child relationship indicators (↳ S2, orphaned warnings)
+  - Extension method badges (→ continues, ✂ cuts, ⤻ transitions)
+  - Recursive rendering for unlimited depth
+
+**Pending Integration** (4 chunks):
+- Update `IntermediateCard` with "Extend This Scene" button (Chunk 2.5)
+- Integrate components into `CenterPanel` Advanced Settings section (Chunk 2.7)
+- Integrate `SceneTree` into `LeftPanel` Scenes tab (Chunk 2.8)
+- Integrate `TransitionPatternSelector` into `SceneExtensionDialog` (Chunk 2.9)
+- Replace component mock data with real services (all chunks)
+
+**Pending Phase 3** (Not Started):
+- Automated testing suite (E2E + integration, 45% coverage target)
+- One-shot generation (intermediate + final output simultaneously)
+- Clean YAML output (remove code fences from transformers)
+- Documentation updates (user guide, implementation notes)
+
+**Implementation Plan**: `/docs/plans/2025-11-11-complete-implementation-roadmap.md` - Detailed breakdown with 19 chunks across 3 phases
 
 ### Added - Automated Testing Suite (2025-11-11)
 **Test Infrastructure**:

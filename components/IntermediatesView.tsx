@@ -157,6 +157,13 @@ export const IntermediatesView: React.FC<IntermediatesViewProps> = () => {
             ? intermediate.structure.sceneType
             : 'scene';
 
+          // Get extension method badge
+          const extensionMethod = intermediate.extensionMetadata?.method;
+          const methodBadge = extensionMethod === 'continue' ? '→ continues'
+            : extensionMethod === 'cutTo' ? '✂ cuts'
+            : extensionMethod === 'transition' ? '⤻ transitions'
+            : null;
+
           return (
             <div
               key={intermediate.id}
@@ -164,10 +171,15 @@ export const IntermediatesView: React.FC<IntermediatesViewProps> = () => {
             >
               {/* Parent/child indicator */}
               {isChild && (
-                <div className="text-xs text-gray-500 mb-1">
-                  ↳ {sceneNumber && `S${sceneNumber}`}
+                <div className="text-xs text-gray-500 mb-1 flex items-center gap-2">
+                  <span>↳ {sceneNumber && `S${sceneNumber}`}</span>
+                  {methodBadge && (
+                    <span className="px-2 py-0.5 bg-blue-600/20 text-blue-400 rounded text-xs">
+                      {methodBadge}
+                    </span>
+                  )}
                   {isOrphaned && (
-                    <span className="ml-2 text-yellow-500">
+                    <span className="text-yellow-500">
                       (Orphaned)
                     </span>
                   )}

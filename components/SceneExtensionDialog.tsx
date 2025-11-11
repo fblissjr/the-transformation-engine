@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { IntermediatePrompt, PreservationOptions } from '../types/intermediate';
 import { ParentSceneSummary } from './ParentSceneSummary';
 import { generateSceneExtension, GenerateExtensionParams } from '../services/sceneExtensionService';
+import { TransitionPatternSelector } from './TransitionPatternSelector';
 
 interface SceneExtensionDialogProps {
   parentIntermediate: IntermediatePrompt;
@@ -65,6 +66,7 @@ export const SceneExtensionDialog: React.FC<SceneExtensionDialogProps> = ({
   const [selectedMethod, setSelectedMethod] = useState<'continue' | 'cutTo' | 'transition'>('continue');
   const [userDescription, setUserDescription] = useState('');
   const [preservation, setPreservation] = useState<PreservationOptions>(PRESERVATION_DEFAULTS.continue);
+  const [selectedTransitionPatternId, setSelectedTransitionPatternId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,6 +90,7 @@ export const SceneExtensionDialog: React.FC<SceneExtensionDialogProps> = ({
         method: selectedMethod,
         userDescription: userDescription.trim(),
         preservation,
+        transitionPatternId: selectedMethod === 'transition' ? selectedTransitionPatternId : undefined,
       };
 
       const newIntermediate = await generateSceneExtension(params);
@@ -181,6 +184,19 @@ export const SceneExtensionDialog: React.FC<SceneExtensionDialogProps> = ({
 
           {/* Parent Summary */}
           <ParentSceneSummary parentIntermediate={parentIntermediate} />
+
+          {/* Transition Pattern Selector - Only for transition method */}
+          {selectedMethod === 'transition' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Transition Pattern:
+              </label>
+              <TransitionPatternSelector
+                selectedPatternId={selectedTransitionPatternId}
+                onSelectPattern={(patternId) => setSelectedTransitionPatternId(patternId)}
+              />
+            </div>
+          )}
 
           {/* User Description */}
           <div>

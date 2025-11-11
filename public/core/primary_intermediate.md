@@ -11,7 +11,19 @@ Convert the user's natural language input into a **structured JSON intermediate 
 
 DO NOT generate model-specific YAML or format-specific output. Instead, extract the underlying semantic content into structured JSON sections.
 
-## Input
+{{#if mediaContext}}
+## Reference Media Context
+
+The user has provided a reference image or video showing:
+
+"""
+{{mediaContext}}
+"""
+
+Use these visual details (appearance, clothing, environment, lighting) as the foundation for the `visual` section. The user's narrative description (below) specifies the action or story. **Merge both seamlessly** - use visual details from the reference media and add the narrative action from the user's input. Avoid redundancy (don't repeat "a person" if both mention it).
+{{/if}}
+
+## User Narrative
 
 {{naturalLanguageInput}}
 

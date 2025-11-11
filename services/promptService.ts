@@ -428,6 +428,7 @@ function extractTitleFromInput(input: string): string {
  *
  * @param input - Natural language description of the scene
  * @param settings - Prompt settings (schema keys, format, etc.)
+ * @param mediaContext - Optional media description from vision analysis
  * @returns IntermediatePrompt object ready to save to IndexedDB
  *
  * NOTE: Model selection is handled by task assignment system (TASK_IDS.INTERMEDIATE_GENERATION)
@@ -436,6 +437,7 @@ function extractTitleFromInput(input: string): string {
 export async function generateIntermediate(
   input: string,
   settings?: PromptSettings,
+  mediaContext?: string | null,
 ): Promise<any> {
   // Load intermediate generation template
   const fragment = await fragmentLoader.loadFragment(
@@ -446,6 +448,7 @@ export async function generateIntermediate(
   // Compose prompt with user input and format constraints
   const systemPrompt = await fragmentLoader.composePrompt(template, {
     naturalLanguageInput: input,
+    mediaContext: mediaContext || null, // Pass media context for template conditional
     // Format constraints variables (for format_constraints.md include)
     format: "JSON (structured v2.0 format)",
     formatGuidance: "Follow the exact JSON structure specified in the template above.",

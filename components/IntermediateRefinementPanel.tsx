@@ -127,13 +127,28 @@ export const IntermediateRefinementPanel: React.FC<IntermediateRefinementPanelPr
     const [currentValue, setCurrentValue] = useState(valueStr);
     const isCurrentlyRefining = isRefining && refiningField === field;
 
+    // Sync local state with prop changes (when parent updates)
+    React.useEffect(() => {
+      const newValueStr = Array.isArray(value) ? value.join(', ') : value;
+      setCurrentValue(newValueStr);
+    }, [value]);
+
     /**
-     * Handle manual field editing
+     * Handle manual field editing - updates local state only
      */
     const handleChange = (newValue: string) => {
       setCurrentValue(newValue);
+    };
 
+    /**
+     * Handle blur - update parent only when focus leaves field
+     */
+    const handleBlur = () => {
       if (!onUpdate) return;
+
+      // Only update if value changed
+      const currentValueStr = Array.isArray(value) ? value.join(', ') : value;
+      if (currentValue === currentValueStr) return;
 
       // Deep clone structure
       const updated = JSON.parse(JSON.stringify(structure)) as IntermediateStructure;
@@ -150,9 +165,9 @@ export const IntermediateRefinementPanel: React.FC<IntermediateRefinementPanelPr
 
       // Convert back to array if needed
       if (type === 'array') {
-        target[finalKey] = newValue.split(',').map(s => s.trim()).filter(s => s);
+        target[finalKey] = currentValue.split(',').map(s => s.trim()).filter(s => s);
       } else {
-        target[finalKey] = newValue;
+        target[finalKey] = currentValue;
       }
 
       onUpdate(updated);
@@ -181,6 +196,7 @@ export const IntermediateRefinementPanel: React.FC<IntermediateRefinementPanelPr
         <textarea
           value={currentValue}
           onChange={(e) => handleChange(e.target.value)}
+          onBlur={handleBlur}
           className="
             w-full text-sm text-gray-300 mb-2 p-2
             bg-gray-900 rounded border border-gray-700

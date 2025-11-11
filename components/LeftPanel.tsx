@@ -5,6 +5,7 @@ import * as dbService from '../services/dbService';
 import ShareModal from './ShareModal';
 import { PrivacyDashboard } from './PrivacyDashboard';
 import { IntermediatesView } from './IntermediatesView';
+import { SceneTree } from './SceneTree';
 import { Prompt } from '../types';
 
 interface LeftPanelProps {
@@ -12,9 +13,11 @@ interface LeftPanelProps {
 }
 
 type LeftPanelTab = 'prompts' | 'scenes';
+type ScenesViewMode = 'list' | 'tree';
 
 const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
   const [activeTab, setActiveTab] = useState<LeftPanelTab>('prompts');
+  const [scenesViewMode, setScenesViewMode] = useState<ScenesViewMode>('list');
   const {
     prompts,
     activePrompt,
@@ -209,6 +212,31 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
 
       <div className="p-3 sm:p-4 border-b border-gray-800 flex items-center gap-2 shrink-0">
         {getHeaderButton()}
+
+        {/* Scenes view mode toggle */}
+        {activeTab === 'scenes' && (
+          <button
+            onClick={() => setScenesViewMode(scenesViewMode === 'list' ? 'tree' : 'list')}
+            className="ml-auto flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white py-1.5 px-3 rounded transition-colors text-xs"
+            title={`Switch to ${scenesViewMode === 'list' ? 'tree' : 'list'} view`}
+          >
+            {scenesViewMode === 'list' ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                Tree View
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                List View
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       <div className="p-3 sm:p-4 shrink-0">
@@ -365,7 +393,11 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
       </div>
     ) : (
       // Scenes view
-      <IntermediatesView />
+      scenesViewMode === 'list' ? (
+        <IntermediatesView />
+      ) : (
+        <SceneTree />
+      )
     )}
 
       {/* Import/Export Section - Prompts tab only */}
