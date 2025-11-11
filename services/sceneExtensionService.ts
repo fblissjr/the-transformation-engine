@@ -16,6 +16,7 @@ import { ParentSceneSummarySchema } from '../types/schemas';
 import { taskRouter } from './taskRouter';
 import { TASK_IDS } from '../types/providers';
 import { getDB } from './db/indexedDbService';
+import { transitionPatternService } from './transitionPatternService';
 
 /**
  * Parameters for generating a scene extension
@@ -26,6 +27,7 @@ export interface GenerateExtensionParams {
   userDescription: string;
   preservation: PreservationOptions;
   outputFormat?: 'veo3' | 'sora2' | 'generic'; // null = inherit from parent
+  transitionPatternId?: string; // Optional transition pattern ID (required if method is 'transition')
 }
 
 /**
@@ -55,15 +57,11 @@ Output JSON with these exact fields:
 }`;
 
   try {
-    const summary = await taskRouter.executeTaskJson<ParentSceneSummary>(
+    const summary = await taskRouter.executeTaskJson(
       TASK_IDS.TRANSFORM,
       'Extract parent scene summary for extension',
-      systemPrompt,
-      {
-        schema: ParentSceneSummarySchema,
-        temperature: 0.3 // Lower temperature for consistent extraction
-      }
-    );
+      systemPrompt
+    ) as ParentSceneSummary;
 
     // Cache the summary in the parent intermediate
     const db = await getDB();
@@ -87,10 +85,10 @@ Output JSON with these exact fields:
 /**
  * Build the system prompt for scene extension
  */
-function buildExtensionPrompt(
+async function buildExtensionPrompt(
   params: GenerateExtensionParams,
   parentSummary: ParentSceneSummary
-): string {
+): Promise<string> {
   const methodInstructions = {
     continue: `
 This is a CONTINUATION of the previous scene.
@@ -124,6 +122,37 @@ Focus on camera movement that reveals or transforms the scene.
 `
   };
 
+  // Load transition pattern fragment if method is 'transition'
+  let transitionPatternPrompt = '';
+  if (params.method === 'transition' && params.transitionPatternId) {
+    try {
+      const pattern = transitionPatternService.getPatternById(params.transitionPatternId);
+      if (!pattern) {
+        throw new Error(`Transition pattern not found: ${params.transitionPatternId}`);
+      }
+
+      const fragmentContent = await transitionPatternService.loadPatternFragment(
+        params.transitionPatternId
+      );
+
+      transitionPatternPrompt = `
+
+TRANSITION PATTERN: ${pattern.name}
+Category: ${pattern.category}
+Description: ${pattern.description}
+
+PATTERN GUIDANCE:
+${fragmentContent}
+
+Apply this transition pattern to smoothly bridge the parent scene to the new scene described by the user.
+Substitute {{scene_a}} with parent scene summary and {{scene_b}} with user's new scene description.
+`;
+    } catch (error) {
+      console.error('Failed to load transition pattern:', error);
+      // Continue without pattern if loading fails
+    }
+  }
+
   return `
 You are generating a scene extension for a video prompt sequence.
 
@@ -132,6 +161,7 @@ ${JSON.stringify(parentSummary, null, 2)}
 
 EXTENSION METHOD: ${params.method}
 ${methodInstructions[params.method]}
+${transitionPatternPrompt}
 
 USER DESCRIPTION:
 ${params.userDescription}
@@ -208,19 +238,15 @@ export async function generateSceneExtension(
   // 2. Get or generate parent summary
   const summary = await getParentSummary(parent);
 
-  // 3. Build extension prompt from template
-  const systemPrompt = buildExtensionPrompt(params, summary);
+  // 3. Build extension prompt from template (now async to support transition patterns)
+  const systemPrompt = await buildExtensionPrompt(params, summary);
 
   // 4. Generate new intermediate via task router
-  const newStructure = await taskRouter.executeTaskJson<IntermediateStructure>(
-    TASK_IDS.GENERATE,
+  const newStructure = await taskRouter.executeTaskJson(
+    TASK_IDS.INTERMEDIATE_GENERATION,
     params.userDescription,
-    systemPrompt,
-    {
-      temperature: 0.8, // Creative generation
-      maxTokens: 2000
-    }
-  );
+    systemPrompt
+  ) as IntermediateStructure;
 
   // 5. Assign scene number
   const sceneNumber = await getNextSceneNumber(params.parentId);

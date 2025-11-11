@@ -3,6 +3,72 @@
 
 import { z } from 'zod';
 
+// ==================== Schema Key Preset Schemas ====================
+
+/**
+ * SceneClassification Schema
+ * 5-dimensional scene taxonomy validation
+ */
+export const SceneClassificationSchema = z.object({
+  genre: z.array(z.string()),
+  format: z.array(z.string()),
+  visualStyle: z.array(z.string()),
+  camera: z.array(z.string()),
+  narrative: z.array(z.string()),
+});
+
+/**
+ * SchemaKey Schema
+ * Individual key in a schema preset
+ */
+export const SchemaKeySchema = z.object({
+  key: z.string(),
+  description: z.string(),
+  required: z.boolean(),
+  category: z.enum(['core', 'enhancement', 'per_segment']),
+  structure: z.enum(['array', 'object']).optional(),
+  format: z.string().optional(),
+  enum: z.array(z.string()).optional(),
+});
+
+/**
+ * SchemaKeyPreset Schema
+ * Validates schema key preset structure
+ */
+export const SchemaKeyPresetSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  modelFamily: z.enum(['veo3', 'sora2', 'generic']),
+  modelVersions: z.array(z.string()),
+  promptingStrategy: z.enum(['continuous', 'timestamp', 'scene_type_specific', 'transition', 'physics_based', 'versatile']),
+  sceneType: z.string().optional(), // References SceneType
+  optimalLength: z.string().optional(),
+  duration: z.string().optional(),
+  segmentDuration: z.string().optional(),
+  segmentCount: z.number().optional(),
+  schemaKeys: z.array(SchemaKeySchema),
+  tags: z.array(z.string()),
+  recommendedFor: z.array(z.string()),
+  notes: z.string().optional(),
+  isGlobal: z.boolean(),
+  isDefault: z.boolean().optional(),
+});
+
+/**
+ * IntermediateMetadata Schema (extended)
+ * Validates metadata including scene classification
+ */
+export const IntermediateMetadataSchema = z.object({
+  generatedAt: z.string().optional(),
+  transformationType: z.string().optional(),
+  transformationParams: z.record(z.string(), z.any()).optional(),
+  parentId: z.string().optional(),
+  sceneClassification: SceneClassificationSchema.optional(),
+  selectedSchemaPreset: z.string().optional(),
+  promptingStrategy: z.enum(['timestamp', 'continuous']).optional(),
+});
+
 // ==================== Scene Types ====================
 
 export const SceneTypeSchema = z.enum([
@@ -82,12 +148,7 @@ export const IntermediateStructureSchema = z.object({
     audio: AudioSectionSchema.optional(),
     camera: CameraSectionSchema.optional(),
   }),
-  metadata: z.object({
-    generatedAt: z.string().optional(),
-    transformationType: z.string().optional(),
-    transformationParams: z.record(z.any()).optional(),
-    parentId: z.string().optional(),
-  }).optional(),
+  metadata: IntermediateMetadataSchema.optional(),
 });
 
 // ==================== Scene Extension Schemas ====================

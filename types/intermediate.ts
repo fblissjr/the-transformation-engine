@@ -32,13 +32,8 @@ export interface IntermediateStructure {
     camera?: CameraSection;          // OPTIONAL - cinematic details
   };
 
-  // Transformation metadata
-  metadata?: {
-    generatedAt?: string;            // ISO timestamp
-    transformationType?: string;     // e.g., "mix", "extend", "reverse"
-    transformationParams?: Record<string, any>;
-    parentId?: string;               // Parent intermediate ID
-  };
+  // Transformation metadata (now uses shared IntermediateMetadata interface)
+  metadata?: IntermediateMetadata;
 }
 
 // ==================== Section Definitions ====================
@@ -162,6 +157,72 @@ export interface NarrativeStructure {
   middle?: string;
   end?: string;
   arc?: string;
+}
+
+// ==================== Schema Key Preset Types ====================
+
+/**
+ * SceneClassification
+ * 5-dimensional scene taxonomy for auto-suggestion and categorization
+ */
+export interface SceneClassification {
+  genre: string[];          // Action, Drama, Horror, Comedy, etc.
+  format: string[];         // Live-Action, Animation, Documentary, etc.
+  visualStyle: string[];    // Cinematic, Handheld, Stylized, etc.
+  camera: string[];         // Static, Slow-Motion, Aerial, etc.
+  narrative: string[];      // Dialogue-Heavy, Action-Driven, Exposition, etc.
+}
+
+/**
+ * SchemaKeyPreset
+ * Defines optimal prompt structure for specific model families and scene types
+ */
+export interface SchemaKeyPreset {
+  id: string;                               // e.g., "veo31-standard"
+  name: string;                             // Display name
+  description: string;                      // Usage guidance
+  modelFamily: 'veo3' | 'sora2' | 'generic';
+  modelVersions: string[];                  // Compatible model IDs
+  promptingStrategy: 'continuous' | 'timestamp' | 'scene_type_specific' | 'transition' | 'physics_based' | 'versatile';
+  sceneType?: SceneType;                    // Optional scene type association
+  optimalLength?: string;                   // Word count guidance
+  duration?: string;                        // For timestamp prompts
+  segmentDuration?: string;                 // For timestamp prompts
+  segmentCount?: number;                    // For timestamp prompts
+  schemaKeys: SchemaKey[];                  // Array of schema keys
+  tags: string[];                           // Searchable tags
+  recommendedFor: string[];                 // Use cases
+  notes?: string;                           // Additional guidance
+  isGlobal: boolean;                        // Global preset vs custom
+  isDefault?: boolean;                      // Default for model family
+}
+
+/**
+ * SchemaKey
+ * Individual key in a schema preset
+ */
+export interface SchemaKey {
+  key: string;                              // Key identifier
+  description: string;                      // What this key represents
+  required: boolean;                        // Is this key required?
+  category: 'core' | 'enhancement' | 'per_segment';
+  structure?: 'array' | 'object';           // Data structure hint
+  format?: string;                          // Format specification
+  enum?: string[];                          // Allowed values
+}
+
+/**
+ * IntermediateMetadata (extended)
+ * Metadata for intermediates including scene classification and schema selection
+ */
+export interface IntermediateMetadata {
+  generatedAt?: string;                     // ISO timestamp
+  transformationType?: string;              // e.g., "mix", "extend", "reverse"
+  transformationParams?: Record<string, any>;
+  parentId?: string;                        // Parent intermediate ID
+  sceneClassification?: SceneClassification;  // NEW: Scene classification tags
+  selectedSchemaPreset?: string;            // NEW: Selected preset ID
+  promptingStrategy?: 'timestamp' | 'continuous';  // NEW: Prompting strategy
 }
 
 // ==================== Scene Extension Types ====================

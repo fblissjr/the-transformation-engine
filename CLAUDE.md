@@ -122,13 +122,49 @@ The living-docs contain modular files covering:
 - **Frontend**: React 19 + TypeScript + Vite + Tailwind v4
 - **Storage**: IndexedDB v9 (multi-provider architecture, no migrations)
 - **LLM Providers**: Gemini 2.5 Flash (default), OpenRouter (with OpenAI + local servers ready)
-- **Testing**: Vitest (setup, minimal coverage)
+- **Testing**: Vitest + Playwright (19 unit tests, 25% coverage, E2E ready)
 
 ---
 
 **Always read this file to get up to speed. For detailed info, see [living-docs](./internal/living-docs/). This is a hobbyist project - aim for simplicity and extensibility.**
 
-## Recent Changes (v2.0.5 - Documentation Sprint)
+---
+
+## Recent Changes (v2.0.6 - Bug Fixes & Testing Sprint)
+
+**Critical Bug Fixes** (2025-11-11):
+- **Fixed Structured View Persistence**: Changes in Structured View now save to database and regenerate Final Output
+  - Implemented `onUpdate` handler in `RightPanel.tsx` (was TODO stub)
+  - Updates call `updateIntermediate()` and `transformToModel()`
+  - Local state tracks changes for immediate UI feedback
+- **Fixed Transform Buttons**: Model-specific transforms (→ Sora 2, → Veo 3, → Generic) now work correctly
+  - Buttons use `structuredViewData` (Phase 2 JSON) instead of `structuredOutput` (Phase 1 string)
+  - Auto-switch to Final Output tab after transformation
+- **Verified Working**: Mix Options, Extend button feedback, Refine suggestions all confirmed functional
+
+**Automated Testing Suite** (2025-11-11):
+- **Test Infrastructure**: Vitest + fake-indexeddb + React Testing Library
+  - `vitest.config.ts` - Full coverage reporting setup
+  - `tests/setup.ts` - Mocked Gemini API, browser APIs (matchMedia, clipboard)
+  - `tests/utils/test-utils.tsx` - React component test utilities
+- **19 Unit Tests Passing**:
+  - Transformer tests (6) - Format transformations, edge cases
+  - Intermediate service tests (13) - CRUD operations, metadata, errors
+  - IndexedDB tests (5 existing) - Database operations
+- **Test Scripts**: `npm run test:run`, `npm run test:ui`, `npm run test:coverage`
+- **Implementation Plan**: `docs/plans/2025-11-11-automated-testing-suite.md` - E2E and integration tests ready to implement
+
+**Scene Extension Phase 1** (Complete - 2025-11-10):
+- **UI Integration**: LeftPanel tabs (Prompts | Scenes), IntermediatesView, IntermediateCard
+- **Delete System**: DeleteWithChildrenDialog with orphan/cascade options
+- **Toast Notifications**: Success/error feedback for all operations
+- **Tree View**: Parent/child indicators (↳ S2), orphaned scene warnings
+
+See [CHANGELOG.md](./CHANGELOG.md) for complete details.
+
+---
+
+## Previous Changes (v2.0.5 - Documentation Sprint)
 
 **Major Documentation Overhaul** (2025-11-10):
 - **Comprehensive Veo 3.1 Research**: Complete prompting guide with 50+ examples, all generation methods, scene type optimization

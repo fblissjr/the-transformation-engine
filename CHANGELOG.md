@@ -4,7 +4,58 @@ All notable changes to The Transformation Engine will be documented in this file
 
 ## [Unreleased]
 
-### Added - Scene Extension Phase 1 (In Progress)
+### Added - Automated Testing Suite (2025-11-11)
+**Test Infrastructure**:
+- Added Vitest configuration (`vitest.config.ts`) with coverage reporting
+- Created test setup file (`tests/setup.ts`) with mocks for Gemini API, matchMedia, clipboard
+- Created test utilities (`tests/utils/test-utils.tsx`) for React component testing
+- Added test scripts to package.json: `test:run`, `test:ui`, `test:coverage`, `test:e2e`
+
+**Unit Tests** (19 passing):
+- **Transformer Tests** (`services/transformers/index.test.ts`) - 6 tests
+  - Generic/Sora 2/Veo 3 format transformation
+  - Unknown model fallback
+  - Edge cases (minimal/empty structures)
+- **Intermediate Service Tests** (`services/db/intermediateService.test.ts`) - 13 tests
+  - CRUD operations (create, read, update, delete)
+  - Modified timestamp updates
+  - Error handling for non-existent IDs
+  - Scene extension metadata preservation
+- **IndexedDB Tests** (`services/db/indexedDbService.test.ts`) - 5 existing tests
+
+**Test Documentation**:
+- Created comprehensive implementation plan (`docs/plans/2025-11-11-automated-testing-suite.md`)
+- Includes E2E tests with Playwright (ready to implement)
+- Includes integration tests for RightPanel fixes (ready to implement)
+
+**Coverage**: ~25% baseline established (focuses on services/transformers)
+
+### Fixed - Critical UI Functionality (2025-11-11)
+**Structured View Persistence**:
+- Fixed onUpdate handler in `RightPanel.tsx` to persist changes made in Structured View
+- Changes now save to database via `updateIntermediate()`
+- Final Output automatically regenerates when structured fields are edited
+- Added local state tracking to show updates immediately
+
+**Transform Buttons**:
+- Fixed model-specific transform buttons (→ Sora 2, → Veo 3, → Generic) to use correct data source
+- Buttons now use `structuredViewData` (Phase 2 intermediate JSON) instead of `structuredOutput` (Phase 1 string)
+- Buttons properly call `transformToModel()` and update Final Output tab
+- Added auto-switch to Final Output tab after transformation
+
+**Component Updates**:
+- Updated `RightPanel.tsx` (lines 9-10): Added imports for `updateIntermediate` and `transformToModel`
+- Updated `RightPanel.tsx` (lines 56-63): Added local state for edited outputs + reset on new generation
+- Updated `RightPanel.tsx` (lines 380-404): Implemented full onUpdate handler with database save + output regeneration
+- Updated `RightPanel.tsx` (lines 426-479): Final Output tab now uses local state when available
+- Updated `RightPanel.tsx` (lines 297-338): Transform buttons use structured data + set local state
+
+**Verified Working Features**:
+- Mix Options: Confirmed already implemented and working (applied during intermediate generation via `generateTextDirectionInstruction`)
+- Extend button feedback: Toast notifications already implemented in Scene Extension Phase 1
+- Refine suggestions: Working correctly (generates suggestions, applies on selection, saves via fixed onUpdate handler)
+
+### Added - Scene Extension Phase 1 (Complete)
 **Data Models & Database**:
 - Added scene extension types to `types/intermediate.ts`
   - `PreservationOptions` - Controls what elements to preserve (characters, environment, visual style, audio)
