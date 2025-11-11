@@ -1,0 +1,526 @@
+{
+  "version": "2.0.0",
+  "lastUpdated": "2025-11-11",
+  "description": "Schema key presets for The Transformation Engine - defining optimal prompt structures for different model families and generation strategies",
+  "presets": [
+    {
+      "id": "veo31-standard",
+      "name": "Veo 3.1 Standard (9-Element Continuous)",
+      "description": "Continuous narrative with comprehensive detail across all 9 core elements. Best for flowing scenes where artistic interpretation is desired.",
+      "modelFamily": "veo3",
+      "modelVersions": ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"],
+      "promptingStrategy": "continuous",
+      "optimalLength": "300-400 words",
+      "schemaKeys": [
+        {
+          "key": "visual_description",
+          "description": "Complete visual scene description - subjects, environment, composition",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "temporal_progression",
+          "description": "How the scene unfolds over time - action development, changes",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "camera_movement",
+          "description": "Camera type, movement, speed, and choreography",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "audio_elements",
+          "description": "Layered audio - dialogue, SFX, ambient sounds with explicit detail",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "lighting",
+          "description": "Lighting quality, time of day, shadows, atmospheric illumination",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "color_palette",
+          "description": "Dominant colors, saturation, color relationships",
+          "required": false,
+          "category": "enhancement"
+        },
+        {
+          "key": "subject_detail",
+          "description": "Specific details about main subjects - appearance, expression, action",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "environment_detail",
+          "description": "Setting specifics - location type, atmosphere, background elements",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "mood",
+          "description": "Emotional tone, atmosphere, feeling the scene should evoke",
+          "required": false,
+          "category": "enhancement"
+        }
+      ],
+      "tags": ["default", "versatile", "artistic", "flowing"],
+      "recommendedFor": ["general_scenes", "cinematic_realism", "creative_animation"]
+    },
+    {
+      "id": "veo31-timestamp",
+      "name": "Veo 3.1 Timestamp (8-Second Segments)",
+      "description": "Time-segmented prompting with precise control over each 2-second interval. Best for complex choreography, high consistency, or specific timing requirements.",
+      "modelFamily": "veo3",
+      "modelVersions": ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"],
+      "promptingStrategy": "timestamp",
+      "optimalLength": "250-350 words",
+      "duration": "8s",
+      "segmentDuration": "2s",
+      "segmentCount": 4,
+      "schemaKeys": [
+        {
+          "key": "timestamp_segments",
+          "description": "Array of 4 timed segments [00:00-00:02], [00:02-00:04], [00:04-00:06], [00:06-00:08]",
+          "required": true,
+          "category": "core",
+          "structure": "array"
+        },
+        {
+          "key": "segment_visual",
+          "description": "Visual description for each segment",
+          "required": true,
+          "category": "per_segment"
+        },
+        {
+          "key": "segment_action",
+          "description": "Action occurring in each segment",
+          "required": true,
+          "category": "per_segment"
+        },
+        {
+          "key": "segment_camera",
+          "description": "Camera position/movement for each segment",
+          "required": true,
+          "category": "per_segment"
+        },
+        {
+          "key": "audio_layering",
+          "description": "Separate section: primary, secondary, ambient audio across all segments",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "lighting_progression",
+          "description": "How lighting changes or remains constant throughout",
+          "required": false,
+          "category": "enhancement"
+        }
+      ],
+      "tags": ["precise", "complex", "choreographed", "high_consistency"],
+      "recommendedFor": ["complex_action", "dialogue_scenes", "precise_timing"]
+    },
+    {
+      "id": "veo31-dialogue",
+      "name": "Veo 3.1 Dialogue & Sound Effects",
+      "description": "Optimized for character-focused scenes with explicit dialogue, close-ups, and layered audio design.",
+      "modelFamily": "veo3",
+      "modelVersions": ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"],
+      "promptingStrategy": "scene_type_specific",
+      "sceneType": "dialogue_sound_effects",
+      "optimalLength": "200-300 words",
+      "schemaKeys": [
+        {
+          "key": "shot_composition",
+          "description": "Close-up, medium, two-shot, over-shoulder framing",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "characters",
+          "description": "Array of characters with names, traits, body language",
+          "required": true,
+          "category": "core",
+          "structure": "array"
+        },
+        {
+          "key": "dialogue",
+          "description": "Quoted speech with delivery style for each character",
+          "required": true,
+          "category": "core",
+          "format": "quoted_with_delivery"
+        },
+        {
+          "key": "dialogue_cues",
+          "description": "Body language, facial expressions during speech",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "sound_effects",
+          "description": "Explicit SFX descriptions - primary and secondary layers",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "ambient_audio",
+          "description": "Environmental soundscape - background sounds",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "lighting",
+          "description": "Lighting atmosphere supporting mood",
+          "required": false,
+          "category": "enhancement"
+        },
+        {
+          "key": "camera_movement",
+          "description": "Minimal or motivated camera movement",
+          "required": false,
+          "category": "enhancement"
+        }
+      ],
+      "tags": ["dialogue", "character_focused", "close_up", "audio_priority"],
+      "recommendedFor": ["conversations", "interrogations", "discoveries", "confrontations"]
+    },
+    {
+      "id": "veo31-cinematic",
+      "name": "Veo 3.1 Cinematic Realism",
+      "description": "Wide shots with dynamic camera movement, photorealistic rendering, and environmental audio emphasis.",
+      "modelFamily": "veo3",
+      "modelVersions": ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"],
+      "promptingStrategy": "scene_type_specific",
+      "sceneType": "cinematic_realism",
+      "optimalLength": "150-250 words",
+      "schemaKeys": [
+        {
+          "key": "camera_setup",
+          "description": "Camera type (drone, tracking, dolly, crane), movement, speed",
+          "required": true,
+          "category": "core",
+          "structure": "object"
+        },
+        {
+          "key": "camera_choreography",
+          "description": "Detailed camera movement progression - start, middle, end",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "subject_action",
+          "description": "Main subject and their action",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "environment",
+          "description": "Location, scale, geography, atmospheric conditions",
+          "required": true,
+          "category": "core",
+          "structure": "object"
+        },
+        {
+          "key": "lighting",
+          "description": "Time of day, lighting quality (golden hour, harsh midday, etc.)",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "audio_design",
+          "description": "Spatial audio - primary sound, secondary sounds, ambient with distance/echo notes",
+          "required": true,
+          "category": "core"
+        }
+      ],
+      "tags": ["wide_shots", "camera_focused", "outdoor", "aerial", "establishing"],
+      "recommendedFor": ["landscapes", "vehicle_scenes", "chase_sequences", "establishing_shots", "aerial_cinematography"]
+    },
+    {
+      "id": "veo31-animation",
+      "name": "Veo 3.1 Creative Animation",
+      "description": "Stylized, non-photorealistic scenes with whimsical subjects and artistic direction emphasis.",
+      "modelFamily": "veo3",
+      "modelVersions": ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"],
+      "promptingStrategy": "scene_type_specific",
+      "sceneType": "creative_animation",
+      "optimalLength": "100-200 words",
+      "schemaKeys": [
+        {
+          "key": "style",
+          "description": "Animation style - stop-motion, 3D cartoon, claymation, watercolor, etc.",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "subject",
+          "description": "Fantastical or imaginative subject description",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "action",
+          "description": "What the subject is doing - can be impossible or whimsical",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "environment",
+          "description": "Imaginative setting - abstract, miniature, surreal",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "creative_details",
+          "description": "Whimsical embellishments, texture notes, artistic flourishes",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "movement_quality",
+          "description": "How things move - jerky, smooth, bouncy, fluid",
+          "required": false,
+          "category": "enhancement"
+        },
+        {
+          "key": "audio",
+          "description": "Whimsical or stylized sound design matching creative style",
+          "required": false,
+          "category": "enhancement"
+        }
+      ],
+      "tags": ["stylized", "whimsical", "creative", "non_realistic", "artistic"],
+      "recommendedFor": ["stop_motion", "3d_cartoon", "surreal_concepts", "childrens_content", "artistic_experiments"]
+    },
+    {
+      "id": "veo31-transition",
+      "name": "Veo 3.1 Scene Transition",
+      "description": "Specialized schema for smooth transitions between scenes using one of 20 transition patterns.",
+      "modelFamily": "veo3",
+      "modelVersions": ["veo-3.1-generate-preview", "veo-3.1-fast-generate-preview"],
+      "promptingStrategy": "transition",
+      "optimalLength": "250-400 words",
+      "schemaKeys": [
+        {
+          "key": "transition_technique",
+          "description": "Specific transition pattern (whip_pan, dolly_through, water_immersion, etc.)",
+          "required": true,
+          "category": "core",
+          "enum": ["whip_pan", "push_pull_zoom", "orbital_reveal", "dolly_through", "crane_ascent_descent", "water_immersion", "smoke_fog", "light_flare", "shape_match", "movement_match", "color_match", "time_of_day", "weather_transformation", "seasonal_morph", "reflection_swap", "silhouette_morph", "object_wipe", "rack_focus", "compound_whip_color", "compound_dolly_reflection"]
+        },
+        {
+          "key": "scene_a_state",
+          "description": "How Scene A ends - final moment before transition",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "transition_mechanics",
+          "description": "Physical or visual technique driving the transition",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "scene_b_reveal",
+          "description": "How Scene B is revealed - first moment of new scene",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "visual_bridge",
+          "description": "What visual element connects scenes (color, shape, motion, object)",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "audio_bridge",
+          "description": "How audio transforms through transition - critical for continuity",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "timing",
+          "description": "Pacing - seconds for each phase of transition",
+          "required": false,
+          "category": "enhancement"
+        },
+        {
+          "key": "camera",
+          "description": "Camera movement driving or supporting transition",
+          "required": true,
+          "category": "core"
+        }
+      ],
+      "tags": ["transition", "scene_connection", "continuity", "bridging"],
+      "recommendedFor": ["scene_extension", "multi_scene_narratives", "smooth_cuts", "creative_transitions"]
+    },
+    {
+      "id": "sora2-standard",
+      "name": "Sora 2 Standard (GPT-5 Methodology)",
+      "description": "Physics-based prompting with imperial units, explicit motion vectors, and GPT-5 reasoning methodology.",
+      "modelFamily": "sora2",
+      "modelVersions": ["sora-turbo"],
+      "promptingStrategy": "physics_based",
+      "optimalLength": "250-400 words",
+      "schemaKeys": [
+        {
+          "key": "initial_conditions",
+          "description": "Starting state with spatial relationships and physical properties",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "motion_vectors",
+          "description": "Direction, velocity in ft/s, acceleration using imperial units",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "forces",
+          "description": "Gravity, friction, air resistance affecting motion",
+          "required": false,
+          "category": "enhancement"
+        },
+        {
+          "key": "camera_physics",
+          "description": "Camera motion as physical movement through space",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "spatial_relationships",
+          "description": "Distances, heights, depths in feet",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "temporal_markers",
+          "description": "Explicit timing for key events",
+          "required": false,
+          "category": "enhancement"
+        },
+        {
+          "key": "lighting_physics",
+          "description": "Light sources, shadows, reflections with physical accuracy",
+          "required": false,
+          "category": "enhancement"
+        }
+      ],
+      "tags": ["physics", "imperial_units", "gpt5_methodology", "realistic"],
+      "recommendedFor": ["realistic_motion", "physics_simulation", "sports", "vehicles", "action"],
+      "notes": "ALWAYS use imperial units (ft, ft/s). NEVER use metric (m, m/s)."
+    },
+    {
+      "id": "generic-versatile",
+      "name": "Generic / Model-Agnostic",
+      "description": "Flexible schema that works across multiple model families without model-specific optimization.",
+      "modelFamily": "generic",
+      "modelVersions": ["*"],
+      "promptingStrategy": "versatile",
+      "optimalLength": "200-350 words",
+      "schemaKeys": [
+        {
+          "key": "scene_description",
+          "description": "Complete visual scene description",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "action",
+          "description": "What happens in the scene",
+          "required": true,
+          "category": "core"
+        },
+        {
+          "key": "camera",
+          "description": "Camera setup and movement",
+          "required": false,
+          "category": "enhancement"
+        },
+        {
+          "key": "audio",
+          "description": "Sound design and audio elements",
+          "required": false,
+          "category": "enhancement"
+        },
+        {
+          "key": "style",
+          "description": "Visual style, mood, atmosphere",
+          "required": false,
+          "category": "enhancement"
+        },
+        {
+          "key": "lighting",
+          "description": "Lighting conditions",
+          "required": false,
+          "category": "enhancement"
+        }
+      ],
+      "tags": ["generic", "versatile", "fallback", "simple"],
+      "recommendedFor": ["unknown_models", "quick_tests", "simple_scenes"]
+    }
+  ],
+  "selectionGuidance": {
+    "bySceneType": {
+      "dialogue_heavy": ["veo31-dialogue"],
+      "action_sequence": ["veo31-cinematic", "veo31-timestamp", "sora2-standard"],
+      "establishing_shot": ["veo31-cinematic"],
+      "creative_stylized": ["veo31-animation"],
+      "scene_transition": ["veo31-transition"],
+      "complex_choreography": ["veo31-timestamp"]
+    },
+    "byControl": {
+      "precise_timing": ["veo31-timestamp"],
+      "artistic_freedom": ["veo31-standard", "veo31-animation"],
+      "physics_accuracy": ["sora2-standard"],
+      "consistency_priority": ["veo31-timestamp", "veo31-dialogue"]
+    },
+    "byModel": {
+      "veo-3.1-generate-preview": ["veo31-standard", "veo31-timestamp", "veo31-dialogue", "veo31-cinematic", "veo31-animation", "veo31-transition"],
+      "veo-3.1-fast-generate-preview": ["veo31-standard", "veo31-dialogue", "veo31-cinematic"],
+      "sora-turbo": ["sora2-standard"],
+      "unknown": ["generic-versatile"]
+    }
+  },
+  "autoSuggestion": {
+    "rules": [
+      {
+        "condition": "contains_quoted_dialogue",
+        "suggested_presets": ["veo31-dialogue", "veo31-timestamp"]
+      },
+      {
+        "condition": "contains_camera_movement_keywords",
+        "keywords": ["drone", "aerial", "tracking", "orbiting", "crane"],
+        "suggested_presets": ["veo31-cinematic"]
+      },
+      {
+        "condition": "contains_style_keywords",
+        "keywords": ["stop-motion", "3D cartoon", "claymation", "whimsical", "surreal"],
+        "suggested_presets": ["veo31-animation"]
+      },
+      {
+        "condition": "contains_timestamp_format",
+        "pattern": "\\[\\d{2}:\\d{2}-\\d{2}:\\d{2}\\]",
+        "suggested_presets": ["veo31-timestamp"]
+      },
+      {
+        "condition": "contains_transition_keywords",
+        "keywords": ["transition", "whip pan", "through", "emerges into", "morphs into"],
+        "suggested_presets": ["veo31-transition"]
+      },
+      {
+        "condition": "contains_imperial_units",
+        "keywords": ["ft", "feet", "ft/s", "mph"],
+        "suggested_presets": ["sora2-standard"]
+      },
+      {
+        "condition": "output_format_is",
+        "format": "veo3",
+        "suggested_presets": ["veo31-standard", "veo31-dialogue", "veo31-cinematic"]
+      }
+    ]
+  }
+}

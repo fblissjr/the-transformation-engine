@@ -6,6 +6,8 @@ import { LogEntry, PromptVersion } from '../types';
 import { VersionTree } from './VersionTree';
 import { generateConversionPrompt } from '../services/promptService';
 import IntermediateRefinementPanel from './IntermediateRefinementPanel';
+import { updateIntermediate } from '../services/db/intermediateService';
+import { transformToModel } from '../services/transformers';
 
 interface RightPanelProps {
   logs: LogEntry[];
@@ -49,6 +51,16 @@ const RightPanel: React.FC<RightPanelProps> = ({
   const [showTransformInput, setShowTransformInput] = useState(false);
   const [customTransform, setCustomTransform] = useState('');
   const [useTreeView, setUseTreeView] = useState(true); // Toggle for tree view
+
+  // Local state for updated outputs after structured view edits
+  const [localFinalOutput, setLocalFinalOutput] = useState<string | null>(null);
+  const [localStructuredViewData, setLocalStructuredViewData] = useState<any | null>(null);
+
+  // Reset local state when new generation happens
+  useEffect(() => {
+    setLocalFinalOutput(null);
+    setLocalStructuredViewData(null);
+  }, [finalOutput, structuredViewData]);
 
   // Sync edited outputs only when activePrompt changes or when new content is generated
   useEffect(() => {
@@ -179,8 +191,9 @@ const RightPanel: React.FC<RightPanelProps> = ({
       </div>
       <div className="flex-1 min-h-0 flex flex-col gap-3">
         {/* Character Counter - Show on finalOutput tab */}
-        {activeTab === 'finalOutput' && finalOutput && (() => {
-          const charCount = finalOutput.length;
+        {activeTab === 'finalOutput' && (localFinalOutput || finalOutput) && (() => {
+          const displayOutput = localFinalOutput || finalOutput;
+          const charCount = displayOutput.length;
           const MODEL_PRESETS = {
             generic: { maxInputChars: Infinity },
             sora2: { maxInputChars: 2500 },
@@ -240,73 +253,85 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 </div>
               )}
               <div className="flex flex-col gap-2">
-                {/* Format Conversions */}
+                {/* Format Conversions - Note: These use the old normalize() flow */}
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => normalize()}
-                    disabled={isNormalizing}
+                    disabled={isNormalizing || !structuredOutput}
                     className="text-xs bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 rounded transition-colors disabled:opacity-50"
                   >
                     {isNormalizing ? 'Transforming...' : '→ Plain English'}
                   </button>
                   <button
                     onClick={() => normalize('Convert to YAML format')}
-                    disabled={isNormalizing}
+                    disabled={isNormalizing || !structuredOutput}
                     className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1 rounded transition-colors disabled:opacity-50"
                   >
                     → YAML
                   </button>
                   <button
                     onClick={() => normalize('Convert to XML format')}
-                    disabled={isNormalizing}
+                    disabled={isNormalizing || !structuredOutput}
                     className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1 rounded transition-colors disabled:opacity-50"
                   >
                     → XML
                   </button>
                   <button
                     onClick={() => normalize('Convert to JSON format')}
-                    disabled={isNormalizing}
+                    disabled={isNormalizing || !structuredOutput}
                     className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1 rounded transition-colors disabled:opacity-50"
                   >
                     → JSON
                   </button>
                   <button
                     onClick={() => normalize('Convert to Markdown format')}
-                    disabled={isNormalizing}
+                    disabled={isNormalizing || !structuredOutput}
                     className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-2 py-1 rounded transition-colors disabled:opacity-50"
                   >
                     → Markdown
                   </button>
                 </div>
 
-                {/* Model-Specific Conversions */}
+                {/* Model-Specific Conversions - Use structured view data */}
                 <div className="flex flex-wrap gap-2 pt-1 border-t border-gray-700/50">
                   <button
-                    onClick={async () => {
-                      const conversionPrompt = await generateConversionPrompt(structuredOutput, 'sora2');
-                      normalize(conversionPrompt);
+                    onClick={() => {
+                      if (!structuredViewData && !localStructuredViewData) return;
+                      const intermediate = localStructuredViewData || structuredViewData;
+                      const output = transformToModel(intermediate, 'sora2');
+                      const cleanOutput = output.replace(/```yaml\n?|```$/g, '').trim();
+                      setLocalFinalOutput(cleanOutput);
+                      setActiveTab('finalOutput');
                     }}
-                    disabled={isNormalizing}
+                    disabled={!structuredViewData && !localStructuredViewData}
                     className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded transition-colors disabled:opacity-50"
                   >
                     → Sora 2
                   </button>
                   <button
-                    onClick={async () => {
-                      const conversionPrompt = await generateConversionPrompt(structuredOutput, 'veo3');
-                      normalize(conversionPrompt);
+                    onClick={() => {
+                      if (!structuredViewData && !localStructuredViewData) return;
+                      const intermediate = localStructuredViewData || structuredViewData;
+                      const output = transformToModel(intermediate, 'veo3');
+                      const cleanOutput = output.replace(/```yaml\n?|```$/g, '').trim();
+                      setLocalFinalOutput(cleanOutput);
+                      setActiveTab('finalOutput');
                     }}
-                    disabled={isNormalizing}
+                    disabled={!structuredViewData && !localStructuredViewData}
                     className="text-xs bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded transition-colors disabled:opacity-50"
                   >
                     → Veo 3
                   </button>
                   <button
-                    onClick={async () => {
-                      const conversionPrompt = await generateConversionPrompt(structuredOutput, 'generic');
-                      normalize(conversionPrompt);
+                    onClick={() => {
+                      if (!structuredViewData && !localStructuredViewData) return;
+                      const intermediate = localStructuredViewData || structuredViewData;
+                      const output = transformToModel(intermediate, 'generic');
+                      const cleanOutput = output.replace(/```yaml\n?|```$/g, '').trim();
+                      setLocalFinalOutput(cleanOutput);
+                      setActiveTab('finalOutput');
                     }}
-                    disabled={isNormalizing}
+                    disabled={!structuredViewData && !localStructuredViewData}
                     className="text-xs bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 rounded transition-colors disabled:opacity-50"
                   >
                     → Generic
@@ -368,12 +393,33 @@ const RightPanel: React.FC<RightPanelProps> = ({
 
         {activeTab === 'structuredView' && (
           <div className="flex-1 min-h-0 overflow-hidden">
-            {structuredViewData ? (
+            {(localStructuredViewData || structuredViewData) ? (
               <IntermediateRefinementPanel
-                intermediate={structuredViewData}
-                onUpdate={(updated) => {
-                  // TODO: Implement update handler to save refined intermediate and regenerate outputs
-                  console.log('Updated intermediate:', updated);
+                intermediate={localStructuredViewData || structuredViewData}
+                onUpdate={async (updated) => {
+                  // Update intermediate in database
+                  if (!structuredViewData?.id) return;
+
+                  try {
+                    await updateIntermediate(structuredViewData.id, {
+                      structure: updated
+                    });
+
+                    // Create updated intermediate object
+                    const updatedIntermediate = { ...structuredViewData, structure: updated };
+
+                    // Regenerate outputs from updated structure
+                    const modelId = selectedExportModel === 'veo3' ? 'veo3' :
+                                    selectedExportModel === 'sora2' ? 'sora2' : 'generic';
+                    const newOutput = transformToModel(updatedIntermediate, modelId);
+                    const cleanOutput = newOutput.replace(/```yaml\n?|```$/g, '').trim();
+
+                    // Update local state
+                    setLocalStructuredViewData(updatedIntermediate);
+                    setLocalFinalOutput(cleanOutput);
+                  } catch (error) {
+                    console.error('Failed to update intermediate:', error);
+                  }
                 }}
               />
             ) : (
@@ -395,38 +441,40 @@ const RightPanel: React.FC<RightPanelProps> = ({
           </div>
         )}
 
-        {activeTab === 'finalOutput' && (
-          <div className="flex-1 min-h-0">
-            {finalOutput ? (
-              <div className="h-full flex flex-col gap-3">
-                {/* Format Selector */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                  <label className="block text-xs font-medium text-gray-300 mb-2">
-                    Export Format:
-                  </label>
-                  <select
-                    value={selectedExportModel}
-                    onChange={(e) => handleExportFormatChange(e.target.value as 'sora2' | 'veo3' | 'generic')}
-                    className="w-full bg-gray-900 border border-gray-600 text-gray-200 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-500"
+        {activeTab === 'finalOutput' && (() => {
+          const displayOutput = localFinalOutput || finalOutput;
+          return (
+            <div className="flex-1 min-h-0">
+              {displayOutput ? (
+                <div className="h-full flex flex-col gap-3">
+                  {/* Format Selector */}
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                    <label className="block text-xs font-medium text-gray-300 mb-2">
+                      Export Format:
+                    </label>
+                    <select
+                      value={selectedExportModel}
+                      onChange={(e) => handleExportFormatChange(e.target.value as 'sora2' | 'veo3' | 'generic')}
+                      className="w-full bg-gray-900 border border-gray-600 text-gray-200 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="sora2">Sora 2 (2,500 chars)</option>
+                      <option value="veo3">Veo 3 (3,000 chars)</option>
+                      <option value="generic">Generic</option>
+                    </select>
+                  </div>
+
+                  {/* Output Display */}
+                  <div className="flex-1 min-h-0 relative">
+                    <pre className="w-full h-full bg-gray-900 border border-gray-800 rounded-lg p-4 overflow-auto font-mono text-sm text-gray-300 whitespace-pre-wrap">
+                      <code>{displayOutput}</code>
+                    </pre>
+                  </div>
+
+                  {/* Copy Button */}
+                  <button
+                    onClick={() => copyToClipboard(displayOutput)}
+                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors"
                   >
-                    <option value="sora2">Sora 2 (2,500 chars)</option>
-                    <option value="veo3">Veo 3 (3,000 chars)</option>
-                    <option value="generic">Generic</option>
-                  </select>
-                </div>
-
-                {/* Output Display */}
-                <div className="flex-1 min-h-0 relative">
-                  <pre className="w-full h-full bg-gray-900 border border-gray-800 rounded-lg p-4 overflow-auto font-mono text-sm text-gray-300 whitespace-pre-wrap">
-                    <code>{finalOutput}</code>
-                  </pre>
-                </div>
-
-                {/* Copy Button */}
-                <button
-                  onClick={() => copyToClipboard(finalOutput)}
-                  className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors"
-                >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
@@ -444,8 +492,9 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 </div>
               </div>
             )}
-          </div>
-        )}
+            </div>
+          );
+        })()}
         {activeTab === 'history' && (
            <div className="flex flex-col h-full gap-3">
             <div className="flex items-center justify-between">
