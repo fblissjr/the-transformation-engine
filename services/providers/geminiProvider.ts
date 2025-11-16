@@ -16,6 +16,7 @@ export class GeminiProvider implements IProvider {
   readonly supportsVideo: boolean = true;
   readonly supportsStreaming: boolean = true;
   readonly supportsJsonMode: boolean = true;
+  readonly supportsImageGeneration: boolean = true;
 
   private apiKey: string;
   private baseUrl: string;
@@ -274,5 +275,88 @@ export class GeminiProvider implements IProvider {
       tags.push("generation");
 
     return tags;
+  }
+
+  // Image Generation (uses gemini-2.5-flash-image model)
+  async generateImage(params: {
+    prompt: string;
+    aspectRatio?: '1:1' | '3:4' | '4:3' | '9:16' | '16:9';
+    negativePrompt?: string;
+    numberOfImages?: number;
+  }): Promise<{ imageData: string; mimeType: string }> {
+    const ai = new GoogleGenAI({ apiKey: this.apiKey });
+    const model = 'gemini-2.5-flash-image';
+
+    const config: any = {
+      prompt: params.prompt,
+    };
+
+    if (params.aspectRatio) {
+      config.aspectRatio = params.aspectRatio;
+    }
+
+    if (params.negativePrompt) {
+      config.negativePrompt = params.negativePrompt;
+    }
+
+    if (params.numberOfImages) {
+      config.numberOfImages = params.numberOfImages;
+    }
+
+    const response = await ai.models.generateContent({
+      model,
+      contents: [{ role: 'user', parts: [{ text: params.prompt }] }],
+      config,
+    });
+
+    const imagePart = response.candidates?.[0]?.content?.parts?.find((part: any) => part.inlineData);
+
+    if (!imagePart?.inlineData) {
+      throw new Error('No image data in response');
+    }
+
+    return {
+      imageData: imagePart.inlineData.data,
+      mimeType: imagePart.inlineData.mimeType || 'image/png',
+    };
+  }
+
+  // Image Editing (uses gemini-2.5-flash-image model with image input)
+  async editImage(params: {
+    sourceImageData: string;
+    sourceImageMimeType: string;
+    instruction: string;
+  }): Promise<{ imageData: string; mimeType: string }> {
+    const ai = new GoogleGenAI({ apiKey: this.apiKey });
+    const model = 'gemini-2.5-flash-image';
+
+    const response = await ai.models.generateContent({
+      model,
+      contents: [{
+        role: 'user',
+        parts: [
+          {
+            inlineData: {
+              mimeType: params.sourceImageMimeType,
+              data: params.sourceImageData,
+            },
+          },
+          {
+            text: params.instruction,
+          },
+        ],
+      }],
+    });
+
+    const imagePart = response.candidates?.[0]?.content?.parts?.find((part: any) => part.inlineData);
+
+    if (!imagePart?.inlineData) {
+      throw new Error('No edited image data in response');
+    }
+
+    return {
+      imageData: imagePart.inlineData.data,
+      mimeType: imagePart.inlineData.mimeType || 'image/png',
+    };
   }
 }

@@ -431,6 +431,152 @@ export class TaskRouter {
   }
 
   /**
+   * Execute image generation task
+   */
+  async executeImageGeneration(
+    projectId: string,
+    prompt: string,
+    structuredYaml: string,
+    options: {
+      template?: string;
+      numImages?: number;
+      aspectRatio?: '1:1' | '3:4' | '4:3' | '9:16' | '16:9';
+      negativePrompt?: string;
+      metadata?: Record<string, unknown>;
+    } = {}
+  ): Promise<{ imageId: string; success: boolean; error?: string }> {
+    const { saveGeneratedImage } = await import('../src/services/imageDbService');
+
+    try {
+      // 1. Get task assignment for IMAGE_GENERATION
+      const assignment = await taskAssignmentService.getOrCreateAssignment('image_generation');
+
+      // 2. Get provider instance
+      const provider = await this.providerRegistry.getProvider(assignment.providerId);
+
+      if (!provider) {
+        throw new Error(`Provider ${assignment.providerId} not found`);
+      }
+
+      // 3. Check if provider supports image generation
+      if (!provider.supportsImageGeneration || !provider.generateImage) {
+        throw new Error(
+          `Provider ${assignment.providerId} does not support image generation. Please select Gemini in Settings → Task Assignment → Image Generation.`
+        );
+      }
+
+      // 4. Execute image generation using provider
+      const imageResult = await provider.generateImage({
+        prompt,
+        aspectRatio: options.aspectRatio,
+        negativePrompt: options.negativePrompt,
+        numberOfImages: options.numImages || 1,
+      });
+
+      // 5. Save generated image to Image DB
+      const imageId = await saveGeneratedImage({
+        projectId,
+        title: `Generated from prompt: ${prompt.substring(0, 50)}...`,
+        imageData: imageResult.imageData,
+        mimeType: imageResult.mimeType,
+        prompt,
+        structuredYaml,
+        template: options.template,
+        metadata: {
+          ...options.metadata,
+          model: assignment.modelId,
+          providerId: assignment.providerId,
+        },
+      });
+
+      return {
+        imageId,
+        success: true,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        imageId: '',
+        success: false,
+        error: errorMessage,
+      };
+    }
+  }
+
+  /**
+   * Execute image editing task
+   */
+  async executeImageEdit(
+    imageId: string,
+    projectId: string,
+    editType: string,
+    instruction: string,
+    parameters: Record<string, unknown>
+  ): Promise<{ imageId: string; success: boolean; error?: string }> {
+    const { getImage, saveEditedImage } = await import('../src/services/imageDbService');
+
+    try {
+      // 1. Get task assignment for IMAGE_EDITING
+      const assignment = await taskAssignmentService.getOrCreateAssignment('image_editing');
+
+      // 2. Get provider instance
+      const provider = await this.providerRegistry.getProvider(assignment.providerId);
+
+      if (!provider) {
+        throw new Error(`Provider ${assignment.providerId} not found`);
+      }
+
+      // 3. Check if provider supports image editing
+      if (!provider.supportsImageGeneration || !provider.editImage) {
+        throw new Error(
+          `Provider ${assignment.providerId} does not support image editing. Please select Gemini in Settings → Task Assignment → Image Editing.`
+        );
+      }
+
+      // 4. Get source image from Image DB
+      const sourceImage = await getImage(imageId);
+      if (!sourceImage) {
+        throw new Error(`Source image ${imageId} not found`);
+      }
+
+      // 5. Execute image edit using provider
+      const editResult = await provider.editImage({
+        sourceImageData: sourceImage.imageData,
+        sourceImageMimeType: sourceImage.mimeType,
+        instruction,
+      });
+
+      // 6. Save edited image to Image DB
+      const editedImageId = await saveEditedImage({
+        sourceImageId: imageId,
+        projectId,
+        title: `${editType}: ${instruction.substring(0, 50)}...`,
+        imageData: editResult.imageData,
+        mimeType: editResult.mimeType,
+        editType,
+        instruction,
+        parameters: {
+          ...parameters,
+          model: assignment.modelId,
+          providerId: assignment.providerId,
+        },
+      });
+
+      return {
+        imageId: editedImageId,
+        success: true,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        imageId,
+        success: false,
+        error: errorMessage,
+      };
+    }
+  }
+
+  /**
    * Refine an existing turn (creates new turn with parentTurnId)
    */
   async refineTurn(

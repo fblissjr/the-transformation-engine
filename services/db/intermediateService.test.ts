@@ -77,19 +77,24 @@ describe('intermediateService', () => {
     });
 
     it('should update modified timestamp', async () => {
-      const originalModified = testIntermediate.modified;
+      const originalModified = testIntermediate.modified.getTime();
 
-      // Wait a bit to ensure timestamp difference
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Use explicit future timestamp to ensure test is deterministic
+      const futureTimestamp = new Date(originalModified + 1000);
+      const originalDateNow = Date.now;
+      Date.now = () => futureTimestamp.getTime();
 
-      await updateIntermediate(testIntermediate.id, {
-        title: 'Updated Title',
-      });
+      try {
+        await updateIntermediate(testIntermediate.id, {
+          title: 'Updated Title',
+        });
 
-      const updated = await getIntermediate(testIntermediate.id);
-      expect(updated?.modified.getTime()).toBeGreaterThan(
-        originalModified.getTime()
-      );
+        const updated = await getIntermediate(testIntermediate.id);
+        expect(updated?.modified.getTime()).toBeGreaterThan(originalModified);
+      } finally {
+        // Restore original Date.now
+        Date.now = originalDateNow;
+      }
     });
 
     it('should throw error for non-existent intermediate', async () => {
