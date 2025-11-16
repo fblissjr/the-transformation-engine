@@ -97,6 +97,31 @@ The living-docs contain modular files covering:
 - **[internal/sora/](./internal/sora/)** - Sora 2 + GPT-5 methodology research
 - **[internal/veo3/](./internal/veo3/)** - Veo 3 + Veo 3.1 research
 
+### Image Studio (NEW - 2025-11-15)
+**Status**: Phase 1 Complete (Database & Services) ✅ | Phase 2 Next (UI Components)
+
+**Quick Start for Next Claude**:
+- **[docs/IMAGE_STUDIO_README.md](./docs/IMAGE_STUDIO_README.md)** - Quick overview and where to start (5 min read)
+- **[internal/image-gen-edit/IMPLEMENTATION_STATUS.md](./internal/image-gen-edit/IMPLEMENTATION_STATUS.md)** - Complete implementation guide (15 min read)
+
+**Dataset & Research**:
+- **[internal/image-gen-edit/pico_data/INDEX.md](./internal/image-gen-edit/pico_data/INDEX.md)** - Pico-Banana-400K dataset navigation
+- **[internal/image-gen-edit/pico_data/QUICK_REFERENCE.md](./internal/image-gen-edit/pico_data/QUICK_REFERENCE.md)** - 35 editing operations, statistics
+- **[internal/image-gen-edit/pico_data/DATASET_ANALYSIS.md](./internal/image-gen-edit/pico_data/DATASET_ANALYSIS.md)** - Complete technical analysis
+
+**What's Done**:
+- ✅ Dual-database architecture (Image DB + Main DB)
+- ✅ Unified schema patterns (Date objects, `title`, `created/modified`)
+- ✅ Complete service layer (imageDbService, crossWorkspaceService, imageGenerationService)
+- ✅ Task router integration (executeImageGeneration, executeImageEdit)
+- ✅ 86/90 tests passing (all Image Studio tests green)
+
+**What's Next** (Phase 2):
+- Build 5 React components (ImageLibraryPanel, ImageGenerateForm, ImageOutputPanel)
+- Import 10 Pico-Banana templates
+- Wire up cross-workspace image → video first frame workflow
+- Achieve 65% test coverage
+
 ### Historical Documentation
 - **[internal/history/](./internal/history/)** - Phase completion reports, architecture proposals, planning docs organized by phase and topic
 

@@ -108,11 +108,27 @@ export interface IProvider {
   // Optional JSON mode (for structured outputs like schema inference)
   generateJson?(request: GenerateRequest): Promise<any>;
 
+  // Optional image generation (Gemini only for now)
+  generateImage?(params: {
+    prompt: string;
+    aspectRatio?: '1:1' | '3:4' | '4:3' | '9:16' | '16:9';
+    negativePrompt?: string;
+    numberOfImages?: number;
+  }): Promise<{ imageData: string; mimeType: string }>;
+
+  // Optional image editing (Gemini only for now)
+  editImage?(params: {
+    sourceImageData: string;
+    sourceImageMimeType: string;
+    instruction: string;
+  }): Promise<{ imageData: string; mimeType: string }>;
+
   // Capabilities
   readonly supportsVision: boolean;
   readonly supportsVideo: boolean;
   readonly supportsStreaming: boolean;
   readonly supportsJsonMode: boolean;
+  readonly supportsImageGeneration?: boolean;
 }
 
 export interface TaskAssignment {
@@ -155,6 +171,11 @@ export const TASK_IDS = {
   TRANSFORM: "transform",
   MODEL_CONVERSION: "model_conversion",
   PROMPT_REWRITE: "prompt_rewrite",
+  // Image Studio tasks
+  IMAGE_GENERATION: "image_generation",
+  IMAGE_EDITING: "image_editing",
+  IMAGE_ANALYSIS: "image_analysis",
+  IMAGE_QUALITY_SCORING: "image_quality_scoring",
 } as const;
 
 export type TaskId = typeof TASK_IDS[keyof typeof TASK_IDS];
@@ -261,5 +282,45 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresJsonMode: false,
     defaultTemperature: 1.0,
     defaultMaxTokens: 4096,
+  },
+  [TASK_IDS.IMAGE_GENERATION]: {
+    id: TASK_IDS.IMAGE_GENERATION,
+    name: "Image Generation",
+    description: "Generate images from text prompts",
+    requiresVision: false,
+    requiresVideo: false,
+    requiresJsonMode: false,
+    defaultTemperature: 1.0,
+    defaultMaxTokens: 1024,
+  },
+  [TASK_IDS.IMAGE_EDITING]: {
+    id: TASK_IDS.IMAGE_EDITING,
+    name: "Image Editing",
+    description: "Edit existing images with instructions",
+    requiresVision: false,
+    requiresVideo: false,
+    requiresJsonMode: false,
+    defaultTemperature: 1.0,
+    defaultMaxTokens: 1024,
+  },
+  [TASK_IDS.IMAGE_ANALYSIS]: {
+    id: TASK_IDS.IMAGE_ANALYSIS,
+    name: "Image Analysis",
+    description: "Analyze image quality and content",
+    requiresVision: true,
+    requiresVideo: false,
+    requiresJsonMode: false,
+    defaultTemperature: 1.0,
+    defaultMaxTokens: 2048,
+  },
+  [TASK_IDS.IMAGE_QUALITY_SCORING]: {
+    id: TASK_IDS.IMAGE_QUALITY_SCORING,
+    name: "Image Quality Scoring",
+    description: "Score image quality across 4 dimensions",
+    requiresVision: true,
+    requiresVideo: false,
+    requiresJsonMode: true,
+    defaultTemperature: 1.0,
+    defaultMaxTokens: 1024,
   },
 };
