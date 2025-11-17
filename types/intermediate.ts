@@ -368,3 +368,62 @@ export function isMarkdownFormat(
 ): structure is MarkdownFormat {
   return 'format' in structure && structure.format === 'markdown';
 }
+
+// ==================== Intermediate v3.0 Types ====================
+
+import type { SceneComponents } from './componentTypes';
+import type { AudioSegment, TimestampSegment } from './audioTypes';
+import type { LinkedObjects } from './objectTypes';
+import type { PromptingStrategy } from './promptingTypes';
+
+/**
+ * IntermediateV3 - Structured scene representation with explicit
+ * component boundaries and object references
+ *
+ * Supports all 6 Veo 3.1 prompting methods:
+ * 1. Continuous narrative
+ * 2. 5-Component formula (cinematography/subject/action/context/style)
+ * 3. Timestamp-segmented
+ * 4. Attribute-value pairs
+ * 5. Structured JSON/YAML
+ * 6. Audio-specific syntax
+ */
+export interface IntermediateV3 {
+  // Metadata
+  id: string;
+  promptId: string; // Links to original user prompt
+  version: 3; // Schema version
+
+  // Structured components with explicit boundaries
+  components: SceneComponents;
+
+  // Object library references (optional, for reusable objects)
+  linkedObjects?: LinkedObjects;
+
+  // Audio with preserved Veo 3.1 syntax
+  audio?: AudioSegment[];
+
+  // Timestamp-based prompting (optional, for time-segmented scenes)
+  timestamps?: TimestampSegment[];
+
+  // Prompting strategy metadata
+  promptingStrategy?: PromptingStrategy;
+
+  // Scene metadata
+  title: string;
+  created: Date;
+  modified: Date;
+
+  // Scene relationships (for scene extension/composition)
+  parentSceneId?: string;
+  childSceneIds?: string[];
+}
+
+/**
+ * Check if intermediate is v3.0 format
+ */
+export function isIntermediateV3(
+  intermediate: any
+): intermediate is IntermediateV3 {
+  return intermediate && typeof intermediate.version === 'number' && intermediate.version === 3;
+}

@@ -176,6 +176,10 @@ export const TASK_IDS = {
   IMAGE_EDITING: "image_editing",
   IMAGE_ANALYSIS: "image_analysis",
   IMAGE_QUALITY_SCORING: "image_quality_scoring",
+  // Object Library tasks (Intermediate v3.0)
+  LLM_DERIVE_SCHEMA: "llm_derive_schema",
+  LLM_EXTRACT_OBJECT: "llm_extract_object",
+  LLM_OBJECT_EDIT: "llm_object_edit",
 } as const;
 
 export type TaskId = typeof TASK_IDS[keyof typeof TASK_IDS];
@@ -322,5 +326,35 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresJsonMode: true,
     defaultTemperature: 1.0,
     defaultMaxTokens: 1024,
+  },
+  [TASK_IDS.LLM_DERIVE_SCHEMA]: {
+    id: TASK_IDS.LLM_DERIVE_SCHEMA,
+    name: "Derive Object Schema",
+    description: "Analyze source material and derive appropriate object schema",
+    requiresVision: false,
+    requiresVideo: false,
+    requiresJsonMode: true,
+    defaultTemperature: 1.0,
+    defaultMaxTokens: 2048,
+  },
+  [TASK_IDS.LLM_EXTRACT_OBJECT]: {
+    id: TASK_IDS.LLM_EXTRACT_OBJECT,
+    name: "Extract Object Data",
+    description: "Extract structured object data from source using schema",
+    requiresVision: false,
+    requiresVideo: false,
+    requiresJsonMode: true,
+    defaultTemperature: 1.0,
+    defaultMaxTokens: 3072,
+  },
+  [TASK_IDS.LLM_OBJECT_EDIT]: {
+    id: TASK_IDS.LLM_OBJECT_EDIT,
+    name: "Edit Object with LLM",
+    description: "Edit object data with natural language instructions",
+    requiresVision: false,
+    requiresVideo: false,
+    requiresJsonMode: true,
+    defaultTemperature: 1.0,
+    defaultMaxTokens: 3072,
   },
 };

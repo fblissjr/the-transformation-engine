@@ -1,18 +1,40 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-11-11 | **Status**: v2.1.0-alpha (Veo 3.1 Integration In Progress)
+> **Last Updated**: 2025-11-17 | **Status**: v2.1.0-alpha (Veo 3.1 Integration In Progress)
 
 ---
 
 ## What This Is
 
-A **local-first, client-side web application** for engineering multi-modal prompts for text-to-video AI models. Built with React + TypeScript + Vite, using IndexedDB for storage and multi-provider LLM support.
+An **Any-to-Any transformation application** that treats LLMs as universal transformation engines operating on structured data. Built with React + TypeScript + Vite, currently focused on multi-modal prompts for text-to-video/image AI models, with the architecture designed to support any source → any output transformations.
 
-**Key Philosophy**: Privacy-first, no accounts, modular LLM providers. All transformations should happen in the intermediate / structured layer. The final output layer is for formatting for models (veo3.1, sora, etc) or for post-processing or ad-hoc things.
+**Core Philosophy - Structured Data First**:
+
+```
+Any Source → LLM Derives Schema → Structured Object → LLM Transforms → Any Output
+     ↓                                    ↓                              ↓
+  Unstructured                     Modular, Editable              Model-Specific
+  (text, images)                   (characters, scenes,            (Veo, Sora,
+                                    backgrounds, props,             Gemini, etc.)
+                                    camera, audio, etc.)
+```
+
+**Key Insight**: LLMs excel at transforming structured data. By keeping everything structured in an intermediate layer, you gain:
+- **Consistency**: Edit one character object, affects all scenes using it
+- **Experimentation**: Change prompt strategy, test A/B variations
+- **Composability**: Mix and match modular objects
+- **Versioning**: Track what changed between outputs
+- **Modularity**: Objects can be anything - characters, backgrounds, props, camera setups, audio, abstract concepts
+
+**Current Philosophy**: Privacy-first, no accounts, client-side (open to backend if structured data requires it). All transformations happen in the intermediate/structured layer. Final output layer formats for specific models (Veo 3.1, Sora, etc.) or post-processing.
 
 ## Guiding Principles
 
-The most important document for our project: **[internal/living-docs/00_INDEX.md](./internal/living-docs/02_GUIDING_PRINCIPLES.md)** - Read it, understand it, and follow it.
+**The most important document for our project**: **[internal/living-docs/02_GUIDING_PRINCIPLES.md](./internal/living-docs/02_GUIDING_PRINCIPLES.md)**
+
+**Principle #0 - Structured Data Above All Else**: Every architectural decision must prioritize structured, modular data that LLMs can transform predictably. Read it, understand it, and follow it.
+
+**For detailed architecture patterns and examples**: **[internal/living-docs/STRUCTURED_DATA_ARCHITECTURE.md](./internal/living-docs/STRUCTURED_DATA_ARCHITECTURE.md)** (coming soon)
 
 ---
 
@@ -33,18 +55,21 @@ npm run build  # Production build
 ### For Claude and Myself
 **[internal/living-docs/00_INDEX.md](./internal/living-docs/00_INDEX.md)** - Complete technical documentation
 
+**START HERE**: **[internal/living-docs/02_GUIDING_PRINCIPLES.md](./internal/living-docs/02_GUIDING_PRINCIPLES.md)** - Principle #0: Structured Data Above All Else
+
 The living-docs contain modular files covering:
+- **Structured Data Architecture** (Any-to-Any transformations, LLM-derived schemas, universal objects) - **[STRUCTURED_DATA_ARCHITECTURE.md](./internal/living-docs/STRUCTURED_DATA_ARCHITECTURE.md)** (coming soon)
 - **Architecture & system design** (5-layer model, prompting system)
 - **Features & capabilities** (generation, transformations, multi-provider)
 - **Development guidelines** (fragment development, best practices)
 - **API integration** (multi-provider architecture, task routing)
-- **Privacy & security** (client-side, no backend)
+- **Privacy & security** (client-side, open to backend for structured data)
 - **Phase history** (v1.0 → v2.0 evolution)
 - **Troubleshooting** (known bugs, solutions)
 - **UX Design** (center panel, scene classification, scene extension)
 - **Prompting System** (fragments, templates, schema keys)
 - **File structure** (organized codebase map)
-- **Roadmap** (Phase 3+ features)
+- **Roadmap** (Phase 3+ features, Intermediate v3.0)
 
 #### Recent Documentation Updates (2025-11-10)
 
@@ -69,8 +94,12 @@ The living-docs contain modular files covering:
 **Schema Key Architecture**:
 - **[internal/living-docs/19_SCHEMA_KEY_ARCHITECTURE.md](./internal/living-docs/19_SCHEMA_KEY_ARCHITECTURE.md)** - Global presets, custom sets, auto-suggestion
 
-**Updated Guiding Principles**:
-- **[internal/living-docs/02_GUIDING_PRINCIPLES.md](./internal/living-docs/02_GUIDING_PRINCIPLES.md)** - Added Principle #13: Intermediate is Model-Agnostic and Unconstrained
+**Updated Guiding Principles** (2025-11-17):
+- **[internal/living-docs/02_GUIDING_PRINCIPLES.md](./internal/living-docs/02_GUIDING_PRINCIPLES.md)** - **Principle #0: Structured Data Above All Else** (foundational principle)
+  - LLMs as transformation engines operating on structured data
+  - Any-to-Any architecture: objects can be characters, backgrounds, props, camera setups, audio, abstract concepts
+  - LLM-derived schemas for universal object editing
+  - Comprehensive examples and anti-patterns
 
 ### Version History
 **[CHANGELOG.md](./CHANGELOG.md)** - Version history and notable changes
@@ -97,8 +126,59 @@ The living-docs contain modular files covering:
 - **[internal/sora/](./internal/sora/)** - Sora 2 + GPT-5 methodology research
 - **[internal/veo3/](./internal/veo3/)** - Veo 3 + Veo 3.1 research
 
-### Image Studio (NEW - 2025-11-15)
-**Status**: Phase 1 Complete (Database & Services) ✅ | Phase 2 Next (UI Components)
+### Intermediate v3.0 & Object System (NEW - 2025-11-17)
+**Status**: Phase 4 Complete (Transformers) ✅ | Phase 5 Next (UI Components)
+
+**Architecture Change (v11 → v12)**: Added universal object library with 10 new stores for structured, reusable objects.
+
+**🚀 START HERE for Next Claude**:
+- **[internal/intermediate-v3/PHASE5_QUICKSTART.md](./internal/intermediate-v3/PHASE5_QUICKSTART.md)** - **START HERE** for Phase 5 (UI Components)
+
+**Phase Guides** (Quickstart documentation):
+- **[internal/intermediate-v3/PHASE3_QUICKSTART.md](./internal/intermediate-v3/PHASE3_QUICKSTART.md)** - Phase 3 reference (services complete)
+- **[internal/intermediate-v3/PHASE4_QUICKSTART.md](./internal/intermediate-v3/PHASE4_QUICKSTART.md)** - Phase 4 reference (transformers complete)
+- **[internal/intermediate-v3/PHASE5_QUICKSTART.md](./internal/intermediate-v3/PHASE5_QUICKSTART.md)** - Phase 5 guide (UI components)
+- **[internal/intermediate-v3/PHASE6_QUICKSTART.md](./internal/intermediate-v3/PHASE6_QUICKSTART.md)** - Phase 6 guide (testing & polish)
+- **[internal/intermediate-v3/PHASE7_QUICKSTART.md](./internal/intermediate-v3/PHASE7_QUICKSTART.md)** - Phase 7 guide (Image Studio integration, optional)
+- **[internal/intermediate-v3/PHASE8_QUICKSTART.md](./internal/intermediate-v3/PHASE8_QUICKSTART.md)** - Phase 8 guide (collaboration features, optional)
+
+**Design References**:
+- **[internal/living-docs/IMPLEMENTATION_CHECKLIST_V3.md](./internal/living-docs/IMPLEMENTATION_CHECKLIST_V3.md)** - Complete implementation plan with task breakdown
+- **[internal/living-docs/OBJECT_SYSTEM_SCHEMA.md](./internal/living-docs/OBJECT_SYSTEM_SCHEMA.md)** - Complete API reference
+- **[internal/living-docs/TRANSFORMER_PSEUDOCODE_V3.md](./internal/living-docs/TRANSFORMER_PSEUDOCODE_V3.md)** - Transformer pseudocode
+
+**Design Documents**:
+- **[internal/living-docs/STRUCTURED_DATA_ARCHITECTURE.md](./internal/living-docs/STRUCTURED_DATA_ARCHITECTURE.md)** - Any-to-Any philosophy and patterns
+- **[internal/living-docs/INTERMEDIATE_V3_INTERFACES.md](./internal/living-docs/INTERMEDIATE_V3_INTERFACES.md)** - TypeScript interface specs
+
+**What's Done** (Phase 1, 2, 3 & 4):
+- ✅ Complete design & documentation (7 docs, 8-week plan)
+- ✅ Database v12 with 10 new stores (characterObjects, locationObjects, cameraObjects, propObjects, audioObjects, conceptObjects, customObjects, objectVersions, objectChangelogs, objectRelationships)
+- ✅ TypeScript types (5 new files: componentTypes, audioTypes, objectTypes, promptingTypes, IntermediateV3)
+- ✅ ObjectLibraryService (800+ lines, full CRUD + versioning + linking + relationships)
+- ✅ ObjectSearchService (350+ lines, 5 search methods + statistics)
+- ✅ 3 LLM tasks (deriveSchemaTask, extractObjectTask, editObjectTask)
+- ✅ Task IDs registered (LLM_DERIVE_SCHEMA, LLM_EXTRACT_OBJECT, LLM_OBJECT_EDIT)
+- ✅ TransformerUtils (400+ lines, shared formatting + resolution utilities)
+- ✅ 8 Transformers (IntermediateV3 → Model-Specific):
+  - Veo3ContinuousTransformer, Veo3AttributeValueTransformer, Veo3TimestampTransformer
+  - Veo3AudioTransformer, Veo3StructuredTransformer
+  - Sora2NarrativeTransformer, Sora2TechnicalTransformer
+  - GenericTransformer
+- ✅ Unit test skeleton (24 test cases for ObjectLibraryService)
+- ✅ Build passes, no TypeScript errors
+
+**What's Next** (Phase 5 - UI Integration, ~25-30 hours):
+- 🔨 Object Library UI (browse, create, edit, delete objects)
+- 🔨 Object Picker components (select objects for scene components)
+- 🔨 Version History UI (view/revert object versions)
+- 🔨 Transformer Selection UI (choose output format)
+- 🔨 Scene Builder UI (compose scenes with object references)
+
+### Image Studio (NEW - 2025-11-16)
+**Status**: Phase 1 Complete (Database Consolidated) ✅ | Phase 2 Next (UI Components)
+
+**Architecture Change (v10 → v11)**: Consolidated from dual-database to single Main DB with image stores.
 
 **Quick Start for Next Claude**:
 - **[docs/IMAGE_STUDIO_README.md](./docs/IMAGE_STUDIO_README.md)** - Quick overview and where to start (5 min read)
@@ -110,16 +190,19 @@ The living-docs contain modular files covering:
 - **[internal/image-gen-edit/pico_data/DATASET_ANALYSIS.md](./internal/image-gen-edit/pico_data/DATASET_ANALYSIS.md)** - Complete technical analysis
 
 **What's Done**:
-- ✅ Dual-database architecture (Image DB + Main DB)
+- ✅ Single unified database (Main DB v11: video + image stores)
 - ✅ Unified schema patterns (Date objects, `title`, `created/modified`)
-- ✅ Complete service layer (imageDbService, crossWorkspaceService, imageGenerationService)
+- ✅ Complete service layer (imageDbService, imageGenerationService)
 - ✅ Task router integration (executeImageGeneration, executeImageEdit)
-- ✅ 86/90 tests passing (all Image Studio tests green)
+- ✅ Deleted crossWorkspaceService (native IndexedDB transactions instead)
 
 **What's Next** (Phase 2):
+- **[internal/image-gen-edit/PHASE2_QUICKSTART.md](./internal/image-gen-edit/PHASE2_QUICKSTART.md)** - Quick start guide (5 min read)
+- **[internal/image-gen-edit/NEXT_STEPS.md](./internal/image-gen-edit/NEXT_STEPS.md)** - Comprehensive roadmap (15 min read)
+- Update test mocks for consolidated database
 - Build 5 React components (ImageLibraryPanel, ImageGenerateForm, ImageOutputPanel)
-- Import 10 Pico-Banana templates
-- Wire up cross-workspace image → video first frame workflow
+- Import 10 Pico-Banana templates (optional)
+- Wire up image → video first frame workflow
 - Achieve 65% test coverage
 
 ### Historical Documentation
@@ -138,14 +221,14 @@ The living-docs contain modular files covering:
 4. **NO GIT COMMITS**: Never commit anything to git or stage it, always rely on the developer for this
 5. **ZERO Legacy Code**: All generation routes through taskRouter
 6. **JSON Mode**: Native JSON generation for structured outputs
-7. **NO MIGRATIONS**: Database v9 is fresh-install only - users must export/import for schema changes
+7. **NO MIGRATIONS**: Database v11 is fresh-install only - breaking schema changes are acceptable, old data will be lost
 
 ---
 
 ## Tech Stack
 
 - **Frontend**: React 19 + TypeScript + Vite + Tailwind v4
-- **Storage**: IndexedDB v9 (multi-provider architecture, no migrations)
+- **Storage**: IndexedDB v11 (unified database: video + image stores, no migrations)
 - **LLM Providers**: Gemini 2.5 Flash (default), OpenRouter (with OpenAI + local servers ready)
 - **Testing**: Vitest + Playwright (19 unit tests, 25% coverage, E2E ready)
 

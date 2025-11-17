@@ -1,14 +1,22 @@
 import { v4 as uuidv4 } from 'uuid';
-import {
-  getImageDB,
-  IMAGE_STORES,
+import { getDB } from '../../services/db/indexedDbService';
+import { DB_CONFIG } from '../../config/database';
+import type {
   ImageProject,
   ImageGeneration,
   ImageEdit,
   SceneLink,
   QualityScores,
   EditHistoryEntry,
-} from '../config/imageDatabase';
+} from '../types/imageTypes';
+
+// Store names from consolidated Main DB v11
+const IMAGE_STORES = {
+  IMAGE_PROJECTS: DB_CONFIG.stores.imageProjects,
+  IMAGE_GENERATIONS: DB_CONFIG.stores.imageGenerations,
+  IMAGE_EDITS: DB_CONFIG.stores.imageEdits,
+  SCENE_LINKS: DB_CONFIG.stores.sceneLinks,
+} as const;
 
 // ============================================================================
 // IMAGE PROJECTS
@@ -19,7 +27,7 @@ export async function createImageProject(
   description?: string,
   tags?: string[]
 ): Promise<ImageProject> {
-  const db = await getImageDB();
+  const db = await getDB();
   const now = new Date();
 
   const project: ImageProject = {
@@ -36,12 +44,12 @@ export async function createImageProject(
 }
 
 export async function getImageProject(id: string): Promise<ImageProject | undefined> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.get(IMAGE_STORES.IMAGE_PROJECTS, id);
 }
 
 export async function getAllImageProjects(): Promise<ImageProject[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAll(IMAGE_STORES.IMAGE_PROJECTS);
 }
 
@@ -49,7 +57,7 @@ export async function updateImageProject(
   id: string,
   updates: Partial<Omit<ImageProject, 'id' | 'created'>>
 ): Promise<ImageProject> {
-  const db = await getImageDB();
+  const db = await getDB();
   const existing = await db.get(IMAGE_STORES.IMAGE_PROJECTS, id);
 
   if (!existing) {
@@ -69,7 +77,7 @@ export async function updateImageProject(
 }
 
 export async function deleteImageProject(id: string): Promise<void> {
-  const db = await getImageDB();
+  const db = await getDB();
 
   // Delete all associated generations
   const generations = await getImageGenerationsByProject(id);
@@ -110,7 +118,7 @@ export interface CreateImageGenerationParams {
 export async function createImageGeneration(
   params: CreateImageGenerationParams
 ): Promise<ImageGeneration> {
-  const db = await getImageDB();
+  const db = await getDB();
   const now = new Date();
 
   // Verify project exists
@@ -145,29 +153,29 @@ export async function createImageGeneration(
 }
 
 export async function getImageGeneration(id: string): Promise<ImageGeneration | undefined> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.get(IMAGE_STORES.IMAGE_GENERATIONS, id);
 }
 
 export async function getAllImageGenerations(): Promise<ImageGeneration[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAll(IMAGE_STORES.IMAGE_GENERATIONS);
 }
 
 export async function getImageGenerationsByProject(projectId: string): Promise<ImageGeneration[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_GENERATIONS, 'projectId', projectId);
 }
 
 export async function getImageGenerationsByStatus(
   status: 'generating' | 'ready' | 'error'
 ): Promise<ImageGeneration[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_GENERATIONS, 'status', status);
 }
 
 export async function getChildImageGenerations(parentImageId: string): Promise<ImageGeneration[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAllFromIndex(
     IMAGE_STORES.IMAGE_GENERATIONS,
     'parentImageId',
@@ -179,7 +187,7 @@ export async function updateImageGeneration(
   id: string,
   updates: Partial<Omit<ImageGeneration, 'id' | 'created' | 'projectId'>>
 ): Promise<ImageGeneration> {
-  const db = await getImageDB();
+  const db = await getDB();
   const existing = await db.get(IMAGE_STORES.IMAGE_GENERATIONS, id);
 
   if (!existing) {
@@ -200,7 +208,7 @@ export async function updateImageGeneration(
 }
 
 export async function deleteImageGeneration(id: string): Promise<void> {
-  const db = await getImageDB();
+  const db = await getDB();
 
   // Delete all child generations
   const children = await getChildImageGenerations(id);
@@ -229,7 +237,7 @@ export async function addEditToHistory(
   parameters: Record<string, unknown>,
   beforeImageId?: string
 ): Promise<ImageGeneration> {
-  const db = await getImageDB();
+  const db = await getDB();
   const existing = await db.get(IMAGE_STORES.IMAGE_GENERATIONS, imageId);
 
   if (!existing) {
@@ -257,7 +265,7 @@ export async function linkImageToScene(
   imageId: string,
   sceneId: string
 ): Promise<ImageGeneration> {
-  const db = await getImageDB();
+  const db = await getDB();
   const existing = await db.get(IMAGE_STORES.IMAGE_GENERATIONS, imageId);
 
   if (!existing) {
@@ -282,7 +290,7 @@ export async function unlinkImageFromScene(
   imageId: string,
   sceneId: string
 ): Promise<ImageGeneration> {
-  const db = await getImageDB();
+  const db = await getDB();
   const existing = await db.get(IMAGE_STORES.IMAGE_GENERATIONS, imageId);
 
   if (!existing) {
@@ -315,7 +323,7 @@ export interface CreateImageEditParams {
 }
 
 export async function createImageEdit(params: CreateImageEditParams): Promise<ImageEdit> {
-  const db = await getImageDB();
+  const db = await getDB();
 
   // Verify image exists
   const image = await db.get(IMAGE_STORES.IMAGE_GENERATIONS, params.generationId);
@@ -341,29 +349,29 @@ export async function createImageEdit(params: CreateImageEditParams): Promise<Im
 }
 
 export async function getImageEdit(id: string): Promise<ImageEdit | undefined> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.get(IMAGE_STORES.IMAGE_EDITS, id);
 }
 
 export async function getAllImageEdits(): Promise<ImageEdit[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAll(IMAGE_STORES.IMAGE_EDITS);
 }
 
 export async function getImageEditsByGeneration(generationId: string): Promise<ImageEdit[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_EDITS, 'generationId', generationId);
 }
 
 export async function getImageEditsByProject(projectId: string): Promise<ImageEdit[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_EDITS, 'projectId', projectId);
 }
 
 export async function getImageEditsByStatus(
   status: 'pending' | 'processing' | 'completed' | 'failed'
 ): Promise<ImageEdit[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_EDITS, 'status', status);
 }
 
@@ -371,7 +379,7 @@ export async function updateImageEdit(
   id: string,
   updates: Partial<Omit<ImageEdit, 'id' | 'created' | 'generationId' | 'projectId'>>
 ): Promise<ImageEdit> {
-  const db = await getImageDB();
+  const db = await getDB();
   const existing = await db.get(IMAGE_STORES.IMAGE_EDITS, id);
 
   if (!existing) {
@@ -392,7 +400,7 @@ export async function updateImageEdit(
 }
 
 export async function deleteImageEdit(id: string): Promise<void> {
-  const db = await getImageDB();
+  const db = await getDB();
   await db.delete(IMAGE_STORES.IMAGE_EDITS, id);
 }
 
@@ -412,7 +420,7 @@ export interface CreateSceneLinkParams {
 }
 
 export async function createSceneLink(params: CreateSceneLinkParams): Promise<SceneLink> {
-  const db = await getImageDB();
+  const db = await getDB();
 
   // Verify image exists
   const image = await db.get(IMAGE_STORES.IMAGE_GENERATIONS, params.imageGenerationId);
@@ -434,27 +442,27 @@ export async function createSceneLink(params: CreateSceneLinkParams): Promise<Sc
 }
 
 export async function getSceneLink(id: string): Promise<SceneLink | undefined> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.get(IMAGE_STORES.SCENE_LINKS, id);
 }
 
 export async function getAllSceneLinks(): Promise<SceneLink[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAll(IMAGE_STORES.SCENE_LINKS);
 }
 
 export async function getSceneLinksByImage(imageGenerationId: string): Promise<SceneLink[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.SCENE_LINKS, 'imageGenerationId', imageGenerationId);
 }
 
 export async function getSceneLinksByScene(intermediateId: string): Promise<SceneLink[]> {
-  const db = await getImageDB();
+  const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.SCENE_LINKS, 'intermediateId', intermediateId);
 }
 
 export async function deleteSceneLink(id: string): Promise<void> {
-  const db = await getImageDB();
+  const db = await getDB();
   await db.delete(IMAGE_STORES.SCENE_LINKS, id);
 }
 
