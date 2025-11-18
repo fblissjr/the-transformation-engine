@@ -1,16 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { PromptProvider, usePrompts } from './context/PromptContext';
-import { ProviderProvider } from './context/ProviderContext';
-import { SceneClassificationProvider } from './contexts/SceneClassificationContext';
-import LeftPanel from './components/LeftPanel';
-import CenterPanel from './components/CenterPanel';
-import RightPanel from './components/RightPanel';
-import SettingsPage from './components/SettingsPage';
+import { PromptProvider, usePrompts } from './src/contexts/PromptContext';
+import { ProviderProvider } from './src/contexts/ProviderContext';
+import { SceneClassificationProvider } from './src/contexts/SceneClassificationContext';
+import { ObjectLibraryProvider } from './src/contexts/ObjectLibraryContext';
+import LeftPanel from './src/components/LeftPanel';
+import CenterPanel from './src/components/CenterPanel';
+import RightPanel from './src/components/RightPanel';
+import SettingsPage from './src/components/SettingsPage';
 import { logger } from './services/loggerService';
 import { LogEntry } from './types';
 import { STRINGS } from './constants';
-import SharePage from './components/SharePage';
+import SharePage from './src/components/SharePage';
 import './services/networkMonitor'; // Initialize network monitor
 
 const App: React.FC = () => {
@@ -37,7 +38,9 @@ const App: React.FC = () => {
     <ProviderProvider>
       <PromptProvider>
         <SceneClassificationProvider>
-          {renderRoute()}
+          <ObjectLibraryProvider>
+            {renderRoute()}
+          </ObjectLibraryProvider>
         </SceneClassificationProvider>
       </PromptProvider>
     </ProviderProvider>
