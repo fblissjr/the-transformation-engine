@@ -27,6 +27,8 @@ export async function createIntermediate(
     sources: data.sources || {},
     structure: data.structure || {},
     relationships: data.relationships,
+    extensionMetadata: data.extensionMetadata,
+    orphanMetadata: data.orphanMetadata,
   };
 
   await db.put('intermediates', intermediate);

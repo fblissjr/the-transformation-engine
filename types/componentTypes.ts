@@ -56,6 +56,7 @@ export interface CameraObjectData {
   movement: CameraMovement;
   lens?: LensSettings;
   style?: string; // 'cinematic', 'documentary', 'handheld', etc.
+  cinematicTechniques?: CinematicTechnique[]; // Advanced editing/camera techniques
 }
 
 export type ShotType =
@@ -68,12 +69,16 @@ export type ShotType =
   | 'extreme-close-up';
 
 export type CameraAngle =
-  | 'eye-level'
-  | 'high-angle'
-  | 'low-angle'
-  | 'dutch'
-  | 'overhead'
-  | 'ground-level';
+  | 'eye-level'          // Neutral, human height perspective
+  | 'high-angle'         // Above subject looking down
+  | 'low-angle'          // Below subject looking up
+  | 'dutch'              // Tilted horizon (canted angle)
+  | 'overhead'           // High angle, not quite bird's-eye
+  | 'ground-level'       // At ground level
+  | 'birds-eye'          // Directly from above (top-down)
+  | 'worms-eye'          // From ground looking straight up
+  | 'over-the-shoulder'  // OTS shot, common in dialogue
+  | 'point-of-view';     // POV shot from character's eyes
 
 export interface CameraMovement {
   type:
@@ -92,10 +97,44 @@ export interface CameraMovement {
 }
 
 export interface LensSettings {
-  focalLength?: string; // '35mm', '50mm', '85mm', etc.
-  aperture?: string; // 'f/1.4', 'f/2.8', 'f/5.6', etc.
+  type?: LensType;                         // Lens type taxonomy
+  focalLength?: string;                    // '35mm', '50mm', '85mm', etc.
+  aperture?: string;                       // 'f/1.4', 'f/2.8', 'f/5.6', etc.
   depthOfField?: 'shallow' | 'medium' | 'deep';
+  opticalEffects?: OpticalEffect[];       // Special optical effects
 }
+
+/**
+ * Lens type taxonomy from Google Cloud Veo 3.1 guide
+ */
+export type LensType =
+  | 'standard'       // Normal perspective (35-50mm equivalent)
+  | 'wide-angle'     // Broader field of view, exaggerated perspective
+  | 'telephoto'      // Narrow field of view, compressed perspective
+  | 'fisheye'        // Ultra-wide with extreme barrel distortion
+  | 'macro';         // Extreme close-up, small subjects
+
+/**
+ * Optical effects achievable through lens and camera techniques
+ */
+export type OpticalEffect =
+  | 'lens-flare'     // Light source creates streaks/starbursts
+  | 'rack-focus'     // Focus shift from one subject to another
+  | 'vertigo-effect' // Dolly zoom (background perspective changes)
+  | 'bokeh';         // Aesthetic quality of out-of-focus areas
+
+/**
+ * Cinematic editing and camera techniques
+ * From Google Cloud Veo 3.1 guide "Cinematic Terms" section
+ */
+export type CinematicTechnique =
+  | 'match-cut'      // Cut between similar compositions/actions
+  | 'jump-cut'       // Cut showing time passage in same location
+  | 'split-diopter'  // Two focus planes in same shot
+  | 'whip-pan'       // Extremely fast pan (transition effect)
+  | 'crash-zoom'     // Sudden rapid zoom in/out
+  | 'freeze-frame'   // Pause on single frame
+  | 'long-take';     // Extended unbroken shot
 
 // ==================== Subject Component ====================
 
@@ -169,6 +208,22 @@ export interface PropObjectData {
 // ==================== Action Component ====================
 
 /**
+ * Temporal pacing and time manipulation effects
+ * From Google Cloud Veo 3.1 guide "Temporal Elements" section
+ */
+export interface TemporalPacing {
+  speed: TemporalSpeed;
+  intensity?: 'subtle' | 'moderate' | 'extreme';
+  description?: string; // What's being shown in altered time
+}
+
+export type TemporalSpeed =
+  | 'slow-motion'    // Slower than real-time (emphasize details, drama)
+  | 'normal'         // Real-time
+  | 'fast-motion'    // Faster than real-time (compress time)
+  | 'time-lapse';    // Extreme time compression (hours → seconds)
+
+/**
  * What's happening in the scene
  * Always structured (not object references, as actions are scene-specific)
  */
@@ -183,6 +238,7 @@ export interface ActionComponent {
   // Temporal info
   duration?: string; // 'over 3 seconds', 'gradually', 'suddenly'
   timing?: string; // 'at the start', 'halfway through', 'at the end'
+  temporalPacing?: TemporalPacing; // Time manipulation effects (slow-motion, time-lapse, etc.)
 
   // Secondary actions (optional)
   secondaryActions?: Array<{
@@ -232,6 +288,34 @@ export type LocationComponent =
   | TextComponent
   | ObjectReferenceComponent<LocationObjectData>;
 
+/**
+ * Lighting quality taxonomy from Google Cloud Veo 3.1 guide
+ * Combines natural, artificial, and cinematic lighting types
+ */
+export type LightingQuality =
+  // Natural lighting
+  | 'natural-daylight'
+  | 'golden-hour'      // Soft warm light before sunset/after sunrise
+  | 'blue-hour'        // Cool twilight tones
+  | 'overcast'
+  | 'moonlight'
+
+  // Artificial lighting
+  | 'harsh'            // Strong directional light, hard shadows
+  | 'soft'             // Diffused, even illumination
+  | 'fluorescent'      // Cool artificial office/industrial lighting
+  | 'neon'             // Colorful artificial light
+  | 'firelight'        // Warm flickering light
+
+  // Cinematic lighting
+  | 'rembrandt'        // Classic portrait lighting with triangle on cheek
+  | 'film-noir'        // High contrast, dramatic shadows
+  | 'volumetric'       // Visible light rays/beams
+  | 'high-key'         // Bright, minimal shadows
+  | 'low-key'          // Dark, heavy shadows
+  | 'backlit'          // Light from behind subject
+  | 'silhouette';      // Subject in shadow against bright background
+
 export interface LocationObjectData {
   name: string;
   setting: {
@@ -240,7 +324,7 @@ export interface LocationObjectData {
     scale: string; // 'intimate', 'vast', 'claustrophobic', etc.
   };
   lighting: {
-    quality: string; // 'harsh', 'soft', 'diffused', 'dramatic'
+    quality: LightingQuality; // Now typed with 17 lighting options
     sources: string[]; // 'sunlight', 'neon signs', 'firelight', etc.
     colorTemperature?: string; // 'warm', 'cool', 'neutral'
   };
@@ -264,6 +348,51 @@ export interface WeatherProgression {
 // ==================== Style Component ====================
 
 /**
+ * Mood and tone taxonomy from Google Cloud Veo 3.1 guide + veo31_director
+ * Enhanced from 20 to 27 types based on reference implementation
+ */
+export type MoodTone =
+  // Positive moods (9)
+  | 'happy'
+  | 'joyful'
+  | 'uplifting'
+  | 'whimsical'
+  | 'peaceful'
+  | 'serene'
+  | 'romantic'
+  | 'euphoric'
+  | 'dreamy'
+
+  // Negative moods (9)
+  | 'sad'
+  | 'melancholy'
+  | 'somber'
+  | 'tense'
+  | 'suspenseful'
+  | 'eerie'
+  | 'unsettling'
+  | 'gritty'
+  | 'raw'
+
+  // Intense moods (5)
+  | 'epic'
+  | 'grandiose'
+  | 'dramatic'
+  | 'thrilling'
+  | 'chaotic'
+
+  // Creative/Surreal (2)
+  | 'psychedelic'
+  | 'surreal'
+
+  // Other (4)
+  | 'mysterious'
+  | 'nostalgic'
+  | 'dystopian'
+  | 'utopian'
+  | 'minimalist';
+
+/**
  * Visual and aesthetic style
  * Always structured (not object references, as style is scene-specific)
  */
@@ -273,8 +402,8 @@ export interface StyleComponent {
   // Visual style tags (fragment-based, composable)
   visualStyle?: string[]; // 'cinematic', 'noir', 'saturated', 'desaturated'
 
-  // Mood/emotion
-  mood?: string[]; // 'tense', 'melancholic', 'joyful', 'eerie'
+  // Mood/emotion (now typed with 27 options)
+  mood?: MoodTone[];
 
   // Color palette
   colorPalette?: string[]; // 'deep blues', 'warm oranges', 'monochrome'
@@ -288,3 +417,39 @@ export interface StyleComponent {
   // Wildcard patterns (gemimg-inspired)
   wildcards?: Record<string, string[]>; // { 'lighting': ['neon', 'natural', 'dramatic'] }
 }
+
+// ==================== Transition Types ====================
+
+/**
+ * Transition type taxonomy to complement fragment system
+ * Matches the 20 transition patterns in /public/veo3/transitions/ + 'none'
+ * From Google Cloud Veo 3.1 guide transition techniques
+ */
+export type TransitionType =
+  | 'none'                  // No transition / continuous scene
+  // Camera-based transitions
+  | 'whip-pan-blur'         // Fast pan blurs Scene A, stops to reveal Scene B
+  | 'zoom-bridge'           // Push-in/pull-out zoom resets scene
+  | 'orbital-reveal'        // Camera circles subject, background morphs
+  | 'dolly-through'         // Move through doorway/portal into new world
+  | 'crane-transition'      // Crane ascent/descent between scenes
+  // Natural transitions
+  | 'water-immersion'       // Submerge in A, emerge in B
+  | 'smoke-fog'             // Obscures frame, clears to new scene
+  | 'light-flare'           // Overexposure hides cut
+  // Match-cut transitions
+  | 'shape-match'           // Object in A morphs to similar shape in B
+  | 'movement-match'        // Action in A continues as action in B
+  | 'color-match'           // Screen fills with color, pulls back to new scene
+  // Environmental transitions
+  | 'time-lapse'            // Time-of-day shift (dawn → night)
+  | 'weather-shift'         // Weather transformation
+  | 'seasonal-morph'        // Landscape shifts seasons
+  // Creative transitions
+  | 'reflection-swap'       // Pass through mirror/reflection
+  | 'silhouette-morph'      // Backlit figure changes shape
+  | 'object-wipe'           // Foreground object wipes to new scene
+  // Compound transitions
+  | 'rack-focus'            // Focus shifts from foreground A to background B
+  | 'crash-zoom-transition' // Sudden zoom creates scene change
+  | 'freeze-blend';         // Freeze frame blends into new scene
