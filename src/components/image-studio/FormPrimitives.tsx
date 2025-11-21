@@ -22,6 +22,8 @@ interface BadgeButtonProps {
   onClick: () => void;
   disabled?: boolean;
   className?: string;
+  badge?: string; // e.g. "PHASE 3" for non-functional features
+  tooltip?: string; // Hover explanation
 }
 
 export const BadgeButton: React.FC<BadgeButtonProps> = ({
@@ -32,17 +34,25 @@ export const BadgeButton: React.FC<BadgeButtonProps> = ({
   onClick,
   disabled = false,
   className = '',
+  badge,
+  tooltip,
 }) => {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
+      title={tooltip}
       className={`
         text-xs rounded-full px-3 py-1.5 flex items-center gap-1.5 transition-colors
         ${
           active
             ? 'bg-amber-600 text-white hover:bg-amber-500'
-            : 'bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700'
+            : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+        }
+        ${
+          badge
+            ? 'border border-dashed border-zinc-600'
+            : 'border border-zinc-700'
         }
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         ${className}
@@ -51,6 +61,11 @@ export const BadgeButton: React.FC<BadgeButtonProps> = ({
       {icon && <span className="w-3 h-3">{icon}</span>}
       {label}
       {count !== undefined && <span className="opacity-70">({count})</span>}
+      {badge && (
+        <span className="ml-1 px-1.5 py-0.5 bg-amber-900/40 text-amber-400 rounded text-[10px] font-medium">
+          {badge}
+        </span>
+      )}
     </button>
   );
 };
@@ -312,7 +327,11 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+        className="w-full h-2 md:h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-amber-500
+                   [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+                   [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5
+                   md:[&::-webkit-slider-thumb]:w-4 md:[&::-webkit-slider-thumb]:h-4
+                   md:[&::-moz-range-thumb]:w-4 md:[&::-moz-range-thumb]:h-4"
       />
       {(leftLabel || rightLabel) && (
         <div className="flex justify-between text-xs text-zinc-600 mt-1">
