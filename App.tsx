@@ -12,6 +12,8 @@ import { logger } from './services/loggerService';
 import { LogEntry } from './types';
 import { STRINGS } from './constants';
 import SharePage from './src/components/SharePage';
+import { WorkspaceModeSwitcher, WorkspaceMode } from './src/components/image-studio/WorkspaceModeSwitcher';
+import { ImageWorkspace } from './src/components/image-studio/ImageWorkspace';
 import './services/networkMonitor'; // Initialize network monitor
 
 const App: React.FC = () => {
@@ -59,6 +61,7 @@ const Main: React.FC = () => {
   const [isLoggingEnabled, setIsLoggingEnabled] = useState(false);
   const [showLeftPanel, setShowLeftPanel] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(false);
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>('video');
 
   useEffect(() => {
     const listener = (newLogs: LogEntry[]) => setLogs(newLogs);
@@ -74,74 +77,88 @@ const Main: React.FC = () => {
 
   return (
     <>
-      <div className="flex h-screen w-full bg-gray-950 font-sans relative overflow-hidden">
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setShowLeftPanel(!showLeftPanel)}
-          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg shadow-lg transition-colors"
-          aria-label="Toggle menu"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-
-        {/* Mobile Output Button */}
-        <button
-          onClick={() => setShowRightPanel(!showRightPanel)}
-          className="lg:hidden fixed top-4 right-4 z-50 p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg shadow-lg transition-colors"
-          aria-label="Toggle output"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </button>
-
-        {/* Left Panel - Drawer on mobile */}
-        <div className={`
-          fixed lg:relative inset-y-0 left-0 z-40
-          w-full sm:w-80 lg:w-1/4 lg:max-w-[350px]
-          transform transition-transform duration-300 ease-in-out
-          ${showLeftPanel ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}>
-          <LeftPanel />
+      <div className="flex flex-col h-screen w-full bg-zinc-950 font-sans relative overflow-hidden">
+        {/* Workspace Mode Switcher - Fixed at top */}
+        <div className="flex items-center justify-center p-4 border-b border-zinc-800 bg-zinc-900">
+          <WorkspaceModeSwitcher currentMode={workspaceMode} onModeChange={setWorkspaceMode} />
         </div>
 
-        {/* Overlay for mobile */}
-        {showLeftPanel && (
-          <div
-            className="lg:hidden fixed inset-0 bg-black/50 z-30"
-            onClick={() => setShowLeftPanel(false)}
-          />
-        )}
+        {/* Workspace Content */}
+        <div className="flex-1 overflow-hidden">
+          {workspaceMode === 'image' ? (
+            <ImageWorkspace />
+          ) : (
+            <div className="flex h-full">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setShowLeftPanel(!showLeftPanel)}
+                className="lg:hidden fixed top-20 left-4 z-50 p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg shadow-lg transition-colors"
+                aria-label="Toggle menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
 
-        {/* Center Panel - Always visible, adjusts width */}
-        <div className="flex-1 min-w-0">
-          <CenterPanel />
+              {/* Mobile Output Button */}
+              <button
+                onClick={() => setShowRightPanel(!showRightPanel)}
+                className="lg:hidden fixed top-20 right-4 z-50 p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg shadow-lg transition-colors"
+                aria-label="Toggle output"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </button>
+
+              {/* Left Panel - Drawer on mobile */}
+              <div className={`
+                fixed lg:relative inset-y-0 left-0 z-40
+                w-full sm:w-80 lg:w-1/4 lg:max-w-[350px]
+                transform transition-transform duration-300 ease-in-out
+                ${showLeftPanel ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+              `}>
+                <LeftPanel />
+              </div>
+
+              {/* Overlay for mobile */}
+              {showLeftPanel && (
+                <div
+                  className="lg:hidden fixed inset-0 bg-black/50 z-30"
+                  onClick={() => setShowLeftPanel(false)}
+                />
+              )}
+
+              {/* Center Panel - Always visible, adjusts width */}
+              <div className="flex-1 min-w-0">
+                <CenterPanel />
+              </div>
+
+              {/* Right Panel - Drawer on mobile */}
+              <div className={`
+                fixed lg:relative inset-y-0 right-0 z-40
+                w-full sm:w-96 lg:w-1/4 lg:max-w-[450px]
+                transform transition-transform duration-300 ease-in-out
+                ${showRightPanel ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+              `}>
+                <RightPanel
+                  logs={logs}
+                  isLoggingEnabled={isLoggingEnabled}
+                  setIsLoggingEnabled={setIsLoggingEnabled}
+                  onClearLogs={handleClearLogs}
+                />
+              </div>
+
+              {/* Overlay for mobile right panel */}
+              {showRightPanel && (
+                <div
+                  className="lg:hidden fixed inset-0 bg-black/50 z-30"
+                  onClick={() => setShowRightPanel(false)}
+                />
+              )}
+            </div>
+          )}
         </div>
-
-        {/* Right Panel - Drawer on mobile */}
-        <div className={`
-          fixed lg:relative inset-y-0 right-0 z-40
-          w-full sm:w-96 lg:w-1/4 lg:max-w-[450px]
-          transform transition-transform duration-300 ease-in-out
-          ${showRightPanel ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-        `}>
-          <RightPanel
-            logs={logs}
-            isLoggingEnabled={isLoggingEnabled}
-            setIsLoggingEnabled={setIsLoggingEnabled}
-            onClearLogs={handleClearLogs}
-          />
-        </div>
-
-        {/* Overlay for mobile right panel */}
-        {showRightPanel && (
-          <div
-            className="lg:hidden fixed inset-0 bg-black/50 z-30"
-            onClick={() => setShowRightPanel(false)}
-          />
-        )}
       </div>
       {error && (
         <div className="fixed bottom-4 right-4 bg-red-800/90 backdrop-blur-sm border border-red-700 text-white p-4 rounded-lg shadow-2xl z-50 flex items-start gap-3 max-w-md">
