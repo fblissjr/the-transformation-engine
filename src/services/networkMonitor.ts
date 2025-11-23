@@ -17,6 +17,12 @@ export interface NetworkRequest {
   hasApiKey: boolean;
 }
 
+/**
+ * NetworkMonitorService class
+ *
+ * Provides functionality to intercept, log, and analyze network requests made by the application.
+ * Used for privacy auditing and monitoring.
+ */
 class NetworkMonitorService {
   private requests: NetworkRequest[] = [];
   private readonly MAX_STORED = 100;
@@ -131,6 +137,8 @@ class NetworkMonitorService {
 
   /**
    * Get all logged requests
+   *
+   * @returns Array of logged NetworkRequest objects.
    */
   getRequests(): NetworkRequest[] {
     return [...this.requests];
@@ -138,6 +146,9 @@ class NetworkMonitorService {
 
   /**
    * Get requests by domain
+   *
+   * @param domain - The domain to filter by.
+   * @returns Array of NetworkRequest objects for the specified domain.
    */
   getRequestsByDomain(domain: string): NetworkRequest[] {
     return this.requests.filter(r => r.domain === domain);
@@ -145,6 +156,8 @@ class NetworkMonitorService {
 
   /**
    * Get summary statistics
+   *
+   * @returns Object containing summary statistics of network requests.
    */
   getSummary() {
     const byDomain = this.requests.reduce((acc, req) => {
@@ -173,6 +186,9 @@ class NetworkMonitorService {
 
   /**
    * Subscribe to network events
+   *
+   * @param callback - Function to be called when a new request is logged.
+   * @returns Function to unsubscribe.
    */
   subscribe(callback: (request: NetworkRequest) => void): () => void {
     this.listeners.push(callback);
@@ -203,6 +219,8 @@ class NetworkMonitorService {
 
   /**
    * Check if app is making unexpected network calls
+   *
+   * @returns True if there are requests to non-approved domains.
    */
   hasUnexpectedRequests(): boolean {
     return this.requests.some(r => !this.APPROVED_DOMAINS.includes(r.domain));
@@ -210,6 +228,8 @@ class NetworkMonitorService {
 
   /**
    * Export audit log
+   *
+   * @returns JSON string containing the audit log.
    */
   exportAuditLog(): string {
     const summary = this.getSummary();

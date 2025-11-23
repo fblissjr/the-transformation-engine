@@ -15,6 +15,10 @@ import type {
 } from '../../../types/componentTypes';
 import type { AudioSegment } from '../../../types/audioTypes';
 
+/**
+ * Utility class providing shared methods for transforming components into natural language strings.
+ * Used by various transformers to resolve references and format data.
+ */
 export class TransformerUtils {
   // ============================================================================
   // COMPONENT RESOLUTION
@@ -23,6 +27,11 @@ export class TransformerUtils {
   /**
    * Resolve object references to actual data
    * Handles: cinematography, subject, location components
+   *
+   * @param component - The component to resolve (text or object reference).
+   * @param objectLibrary - The object library service to fetch object data.
+   * @returns A Promise resolving to the component data.
+   * @throws Error if the referenced object is not found.
    */
   static async resolveComponent<T>(
     component: ComponentBase<T>,
@@ -52,6 +61,10 @@ export class TransformerUtils {
 
   /**
    * Deep merge for applying overrides
+   *
+   * @param target - The target object.
+   * @param override - The object containing override values.
+   * @returns A new object with overrides applied.
    */
   static deepMerge(target: any, override: any): any {
     const result = { ...target };
@@ -73,6 +86,9 @@ export class TransformerUtils {
 
   /**
    * Format character data to natural language
+   *
+   * @param character - The character object data.
+   * @returns A string describing the character.
    */
   static formatCharacter(character: CharacterObjectData): string {
     const parts: string[] = [];
@@ -114,6 +130,9 @@ export class TransformerUtils {
 
   /**
    * Format camera data to natural language
+   *
+   * @param camera - The camera object data.
+   * @returns A string describing the camera setup.
    */
   static formatCamera(camera: CameraObjectData): string {
     const parts: string[] = [];
@@ -158,6 +177,9 @@ export class TransformerUtils {
 
   /**
    * Format location data to natural language
+   *
+   * @param location - The location object data.
+   * @returns A string describing the location.
    */
   static formatLocation(location: LocationObjectData): string {
     const parts: string[] = [];
@@ -197,6 +219,9 @@ export class TransformerUtils {
 
   /**
    * Format action component to natural language
+   *
+   * @param action - The action component data.
+   * @returns A string describing the action.
    */
   static formatAction(action: ActionComponent): string {
     const parts: string[] = [];
@@ -242,6 +267,9 @@ export class TransformerUtils {
 
   /**
    * Format context component to natural language
+   *
+   * @param context - The context component data.
+   * @returns A string describing the context.
    */
   static formatContext(context: ContextComponent): string {
     const parts: string[] = [];
@@ -296,6 +324,9 @@ export class TransformerUtils {
 
   /**
    * Format style component to natural language
+   *
+   * @param style - The style component data.
+   * @returns A string describing the style.
    */
   static formatStyle(style: StyleComponent): string {
     const parts: string[] = [];
@@ -330,6 +361,9 @@ export class TransformerUtils {
 
   /**
    * Format audio segments with original Veo 3.1 syntax
+   *
+   * @param audioSegments - Array of audio segments.
+   * @returns A formatted string of audio segments.
    */
   static formatAudio(audioSegments: AudioSegment[] | undefined): string {
     if (!audioSegments || audioSegments.length === 0) {
@@ -345,6 +379,10 @@ export class TransformerUtils {
 
   /**
    * Resolve context component's location if it's an object reference
+   *
+   * @param context - The context component to resolve.
+   * @param objectLibrary - The object library service to fetch location data.
+   * @returns A Promise resolving to the formatted context string.
    */
   static async resolveContextComponent(
     context: ContextComponent,

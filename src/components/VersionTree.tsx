@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PromptVersion } from '../../types';
-import * as versionService from '../../services/versionService';
+import * as versionService from '../services/versionService';
 
 interface VersionTreeProps {
   promptId: string;
@@ -14,6 +14,18 @@ interface VersionNode {
   children: VersionNode[];
 }
 
+/**
+ * VersionTree component
+ *
+ * Visualizes the history of prompt versions as a tree structure.
+ * Supports branching, restoring previous versions, and expanding/collapsing branches.
+ *
+ * @param promptId - The ID of the prompt to display history for.
+ * @param currentVersionId - The ID of the currently active version.
+ * @param onRestoreVersion - Callback when a version is restored.
+ * @param onCreateBranch - (Optional) Callback when a new branch is created.
+ * @returns The rendered VersionTree component.
+ */
 export const VersionTree: React.FC<VersionTreeProps> = ({
   promptId,
   currentVersionId,

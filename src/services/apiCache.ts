@@ -22,6 +22,12 @@ interface CacheStats {
   hitRate: number;
 }
 
+/**
+ * APICache class
+ *
+ * Manages an in-memory cache for API responses with TTL expiration.
+ * Supports basic get, set, clear operations, and provides statistics.
+ */
 class APICache {
   private cache: Map<string, CacheEntry>;
   private hits: number;

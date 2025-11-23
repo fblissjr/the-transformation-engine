@@ -8,10 +8,15 @@ interface ToastProps {
 }
 
 /**
- * Toast
+ * Toast component
  *
- * Simple toast notification component.
- * Auto-dismisses after duration (default 3 seconds).
+ * A simple toast notification component that displays a message and auto-dismisses after a specified duration.
+ *
+ * @param message - The message to display.
+ * @param type - (Optional) The type of toast, determining the background color and icon. Defaults to 'success'.
+ * @param onClose - Callback to close the toast.
+ * @param duration - (Optional) Duration in milliseconds before auto-dismissing. Defaults to 3000.
+ * @returns The rendered Toast component.
  */
 export const Toast: React.FC<ToastProps> = ({
   message,

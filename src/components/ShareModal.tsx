@@ -7,6 +7,17 @@ interface ShareModalProps {
   onClose: () => void;
 }
 
+/**
+ * ShareModal component
+ *
+ * A modal dialog that allows users to generate a shareable link for a prompt.
+ * Users can select which fields of the prompt to include in the shared data.
+ * The generated link contains the selected data encoded in base64.
+ *
+ * @param prompt - The prompt object to be shared.
+ * @param onClose - Callback to close the modal.
+ * @returns The rendered ShareModal component.
+ */
 const ShareModal: React.FC<ShareModalProps> = ({ prompt, onClose }) => {
   const [fieldsToShare, setFieldsToShare] = useState({
     naturalLanguageInput: true,

@@ -1,4 +1,4 @@
-import { getDB } from '../../services/db/indexedDbService';
+import { getDB } from '..//db/indexedDbService';
 import { DB_CONFIG } from '../../config/database';
 import type { ObjectStoreRecord } from '../../types/objectTypes';
 import { objectLibraryService } from './objectLibraryService';
@@ -360,6 +360,7 @@ export class ObjectSearchService {
   /**
    * Get object statistics
    * Returns counts by object type and usage statistics
+   * @returns A Promise resolving to object statistics including total count, breakdown by type, and usage info.
    */
   async getObjectStatistics(): Promise<{
     totalObjects: number;

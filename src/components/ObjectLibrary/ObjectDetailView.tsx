@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useObjectLibrary } from '../../contexts/ObjectLibraryContext';
-import type { ObjectStoreRecord } from '../../../types/objectTypes';
+import type { ObjectStoreRecord } from '../../types/objectTypes';
 import { ObjectHeader } from './ObjectHeader';
 import { ObjectDataDisplay } from './ObjectDataDisplay';
 import { VersionHistoryDropdown } from './VersionHistoryDropdown';
@@ -12,6 +12,17 @@ interface ObjectDetailViewProps {
   objectType: string;
 }
 
+/**
+ * ObjectDetailView component
+ *
+ * Displays detailed information about a specific object in the library.
+ * Includes header, data display, version history, linked scenes, and metadata.
+ * Provides edit, delete, and duplicate actions.
+ *
+ * @param objectId - The ID of the object to display.
+ * @param objectType - The type of the object.
+ * @returns The rendered ObjectDetailView component.
+ */
 export const ObjectDetailView: React.FC<ObjectDetailViewProps> = ({
   objectId,
   objectType

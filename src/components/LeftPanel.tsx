@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { usePrompts } from '../contexts/PromptContext';
 import { LogoIcon, PlusIcon, ImportIcon, ExportIcon, SettingsIcon, MixIcon, TrashIcon, StarIconFilled, StarIconOutline, CopyIcon, ShareIcon } from './icons';
-import * as dbService from '../../services/dbService';
+import * as dbService from '../services/dbService';
 import ShareModal from './ShareModal';
 import { PrivacyDashboard } from './PrivacyDashboard';
 import { IntermediatesView } from './IntermediatesView';
@@ -16,6 +16,16 @@ interface LeftPanelProps {
 type LeftPanelTab = 'prompts' | 'scenes' | 'objects';
 type ScenesViewMode = 'list' | 'tree';
 
+/**
+ * LeftPanel component
+ *
+ * The main navigation and sidebar panel.
+ * Provides access to Prompts, Scenes, and Objects libraries.
+ * Handles prompt management actions like creation, deletion, mixing, sharing, import, and export.
+ *
+ * @param onDeleteRequest - (Optional) Callback for requesting deletion of a prompt.
+ * @returns The rendered LeftPanel component.
+ */
 const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
   const [activeTab, setActiveTab] = useState<LeftPanelTab>('prompts');
   const [scenesViewMode, setScenesViewMode] = useState<ScenesViewMode>('list');

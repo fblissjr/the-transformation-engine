@@ -18,6 +18,18 @@ const TYPE_COLORS: Record<string, string> = {
   custom: 'bg-gray-600'
 };
 
+/**
+ * ObjectList component
+ *
+ * Renders a list of objects in the library.
+ * Each object is displayed as a card with its details, including type badge, name, description, metadata, and tags.
+ * Supports selection of an object.
+ *
+ * @param objects - Array of objects to display.
+ * @param selectedObjectId - ID of the currently selected object.
+ * @param onSelectObject - Callback when an object is selected.
+ * @returns The rendered ObjectList component.
+ */
 export const ObjectList: React.FC<ObjectListProps> = ({
   objects,
   selectedObjectId,

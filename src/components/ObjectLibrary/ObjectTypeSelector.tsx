@@ -3,7 +3,8 @@ import { useObjectLibrary, OBJECT_TYPES } from '../../contexts/ObjectLibraryCont
 
 interface ObjectTypeSelectorProps {
   selectedType: string;
-  onTypeChange: (type: string) => void;
+  onTypeChange?: (type: string) => void;
+  onTypeSelect?: (type: string) => void; // Add support for onTypeSelect prop
 }
 
 // Icons and labels for each object type
@@ -17,11 +18,31 @@ const OBJECT_TYPE_CONFIG = {
   custom: { label: 'Custom', icon: '⚙️', color: 'text-gray-400' }
 } as const;
 
+/**
+ * ObjectTypeSelector component
+ *
+ * A grid of buttons for selecting an object type.
+ * Each button displays an icon, label, and item count for that type.
+ *
+ * @param selectedType - The currently selected object type.
+ * @param onTypeChange - Callback when the type is changed.
+ * @param onTypeSelect - Alias for onTypeChange (for compatibility).
+ * @returns The rendered ObjectTypeSelector component.
+ */
 export const ObjectTypeSelector: React.FC<ObjectTypeSelectorProps> = ({
   selectedType,
-  onTypeChange
+  onTypeChange,
+  onTypeSelect
 }) => {
   const { getObjectsByType } = useObjectLibrary();
+
+  const handleChange = (type: string) => {
+    if (onTypeChange) {
+      onTypeChange(type);
+    } else if (onTypeSelect) {
+      onTypeSelect(type);
+    }
+  };
 
   return (
     <div className="grid grid-cols-2 gap-2">
@@ -33,7 +54,7 @@ export const ObjectTypeSelector: React.FC<ObjectTypeSelectorProps> = ({
         return (
           <button
             key={type}
-            onClick={() => onTypeChange(type)}
+            onClick={() => handleChange(type)}
             className={`
               flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm
               ${isSelected

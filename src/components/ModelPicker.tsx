@@ -16,8 +16,20 @@ interface ModelPickerProps {
 }
 
 /**
- * Searchable model picker with filtering and capability badges
- * Scales to 100+ models with virtual scrolling
+ * ModelPicker component
+ *
+ * A searchable dropdown component for selecting an AI model from a list.
+ * Supports filtering by capabilities (vision, video, jsonMode) and keyword search.
+ * Designed to handle large lists of models efficiently.
+ *
+ * @param providerId - The ID of the provider for the models.
+ * @param models - Array of available models.
+ * @param selectedModelId - The ID of the currently selected model.
+ * @param onSelect - Callback when a model is selected.
+ * @param filterCapabilities - (Optional) Object to filter models by specific capabilities.
+ * @param disabled - (Optional) Whether the picker is disabled.
+ * @param className - (Optional) Additional CSS classes.
+ * @returns The rendered ModelPicker component.
  */
 export const ModelPicker: React.FC<ModelPickerProps> = ({
   providerId,

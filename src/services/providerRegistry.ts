@@ -4,13 +4,21 @@ import { GeminiProvider } from "./providers/geminiProvider";
 import { providerService } from "./providerService";
 
 /**
- * Registry for managing provider instances
+ * ProviderRegistry class
+ *
+ * Manages the lifecycle and caching of provider instances.
+ * Responsible for creating the correct provider implementation based on configuration
+ * and retrieving the necessary API keys.
  */
 export class ProviderRegistry {
   private instances: Map<string, IProvider> = new Map();
 
   /**
    * Get provider instance by ID (creates if doesn't exist)
+   *
+   * @param providerId - The ID of the provider to retrieve.
+   * @returns A Promise resolving to the IProvider instance or null if not found.
+   * @throws Error if no valid API key is found or if the provider type is unsupported.
    */
   async getProvider(providerId: string): Promise<IProvider | null> {
     // Check if instance already exists
@@ -74,6 +82,8 @@ export class ProviderRegistry {
 
   /**
    * Remove provider instance from cache (forces recreation on next request)
+   *
+   * @param providerId - The ID of the provider to clear.
    */
   clearProvider(providerId: string): void {
     this.instances.delete(providerId);
@@ -88,6 +98,8 @@ export class ProviderRegistry {
 
   /**
    * Get all active provider instances
+   *
+   * @returns An array of active IProvider instances.
    */
   getActiveProviders(): IProvider[] {
     return Array.from(this.instances.values());

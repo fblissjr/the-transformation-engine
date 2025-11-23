@@ -19,28 +19,41 @@ import type { AudioObjectData } from './audioTypes';
  */
 export interface UniversalObject<T = any> {
   // Core metadata
+  /** Unique ID of the object */
   id: string;
-  type: string; // 'character', 'location', 'camera', 'prop', 'audio', 'concept', or LLM-derived
+  /** Type of object (e.g., 'character', 'location', etc.) */
+  type: string;
+  /** Version number of the object */
   version: number;
 
   // Object data (schema varies by type)
+  /** The actual object data payload */
   data: T;
 
   // Relationships
-  linkedScenes: string[]; // Scenes using this object
-  linkedObjects?: string[]; // Other objects this relates to
+  /** IDs of scenes using this object */
+  linkedScenes: string[];
+  /** IDs of other objects this object relates to */
+  linkedObjects?: string[];
 
   // Metadata
+  /** Object name */
   name: string;
+  /** Object description */
   description?: string;
+  /** Object tags */
   tags?: string[];
 
   // Versioning
+  /** Creation timestamp */
   created: Date;
+  /** Last modification timestamp */
   modified: Date;
-  parentVersion?: string; // Previous version ID (for versioning)
+  /** ID of the previous version */
+  parentVersion?: string;
 
   // Source tracking (optional)
+  /** Information about the source of this object */
   derivedFrom?: {
     sourceType: 'user_input' | 'llm_generation' | 'imported' | 'duplicated';
     sourceId?: string;
@@ -50,122 +63,176 @@ export interface UniversalObject<T = any> {
 
 // ==================== Specific Object Types ====================
 
+/** Character object type */
 export type CharacterObject = UniversalObject<CharacterObjectData>;
+/** Location object type */
 export type LocationObject = UniversalObject<LocationObjectData>;
+/** Camera object type */
 export type CameraObject = UniversalObject<CameraObjectData>;
+/** Prop object type */
 export type PropObject = UniversalObject<PropObjectData>;
+/** Audio object type */
 export type AudioObject = UniversalObject<AudioObjectData>;
+/** Concept object type */
 export type ConceptObject = UniversalObject<ConceptObjectData>;
 
 /**
  * Concept object data (abstract concepts like mood, theme, pacing)
  */
 export interface ConceptObjectData {
+  /** Category of the concept */
   category: 'mood' | 'theme' | 'pacing' | 'tone' | 'symbolism';
+  /** Description of the concept */
   description: string;
-  manifestations: string[]; // How this appears visually/aurally
-  intensity: number; // 1-10
+  /** How this concept manifests visually/aurally */
+  manifestations: string[];
+  /** Intensity level (1-10) */
+  intensity: number;
 }
 
 // ==================== Object Store Records ====================
 
 /**
  * Object store record (all object types follow this structure)
+ * This is the raw format stored in IndexedDB.
  */
 export interface ObjectStoreRecord {
   // Core metadata
-  id: string; // 'char_001', 'loc_005', 'camera_012', etc.
-  type: string; // 'character', 'location', 'camera', 'prop', 'audio', 'concept', or custom
-  version: number; // Current version (increments with each edit)
+  /** Unique ID */
+  id: string;
+  /** Object type */
+  type: string;
+  /** Current version number */
+  version: number;
 
   // Object data (schema varies by type)
+  /** Object data payload */
   data: Record<string, any>;
 
   // Relationships
-  linkedScenes: string[]; // Scene IDs using this object
-  linkedObjects: string[]; // Other object IDs this relates to
+  /** Linked scene IDs */
+  linkedScenes: string[];
+  /** Linked object IDs */
+  linkedObjects: string[];
 
   // Metadata
-  name: string; // Display name
-  description?: string; // Optional description
-  tags?: string[]; // User-defined tags for categorization
+  /** Display name */
+  name: string;
+  /** Optional description */
+  description?: string;
+  /** Tags */
+  tags?: string[];
 
   // Versioning
+  /** Creation date */
   created: Date;
+  /** Modification date */
   modified: Date;
-  parentVersion?: string; // Previous version's record ID (for versioning)
+  /** Parent version ID */
+  parentVersion?: string;
 
   // Source tracking
+  /** Source information */
   derivedFrom?: {
     sourceType: 'user_input' | 'llm_generation' | 'imported' | 'duplicated';
-    sourceId?: string; // ID of source (e.g., prompt ID, imported file ID)
+    sourceId?: string;
     timestamp: Date;
   };
 }
 
 /**
  * Version history record
+ * Represents a snapshot of an object at a specific version.
  */
 export interface ObjectVersionRecord {
-  versionId: string; // 'ver_char001_v2_20251117'
-  objectId: string; // 'char_001'
-  objectType: string; // 'character'
-  version: number; // 2, 3, 4, etc.
+  /** Unique version ID */
+  versionId: string;
+  /** ID of the object */
+  objectId: string;
+  /** Type of the object */
+  objectType: string;
+  /** Version number */
+  version: number;
 
   // Snapshot of object data at this version
+  /** Object data snapshot */
   data: Record<string, any>;
 
   // Metadata
+  /** Creation timestamp */
   created: Date;
-  createdBy?: string; // User ID (if multi-user in future)
+  /** ID of the user who created this version */
+  createdBy?: string;
 }
 
 /**
  * Changelog record
+ * Tracks changes between object versions.
  */
 export interface ObjectChangelogRecord {
-  changelogId: string; // 'log_char001_v1to2_20251117'
-  objectId: string; // 'char_001'
-  objectType: string; // 'character'
+  /** Unique changelog ID */
+  changelogId: string;
+  /** ID of the object */
+  objectId: string;
+  /** Type of the object */
+  objectType: string;
 
   // Version transition
+  /** Previous version number */
   fromVersion: number;
+  /** New version number */
   toVersion: number;
 
   // Changes made
+  /** List of changes */
   changes: Array<{
-    field: string; // 'appearance.head.features'
+    field: string;
     oldValue: any;
     newValue: any;
-    reason: string; // LLM explanation
+    reason: string;
   }>;
 
   // Edit context
-  editInstructions?: string; // Original user instructions
-  preserveRules?: string[]; // Fields that were preserved
-  llmReasoning?: string; // LLM's explanation of edits
+  /** Instructions that led to this change */
+  editInstructions?: string;
+  /** Fields that were preserved */
+  preserveRules?: string[];
+  /** Reasoning provided by the LLM */
+  llmReasoning?: string;
 
   // Metadata
+  /** Creation timestamp */
   created: Date;
 }
 
 /**
  * Relationship record (for complex object relationships)
+ * Tracks directed relationships between objects.
  */
 export interface ObjectRelationshipRecord {
-  relationshipId: string; // 'rel_char001_uses_prop005'
-  fromObjectId: string; // 'char_001'
-  fromObjectType: string; // 'character'
-  toObjectId: string; // 'prop_005'
-  toObjectType: string; // 'prop'
+  /** Unique relationship ID */
+  relationshipId: string;
+  /** Source object ID */
+  fromObjectId: string;
+  /** Source object type */
+  fromObjectType: string;
+  /** Target object ID */
+  toObjectId: string;
+  /** Target object type */
+  toObjectType: string;
 
   // Relationship metadata
-  relationType: string; // 'uses', 'located_at', 'interacts_with', 'opposes', etc.
-  strength?: number; // 0-1 (how strong is this relationship?)
-  context?: string; // Optional context: "in combat scenes", "when investigating"
+  /** Type of relationship */
+  relationType: string;
+  /** Strength of the relationship (0-1) */
+  strength?: number;
+  /** Contextual description */
+  context?: string;
 
   // Lifecycle
+  /** Creation timestamp */
   created: Date;
+  /** Modification timestamp */
   modified: Date;
 }
 
@@ -176,13 +243,20 @@ export interface ObjectRelationshipRecord {
  * Objects can be shared across multiple scenes for consistency
  */
 export interface LinkedObjects {
-  characters?: string[]; // Character object IDs
-  locations?: string[]; // Location object IDs
-  cameras?: string[]; // Camera object IDs
-  props?: string[]; // Prop object IDs
-  audio?: string[]; // Audio object IDs
-  concepts?: string[]; // Abstract concept object IDs
-  custom?: string[]; // LLM-derived custom object IDs
+  /** List of character object IDs */
+  characters?: string[];
+  /** List of location object IDs */
+  locations?: string[];
+  /** List of camera object IDs */
+  cameras?: string[];
+  /** List of prop object IDs */
+  props?: string[];
+  /** List of audio object IDs */
+  audio?: string[];
+  /** List of concept object IDs */
+  concepts?: string[];
+  /** List of custom object IDs */
+  custom?: string[];
 }
 
 // ==================== Relationship Types ====================

@@ -9,18 +9,18 @@ import {
   generateIntermediate,
   detectTargetModelFromIntermediate,
   fragmentLoader
-} from '../../services/promptService';
-import * as intermediateService from '../../services/db/intermediateService';
-import { transformToModel } from '../../services/transformers';
-import * as versionService from '../../services/versionService';
-import * as dbService from '../../services/dbService';
+} from '../services/promptService';
+import * as intermediateService from '../services/db/intermediateService';
+import { transformToModel } from '../services/transformers';
+import * as versionService from '../services/versionService';
+import * as dbService from '../services/dbService';
 import { useProviders } from './ProviderContext';
 import { useActivePrompt } from './ActivePromptContext';
 import { useMedia } from './MediaContext';
 import { usePromptLibrary } from './PromptLibraryContext';
-import { taskRouter } from '../../services/taskRouter';
+import { taskRouter } from '../services/taskRouter';
 import { TASK_IDS } from '../../types/providers';
-import { parseRevisionRequest, formatAnswersForPrompt } from '../../services/revisionRequestParser';
+import { parseRevisionRequest, formatAnswersForPrompt } from '../services/revisionRequestParser';
 
 export interface StreamingState {
   accumulatedContent: string;
@@ -78,6 +78,16 @@ interface GenerationContextType {
 
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
 
+/**
+ * GenerationProvider
+ *
+ * Provides generation capabilities and state management.
+ * Handles the orchestration of prompt generation, normalization, mixing, and schema inference.
+ * Manages intermediate representations, export formats, and multi-provider interactions.
+ *
+ * @param children - Child components to wrap.
+ * @returns The context provider.
+ */
 export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const { providers } = useProviders();
   const {
@@ -664,6 +674,14 @@ export const GenerationProvider: React.FC<{children: ReactNode}> = ({ children }
   return <GenerationContext.Provider value={value}>{children}</GenerationContext.Provider>;
 };
 
+/**
+ * useGeneration hook
+ *
+ * Custom hook to access the GenerationContext.
+ *
+ * @returns The context value containing generation state and functions.
+ * @throws Error if used outside of a GenerationProvider.
+ */
 export const useGeneration = (): GenerationContextType => {
   const context = useContext(GenerationContext);
   if (context === undefined) {

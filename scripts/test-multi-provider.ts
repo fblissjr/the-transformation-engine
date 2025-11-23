@@ -19,6 +19,13 @@ interface TestResult {
 
 const results: TestResult[] = [];
 
+/**
+ * Logs the result of a test case.
+ * @param name - The name of the test case.
+ * @param passed - Whether the test passed or failed.
+ * @param error - Optional error message if the test failed.
+ * @param duration - Optional duration of the test in milliseconds.
+ */
 function logTest(name: string, passed: boolean, error?: string, duration?: number) {
   results.push({ name, passed, error, duration });
   const status = passed ? '✓' : '✗';
@@ -29,6 +36,10 @@ function logTest(name: string, passed: boolean, error?: string, duration?: numbe
   }
 }
 
+/**
+ * Test 1: Verifies that a provider can be created successfully.
+ * @returns A Promise resolving to the created provider ID.
+ */
 async function test1_ProviderCreation() {
   const start = Date.now();
   try {
@@ -51,6 +62,10 @@ async function test1_ProviderCreation() {
   }
 }
 
+/**
+ * Test 2: Verifies that an API key can be stored and retrieved for a provider.
+ * @param providerId - The ID of the provider to test.
+ */
 async function test2_ApiKeyStorage(providerId: string) {
   const start = Date.now();
   try {
@@ -73,6 +88,10 @@ async function test2_ApiKeyStorage(providerId: string) {
   }
 }
 
+/**
+ * Test 3: Verifies that tasks can be assigned to a provider.
+ * @param providerId - The ID of the provider to assign tasks to.
+ */
 async function test3_TaskAssignment(providerId: string) {
   const start = Date.now();
   try {
@@ -112,6 +131,11 @@ async function test3_TaskAssignment(providerId: string) {
   }
 }
 
+/**
+ * Test 4: Verifies the provider registration flow.
+ * Note: This is expected to fail with "No valid API key" since we use a fake key.
+ * @param providerId - The ID of the provider to test registration for.
+ */
 async function test4_ProviderRegistration(providerId: string) {
   const start = Date.now();
   try {
@@ -138,6 +162,9 @@ async function test4_ProviderRegistration(providerId: string) {
   }
 }
 
+/**
+ * Test 5: Verifies that the GeminiProvider class correctly implements the IProvider interface.
+ */
 async function test5_GeminiProviderInterface() {
   const start = Date.now();
   try {
@@ -166,6 +193,9 @@ async function test5_GeminiProviderInterface() {
   }
 }
 
+/**
+ * Test 6: Verifies that the database schema contains all required object stores.
+ */
 async function test6_DatabaseSchema() {
   const start = Date.now();
   try {
@@ -204,6 +234,9 @@ async function test6_DatabaseSchema() {
   }
 }
 
+/**
+ * Cleans up test data by deleting the test provider.
+ */
 async function cleanup() {
   try {
     // Clean up test data

@@ -9,20 +9,16 @@ import {
 import type { ImageProject, ImageGeneration } from '../../types/imageTypes';
 
 /**
- * ImageWorkspace
+ * ImageWorkspace component
  *
- * Main workspace for Image Studio (Week 1 MVP):
- * - 3-panel layout (LeftPanel | CenterPanel | RightPanel)
- * - Left: Simplified project selector (full library UI in Week 2)
- * - Center: ImageGenerateForm
- * - Right: ImageOutputPanel
+ * The main layout for the Image Studio workspace.
+ * Implements a 3-panel layout:
+ * - Left: Project selector
+ * - Center: Image generation form
+ * - Right: Image output and history
  *
- * Week 2+ will add:
- * - Full image library with thumbnails
- * - Search/filter functionality
- * - Advanced project management
+ * @returns The rendered ImageWorkspace component.
  */
-
 export const ImageWorkspace: React.FC = () => {
   const [projects, setProjects] = useState<ImageProject[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);

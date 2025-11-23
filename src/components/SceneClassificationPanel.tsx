@@ -27,6 +27,17 @@ import { ChevronDown, Search, Sparkles, Check } from 'lucide-react';
 
 // ==================== Type Definitions ====================
 
+/**
+ * SceneClassification interface
+ *
+ * Defines the structure for scene classification tags across multiple dimensions.
+ *
+ * @property genre - Array of genre tags.
+ * @property format - Array of format tags.
+ * @property visualStyle - Array of visual style tags.
+ * @property camera - Array of camera technique tags.
+ * @property narrative - Array of narrative structure tags.
+ */
 export interface SceneClassification {
   genre: string[];
   format: string[];
@@ -142,6 +153,19 @@ const PRESET_COMBINATIONS = [
 
 // ==================== Component ====================
 
+/**
+ * SceneClassificationPanel component
+ *
+ * A panel for classifying scenes using a multi-dimensional tagging system.
+ * It provides an accordion interface for selecting tags across Genre, Format, Visual Style, Camera, and Narrative dimensions.
+ * Includes search functionality and presets.
+ *
+ * @param classification - The current classification state.
+ * @param onClassificationChange - Callback when classification changes.
+ * @param autoDetect - (Optional) Whether auto-detection features are enabled.
+ * @param showPresets - (Optional) Whether to show the presets button.
+ * @returns The rendered SceneClassificationPanel component.
+ */
 export const SceneClassificationPanel: React.FC<SceneClassificationPanelProps> = ({
   classification,
   onClassificationChange,

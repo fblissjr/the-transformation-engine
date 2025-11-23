@@ -1,10 +1,24 @@
 import React from "react";
 import logoImage from "../../assets/logo_256_256.png";
 
+/**
+ * LogoIcon component
+ *
+ * Renders the application logo.
+ *
+ * @returns The image element of the logo.
+ */
 export const LogoIcon = () => (
   <img src={logoImage} alt="Logo" width="40" height="40" />
 );
 
+/**
+ * PlusIcon component
+ *
+ * Renders a plus sign icon, typically used for adding new items.
+ *
+ * @returns The SVG element of the plus icon.
+ */
 export const PlusIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -22,6 +36,13 @@ export const PlusIcon = () => (
   </svg>
 );
 
+/**
+ * MixIcon component
+ *
+ * Renders an icon representing mixing or combining elements.
+ *
+ * @returns The SVG element of the mix icon.
+ */
 export const MixIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -51,6 +72,13 @@ export const MixIcon = () => (
   </svg>
 );
 
+/**
+ * ImportIcon component
+ *
+ * Renders an icon for import actions.
+ *
+ * @returns The SVG element of the import icon.
+ */
 export const ImportIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -68,6 +96,13 @@ export const ImportIcon = () => (
   </svg>
 );
 
+/**
+ * ExportIcon component
+ *
+ * Renders an icon for export actions.
+ *
+ * @returns The SVG element of the export icon.
+ */
 export const ExportIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -85,6 +120,13 @@ export const ExportIcon = () => (
   </svg>
 );
 
+/**
+ * CopyIcon component
+ *
+ * Renders an icon for copy to clipboard actions.
+ *
+ * @returns The SVG element of the copy icon.
+ */
 export const CopyIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -102,6 +144,13 @@ export const CopyIcon = () => (
   </svg>
 );
 
+/**
+ * SettingsIcon component
+ *
+ * Renders a gear icon for settings.
+ *
+ * @returns The SVG element of the settings icon.
+ */
 export const SettingsIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -125,6 +174,13 @@ export const SettingsIcon = () => (
   </svg>
 );
 
+/**
+ * SparklesIcon component
+ *
+ * Renders a sparkles icon, often used to denote AI or magic features.
+ *
+ * @returns The SVG element of the sparkles icon.
+ */
 export const SparklesIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -142,6 +198,13 @@ export const SparklesIcon = () => (
   </svg>
 );
 
+/**
+ * TrashIcon component
+ *
+ * Renders a trash bin icon for delete actions.
+ *
+ * @returns The SVG element of the trash icon.
+ */
 export const TrashIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -159,7 +222,14 @@ export const TrashIcon = () => (
   </svg>
 );
 
-// FIX: Updated component to accept a className prop.
+/**
+ * StarIconFilled component
+ *
+ * Renders a solid filled star icon, typically for favorites or ratings.
+ *
+ * @param className - Optional CSS class string for styling.
+ * @returns The SVG element of the filled star icon.
+ */
 export const StarIconFilled = ({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -171,7 +241,14 @@ export const StarIconFilled = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// FIX: Updated component to accept a className prop.
+/**
+ * StarIconOutline component
+ *
+ * Renders an outlined star icon.
+ *
+ * @param className - Optional CSS class string for styling.
+ * @returns The SVG element of the outlined star icon.
+ */
 export const StarIconOutline = ({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -189,6 +266,13 @@ export const StarIconOutline = ({ className }: { className?: string }) => (
   </svg>
 );
 
+/**
+ * RestoreIcon component
+ *
+ * Renders a clock-like refresh icon, often used for restoring history or undoing.
+ *
+ * @returns The SVG element of the restore icon.
+ */
 export const RestoreIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -217,6 +301,14 @@ export const RestoreIcon = () => (
     />
   </svg>
 );
+
+/**
+ * WandIcon component
+ *
+ * Renders a magic wand icon, used for AI generation features.
+ *
+ * @returns The SVG element of the wand icon.
+ */
 export const WandIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -239,6 +331,14 @@ export const WandIcon = () => (
   </svg>
 );
 
+/**
+ * EditIcon component
+ *
+ * Renders a pencil/pen icon for editing.
+ *
+ * @param className - Optional CSS class string for styling.
+ * @returns The SVG element of the edit icon.
+ */
 export const EditIcon = ({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -256,6 +356,13 @@ export const EditIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+/**
+ * ShareIcon component
+ *
+ * Renders a share node icon.
+ *
+ * @returns The SVG element of the share icon.
+ */
 export const ShareIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

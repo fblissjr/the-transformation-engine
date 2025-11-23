@@ -5,11 +5,11 @@ import { useGeneration } from '../contexts/GenerationContext';
 import { SparklesIcon, WandIcon, EditIcon } from './icons';
 import { ConversationThread } from './ConversationThread';
 import { ModelInfoDisplay } from './ModelInfoDisplay';
-import * as configService from '../../services/configService';
-import * as promptService from '../../services/promptService';
-import { taskRouter } from '../../services/taskRouter';
+import * as configService from '../services/configService';
+import * as promptService from '../services/promptService';
+import { taskRouter } from '../services/taskRouter';
 import { TASK_IDS } from '../../types/providers';
-import { transformToModel } from '../../services/transformers';
+import { transformToModel } from '../services/transformers';
 import { useMediaBlobUrls } from '../../hooks/useMediaBlobUrls';
 import { MediaReference, MixOption, Prompt } from '../../types';
 import { BUILT_IN_MIX_OPTIONS } from '../../constants';
@@ -18,6 +18,15 @@ import { TimestampPromptToggle } from './TimestampPromptToggle';
 import { SchemaKeyPresetSelector } from './SchemaKeyPresetSelector';
 import { useSceneClassification } from '../contexts/SceneClassificationContext';
 
+/**
+ * CenterPanel component
+ *
+ * The main workspace area for creating and configuring prompts.
+ * It contains the input area for natural language descriptions, media uploads,
+ * mix options configuration, schema design, and the generation controls.
+ *
+ * @returns The rendered CenterPanel component.
+ */
 const CenterPanel: React.FC = () => {
   const {
     settings,
@@ -1161,6 +1170,16 @@ const CenterPanel: React.FC = () => {
   );
 };
 
+/**
+ * SchemaKey component
+ *
+ * Renders a single schema key tag with rename and remove functionality.
+ *
+ * @param initialKey - The initial text of the key.
+ * @param onRename - Callback when the key is renamed.
+ * @param onRemove - Callback when the key is removed.
+ * @returns The rendered SchemaKey component.
+ */
 const SchemaKey: React.FC<{initialKey: string, onRename: (oldKey: string, newKey: string) => void, onRemove: (key: string) => void}> = ({ initialKey, onRename, onRemove }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [key, setKey] = useState(initialKey);
@@ -1226,6 +1245,18 @@ const SchemaKey: React.FC<{initialKey: string, onRename: (oldKey: string, newKey
   );
 }
 
+/**
+ * CompactSlider component
+ *
+ * A compact range slider component with labels.
+ *
+ * @param label - The main label for the slider.
+ * @param leftLabel - Label for the minimum end.
+ * @param rightLabel - Label for the maximum end.
+ * @param value - The current value of the slider.
+ * @param onChange - Callback when the value changes.
+ * @returns The rendered CompactSlider component.
+ */
 const CompactSlider: React.FC<{
   label: string,
   leftLabel: string,
@@ -1255,7 +1286,15 @@ const CompactSlider: React.FC<{
   );
 }
 
-// Phase 2.1: Character Count Component
+/**
+ * CharacterCount component
+ *
+ * Displays the character count and validates against model limits.
+ *
+ * @param content - The text content to count.
+ * @param model - The target model to check limits against ('sora2', 'veo3', or 'generic').
+ * @returns The rendered CharacterCount component.
+ */
 const CharacterCount: React.FC<{
   content: string;
   model: 'sora2' | 'veo3' | 'generic';
@@ -1302,7 +1341,15 @@ const CharacterCount: React.FC<{
   );
 };
 
-// Phase 2.1: Copy Button Component
+/**
+ * CopyButton component
+ *
+ * A button to copy text content to the clipboard with feedback.
+ *
+ * @param content - The text to copy.
+ * @param format - The format label for the button text.
+ * @returns The rendered CopyButton component.
+ */
 const CopyButton: React.FC<{
   content: string;
   format: 'sora2' | 'veo3' | 'generic';

@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 /**
- * CharacterSelector
+ * CharacterSelector component
  *
  * Full-screen modal for browsing and selecting characters to insert into prompts.
- * - Loads characters from public/image-studio/characters/
- * - Visual preview cards with character details
- * - Click to insert character description at cursor position
- * - Search functionality across character names and attributes
+ * Displays a grid of characters with search functionality.
+ * Selecting a character inserts its formatted description into the prompt.
  *
- * Phase 3 Integration: Will connect to CharacterPromptTransformer and object library
+ * @param isOpen - Boolean indicating if the modal is visible.
+ * @param onClose - Callback to close the modal.
+ * @param onSelectCharacter - Callback executed when a character is selected, passing the description string.
+ * @returns The rendered CharacterSelector component.
  */
 
 interface Character {

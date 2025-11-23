@@ -14,6 +14,11 @@ let db: IDBPDatabase;
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
 // Export a function to get the shared DB instance
+/**
+ * Gets the shared IndexedDB database instance.
+ * Initializes the database if it hasn't been initialized yet.
+ * @returns A Promise resolving to the IDBPDatabase instance.
+ */
 export async function getDB(): Promise<IDBPDatabase> {
   if (!dbPromise) {
     dbPromise = initDB();
@@ -21,6 +26,11 @@ export async function getDB(): Promise<IDBPDatabase> {
   return dbPromise;
 }
 
+/**
+ * Initializes the IndexedDB database.
+ * Opens the database and handles schema upgrades.
+ * @returns A Promise resolving to the opened IDBPDatabase instance.
+ */
 export async function initDB() {
   if (db) {
     return db;
@@ -44,6 +54,11 @@ export async function initDB() {
   return db;
 }
 
+/**
+ * Adds a new prompt to the prompts store.
+ * @param promptData - The prompt data without ID and creation timestamp.
+ * @returns A Promise resolving to the newly created Prompt object.
+ */
 export async function addPrompt(promptData: Omit<Prompt, 'id' | 'createdAt'>): Promise<Prompt> {
   const newPrompt: Prompt = {
     ...promptData,
@@ -55,11 +70,21 @@ export async function addPrompt(promptData: Omit<Prompt, 'id' | 'createdAt'>): P
   return newPrompt;
 }
 
+/**
+ * Retrieves all prompts from the store, sorted by creation date (newest first).
+ * @returns A Promise resolving to an array of Prompt objects.
+ */
 export async function getPrompts(): Promise<Prompt[]> {
   const prompts = await db.getAllFromIndex(PROMPTS_STORE_NAME, 'createdAt');
   return prompts.reverse();
 }
 
+/**
+ * Retrieves a paginated list of prompts.
+ * @param limit - The maximum number of prompts to return.
+ * @param offset - The starting index for pagination.
+ * @returns A Promise resolving to an object containing the prompts, a hasMore flag, and the total count.
+ */
 export async function getPromptsPaginated(limit: number, offset: number): Promise<{
   prompts: Prompt[];
   hasMore: boolean;
@@ -74,6 +99,11 @@ export async function getPromptsPaginated(limit: number, offset: number): Promis
   return { prompts, hasMore, total };
 }
 
+/**
+ * Searches for prompts by title (case-insensitive).
+ * @param searchTerm - The search term.
+ * @returns A Promise resolving to an array of matching Prompt objects.
+ */
 export async function searchPrompts(searchTerm: string): Promise<Prompt[]> {
     if (!db) await initDB();
     if (!searchTerm) {
@@ -87,6 +117,11 @@ export async function searchPrompts(searchTerm: string): Promise<Prompt[]> {
     return results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+/**
+ * Updates an existing prompt in the store.
+ * @param prompt - The updated Prompt object.
+ * @returns A Promise that resolves when the update is complete.
+ */
 export async function updatePrompt(prompt: Prompt): Promise<void> {
   const promptToUpdate = {
     ...prompt,
@@ -95,15 +130,29 @@ export async function updatePrompt(prompt: Prompt): Promise<void> {
   await db.put(PROMPTS_STORE_NAME, promptToUpdate);
 }
 
+/**
+ * Deletes a prompt from the store by its ID.
+ * @param id - The ID of the prompt to delete.
+ * @returns A Promise that resolves when the deletion is complete.
+ */
 export async function deletePrompt(id: string): Promise<void> {
   await db.delete(PROMPTS_STORE_NAME, id);
 }
 
+/**
+ * Exports all prompts as a JSON string.
+ * @returns A Promise resolving to a JSON string representing all prompts.
+ */
 export async function exportPrompts(): Promise<string> {
   const allPrompts = await getPrompts();
   return JSON.stringify(allPrompts, null, 2);
 }
 
+/**
+ * Imports prompts from a JSON string into the store.
+ * @param jsonContent - The JSON string containing an array of Prompt objects.
+ * @returns A Promise that resolves when the import is complete.
+ */
 export async function importPrompts(jsonContent: string): Promise<void> {
     const promptsToImport: Prompt[] = JSON.parse(jsonContent);
     const tx = db.transaction(PROMPTS_STORE_NAME, 'readwrite');
@@ -113,15 +162,30 @@ export async function importPrompts(jsonContent: string): Promise<void> {
 
 // --- Version Functions ---
 
+/**
+ * Adds a new prompt version to the versions store.
+ * @param versionData - The PromptVersion object to add.
+ * @returns A Promise that resolves when the version is added.
+ */
 export async function addVersion(versionData: PromptVersion): Promise<void> {
     await db.put(VERSIONS_STORE_NAME, versionData);
 }
 
+/**
+ * Retrieves all versions for a specific prompt ID, sorted by saved date (oldest first).
+ * @param promptId - The ID of the prompt.
+ * @returns A Promise resolving to an array of PromptVersion objects.
+ */
 export async function getVersions(promptId: string): Promise<PromptVersion[]> {
     const versions = await db.getAllFromIndex(VERSIONS_STORE_NAME, 'promptId', promptId);
     return versions.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
 }
 
+/**
+ * Deletes all versions associated with a specific prompt ID.
+ * @param promptId - The ID of the prompt.
+ * @returns A Promise that resolves when the versions are deleted.
+ */
 export async function deleteVersions(promptId: string): Promise<void> {
     const tx = db.transaction(VERSIONS_STORE_NAME, 'readwrite');
     const index = tx.store.index('promptId');
@@ -135,6 +199,11 @@ export async function deleteVersions(promptId: string): Promise<void> {
 
 // --- Prompt Config Functions ---
 
+/**
+ * Adds a new system prompt configuration.
+ * @param config - The configuration data without ID and timestamps.
+ * @returns A Promise resolving to the created SystemPromptConfig object.
+ */
 export async function addPromptConfig(config: Omit<SystemPromptConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<SystemPromptConfig> {
   const newConfig: SystemPromptConfig = {
     ...config,
@@ -146,16 +215,29 @@ export async function addPromptConfig(config: Omit<SystemPromptConfig, 'id' | 'c
   return newConfig;
 }
 
+/**
+ * Retrieves all system prompt configurations, sorted by creation date (newest first).
+ * @returns A Promise resolving to an array of SystemPromptConfig objects.
+ */
 export async function getPromptConfigs(): Promise<SystemPromptConfig[]> {
   const configs = await db.getAllFromIndex(CONFIG_STORE_NAME, 'createdAt');
   return configs.reverse();
 }
 
+/**
+ * Retrieves the default system prompt configuration.
+ * @returns A Promise resolving to the default SystemPromptConfig or undefined if not found.
+ */
 export async function getDefaultPromptConfig(): Promise<SystemPromptConfig | undefined> {
   const allConfigs = await db.getAll(CONFIG_STORE_NAME);
   return allConfigs.find(config => config.isDefault);
 }
 
+/**
+ * Updates an existing system prompt configuration.
+ * @param config - The updated SystemPromptConfig object.
+ * @returns A Promise that resolves when the update is complete.
+ */
 export async function updatePromptConfig(config: SystemPromptConfig): Promise<void> {
   const updatedConfig = {
     ...config,
@@ -164,10 +246,20 @@ export async function updatePromptConfig(config: SystemPromptConfig): Promise<vo
   await db.put(CONFIG_STORE_NAME, updatedConfig);
 }
 
+/**
+ * Deletes a system prompt configuration by ID.
+ * @param id - The ID of the configuration to delete.
+ * @returns A Promise that resolves when the deletion is complete.
+ */
 export async function deletePromptConfig(id: string): Promise<void> {
   await db.delete(CONFIG_STORE_NAME, id);
 }
 
+/**
+ * Sets a system prompt configuration as the default.
+ * @param id - The ID of the configuration to set as default.
+ * @returns A Promise that resolves when the operation is complete.
+ */
 export async function setDefaultPromptConfig(id: string): Promise<void> {
   const tx = db.transaction(CONFIG_STORE_NAME, 'readwrite');
   const allConfigs = await tx.store.getAll();
@@ -182,11 +274,20 @@ export async function setDefaultPromptConfig(id: string): Promise<void> {
 
 // --- App Settings Functions ---
 
+/**
+ * Retrieves the application settings.
+ * @returns A Promise resolving to the AppSettings object or undefined if not found.
+ */
 export async function getAppSettings(): Promise<AppSettings | undefined> {
   const allSettings = await db.getAll(SETTINGS_STORE_NAME);
   return allSettings[0];
 }
 
+/**
+ * Saves or updates the application settings.
+ * @param settings - The AppSettings object to save.
+ * @returns A Promise that resolves when the settings are saved.
+ */
 export async function saveAppSettings(settings: AppSettings): Promise<void> {
   const updatedSettings = {
     ...settings,

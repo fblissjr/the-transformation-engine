@@ -10,6 +10,7 @@
  * This helps transformers choose the appropriate format
  */
 export interface PromptingStrategy {
+  /** The specific prompting method to employ */
   method:
     | 'continuous_narrative' // Method 1: Natural language paragraph
     | 'component_formula' // Method 2: 5-component structured format
@@ -19,14 +20,18 @@ export interface PromptingStrategy {
     | 'audio_focused'; // Method 6: Audio-first with syntax preservation
 
   // For timestamp-segmented
-  segmentDuration?: number; // Default segment length in seconds
+  /** Default duration for each segment in seconds */
+  segmentDuration?: number;
 
   // For attribute-value
-  attributeOrder?: string[]; // Preferred order: ['subject', 'action', 'cinematography', ...]
+  /** Preferred order of attributes (e.g., ['subject', 'action', ...]) */
+  attributeOrder?: string[];
 
   // Auto-selected or user-chosen
+  /** Whether the strategy was selected automatically or manually */
   selectionMode: 'auto' | 'manual';
 
   // Reasoning (if auto-selected)
+  /** Explanation for why this strategy was automatically selected */
   reasoning?: string;
 }

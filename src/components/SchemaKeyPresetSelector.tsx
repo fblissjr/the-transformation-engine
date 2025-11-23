@@ -26,6 +26,21 @@ import { ChevronDown, Info, Sparkles, Check, X, Edit } from 'lucide-react';
 
 // ==================== Type Definitions ====================
 
+/**
+ * SchemaKeyPreset interface
+ *
+ * Defines the structure of a schema key preset.
+ *
+ * @property id - Unique identifier for the preset.
+ * @property name - Display name of the preset.
+ * @property description - Description of the preset's purpose.
+ * @property outputFormat - The output format this preset is optimized for.
+ * @property keys - Array of schema keys included in the preset.
+ * @property isGlobal - Boolean indicating if this is a globally available preset.
+ * @property promptingStrategy - 'timestamp' or 'continuous'.
+ * @property optimalLength - Optional string describing the optimal length of generation.
+ * @property isDefault - Boolean indicating if this is the default preset.
+ */
 export interface SchemaKeyPreset {
   id: string;
   name: string;
@@ -134,6 +149,22 @@ const MOCK_PRESETS: SchemaKeyPreset[] = [
 
 // ==================== Component ====================
 
+/**
+ * SchemaKeyPresetSelector component
+ *
+ * A dropdown selector for choosing schema key presets. It includes functionality for
+ * displaying auto-suggestions, previewing preset details, and triggering customization or management actions.
+ *
+ * @param presets - Array of available schema key presets.
+ * @param selectedPresetId - ID of the currently selected preset.
+ * @param suggestedPresetId - ID of a suggested preset (if any).
+ * @param suggestionReasoning - Reasoning string for the suggestion.
+ * @param onPresetSelect - Callback when a preset is selected.
+ * @param onCustomize - Callback for customizing the selected preset.
+ * @param onManagePresets - Callback for managing the list of presets.
+ * @param onDismissSuggestion - Callback for dismissing the suggestion card.
+ * @returns The rendered SchemaKeyPresetSelector component.
+ */
 export const SchemaKeyPresetSelector: React.FC<SchemaKeyPresetSelectorProps> = ({
   presets = MOCK_PRESETS,
   selectedPresetId,

@@ -1,7 +1,9 @@
 // Simplified test for Phase 9.2 transformers (plain JS, no imports)
 // Run with: node scripts/test-transformers-simple.js
 
-// Mock intermediate prompt
+/**
+ * Mock intermediate prompt object for testing.
+ */
 const mockIntermediate = {
   id: 'test-001',
   version: '1.0.0',
@@ -67,14 +69,22 @@ const mockIntermediate = {
   }
 };
 
-// Helper function from sora2Transformer
+/**
+ * Formats seconds into MM:SS.
+ * @param {number} seconds - The time in seconds.
+ * @returns {string} Formatted time string.
+ */
 function formatTime(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Inline Sora 2 transformer
+/**
+ * Simple inline transformer for Sora 2 format.
+ * @param {object} intermediate - The intermediate prompt object.
+ * @returns {string} The transformed Sora 2 YAML string.
+ */
 function transformToSora2(intermediate) {
   let output = '```yaml\n';
 
@@ -129,7 +139,11 @@ function transformToSora2(intermediate) {
   return output;
 }
 
-// Inline Veo 3 transformer
+/**
+ * Simple inline transformer for Veo 3 format.
+ * @param {object} intermediate - The intermediate prompt object.
+ * @returns {string} The transformed Veo 3 YAML string.
+ */
 function transformToVeo3(intermediate) {
   let output = '```yaml\n';
 

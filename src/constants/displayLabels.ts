@@ -21,6 +21,7 @@ import type {
 
 // ==================== Camera Angle Labels ====================
 
+/** Display labels for camera angles */
 export const CAMERA_ANGLE_LABELS: Record<CameraAngle, string> = {
   'eye-level': 'Eye-Level',
   'high-angle': 'High-Angle',
@@ -36,6 +37,7 @@ export const CAMERA_ANGLE_LABELS: Record<CameraAngle, string> = {
 
 // ==================== Lens Type Labels ====================
 
+/** Display labels for lens types */
 export const LENS_TYPE_LABELS: Record<LensType, string> = {
   'standard': 'Standard (35-50mm)',
   'wide-angle': 'Wide-Angle (24-35mm)',
@@ -46,6 +48,7 @@ export const LENS_TYPE_LABELS: Record<LensType, string> = {
 
 // ==================== Optical Effect Labels ====================
 
+/** Display labels for optical effects */
 export const OPTICAL_EFFECT_LABELS: Record<OpticalEffect, string> = {
   'lens-flare': 'Lens Flare',
   'rack-focus': 'Rack Focus',
@@ -55,6 +58,7 @@ export const OPTICAL_EFFECT_LABELS: Record<OpticalEffect, string> = {
 
 // ==================== Cinematic Technique Labels ====================
 
+/** Display labels for cinematic techniques */
 export const CINEMATIC_TECHNIQUE_LABELS: Record<CinematicTechnique, string> = {
   'match-cut': 'Match Cut',
   'jump-cut': 'Jump Cut',
@@ -67,6 +71,7 @@ export const CINEMATIC_TECHNIQUE_LABELS: Record<CinematicTechnique, string> = {
 
 // ==================== Lighting Quality Labels ====================
 
+/** Display labels for lighting quality options */
 export const LIGHTING_QUALITY_LABELS: Record<LightingQuality, string> = {
   // Natural lighting
   'natural-daylight': 'Natural Daylight',
@@ -94,6 +99,7 @@ export const LIGHTING_QUALITY_LABELS: Record<LightingQuality, string> = {
 
 // ==================== Mood/Tone Labels ====================
 
+/** Display labels for mood and tone options */
 export const MOOD_TONE_LABELS: Record<MoodTone, string> = {
   // Positive moods
   'happy': 'Happy',
@@ -138,6 +144,7 @@ export const MOOD_TONE_LABELS: Record<MoodTone, string> = {
 
 // ==================== Temporal Speed Labels ====================
 
+/** Display labels for temporal speed settings */
 export const TEMPORAL_SPEED_LABELS: Record<TemporalSpeed, string> = {
   'slow-motion': 'Slow Motion',
   'normal': 'Normal Speed',
@@ -147,6 +154,7 @@ export const TEMPORAL_SPEED_LABELS: Record<TemporalSpeed, string> = {
 
 // ==================== Transition Type Labels ====================
 
+/** Display labels for transition types */
 export const TRANSITION_TYPE_LABELS: Record<TransitionType, string> = {
   'none': 'None / Continuous Scene',
 
@@ -188,6 +196,9 @@ export const TRANSITION_TYPE_LABELS: Record<TransitionType, string> = {
 /**
  * Get display label for any taxonomy type
  * Type-safe with exhaustive checking
+ * @param type - The taxonomy type to look up
+ * @param value - The value to get the label for
+ * @returns The display label string
  */
 export function getDisplayLabel(
   type: 'camera-angle' | 'lens-type' | 'optical-effect' | 'cinematic-technique' |
@@ -219,6 +230,8 @@ export function getDisplayLabel(
 /**
  * Get all options for a taxonomy as [value, label] pairs
  * Useful for populating dropdown selectors in Phase 5 UI
+ * @param type - The taxonomy type to get options for
+ * @returns Array of [value, label] tuples
  */
 export function getTaxonomyOptions(
   type: 'camera-angle' | 'lens-type' | 'optical-effect' | 'cinematic-technique' |

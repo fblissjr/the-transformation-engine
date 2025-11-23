@@ -8,8 +8,17 @@ interface StreamingProgressProps {
 }
 
 /**
- * Live streaming progress display
- * Shows accumulated tokens, tokens/second, and optional cancel button
+ * StreamingProgress component
+ *
+ * Live streaming progress display.
+ * Shows accumulated tokens, tokens/second, and an optional cancel button.
+ * Displays a live preview of the accumulated content.
+ *
+ * @param accumulatedContent - The content accumulated so far.
+ * @param currentTokenCount - The current number of tokens generated.
+ * @param tokensPerSecond - The generation speed in tokens per second.
+ * @param onCancel - Optional callback to cancel the streaming.
+ * @returns The rendered StreamingProgress component.
  */
 export const StreamingProgress: React.FC<StreamingProgressProps> = ({
   accumulatedContent,
@@ -65,7 +74,14 @@ interface StreamingToggleProps {
 }
 
 /**
- * Toggle control for enabling/disabling streaming
+ * StreamingToggle component
+ *
+ * Toggle control for enabling or disabling live token streaming.
+ *
+ * @param enabled - Whether streaming is enabled.
+ * @param onToggle - Callback when the toggle is changed.
+ * @param disabled - (Optional) Whether the toggle control is disabled.
+ * @returns The rendered StreamingToggle component.
  */
 export const StreamingToggle: React.FC<StreamingToggleProps> = ({
   enabled,
@@ -97,7 +113,17 @@ interface TokenCounterProps {
 }
 
 /**
- * Token usage display (compact or detailed)
+ * TokenCounter component
+ *
+ * Displays token usage statistics, optionally including cost.
+ * Can be rendered in compact or detailed mode.
+ *
+ * @param inputTokens - Number of input tokens.
+ * @param outputTokens - Number of output tokens.
+ * @param totalTokens - Total number of tokens used.
+ * @param cost - (Optional) Estimated cost.
+ * @param showDetails - (Optional) Whether to show detailed breakdown.
+ * @returns The rendered TokenCounter component.
  */
 export const TokenCounter: React.FC<TokenCounterProps> = ({
   inputTokens,

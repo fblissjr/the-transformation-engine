@@ -9,9 +9,18 @@ import type { IntermediateV3 } from '../../../types/intermediate';
 import type { ObjectLibraryService } from '../objectLibraryService';
 import { TransformerUtils } from './TransformerUtils';
 
+/**
+ * Transformer class for converting IntermediateV3 objects into a generic model-agnostic format.
+ * Acts as a universal fallback for any video generation model.
+ */
 export class GenericTransformer {
   /**
    * Transform IntermediateV3 to generic format (similar to continuous narrative)
+   *
+   * @param intermediate - The intermediate V3 prompt object.
+   * @param objectLibrary - The object library service to resolve components.
+   * @returns A Promise resolving to the transformed generic narrative string.
+   * @throws Error if transformation fails.
    */
   async transform(
     intermediate: IntermediateV3,

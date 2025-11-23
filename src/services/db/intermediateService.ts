@@ -5,12 +5,20 @@
 import { initDB } from './indexedDbService';
 import type { IntermediatePrompt } from '../../types/intermediate';
 
-// Initialize DB connection
+/**
+ * Gets the shared IndexedDB database instance.
+ * Initializes the database if it hasn't been initialized yet.
+ * @returns A Promise resolving to the IDBPDatabase instance.
+ */
 async function getDB() {
   return initDB();
 }
 
-// Create new intermediate
+/**
+ * Creates a new intermediate prompt in the database.
+ * @param data - Partial intermediate prompt data.
+ * @returns A Promise resolving to the newly created IntermediatePrompt.
+ */
 export async function createIntermediate(
   data: Partial<IntermediatePrompt>
 ): Promise<IntermediatePrompt> {
@@ -35,20 +43,33 @@ export async function createIntermediate(
   return intermediate;
 }
 
-// Get intermediate by ID
+/**
+ * Retrieves an intermediate prompt by its ID.
+ * @param id - The unique identifier of the intermediate prompt.
+ * @returns A Promise resolving to the IntermediatePrompt, or null if not found.
+ */
 export async function getIntermediate(id: string): Promise<IntermediatePrompt | null> {
   const db = await getDB();
   const intermediate = await db.get('intermediates', id);
   return intermediate || null;
 }
 
-// Get all intermediates
+/**
+ * Retrieves all intermediate prompts from the database.
+ * @returns A Promise resolving to an array of all IntermediatePrompt objects.
+ */
 export async function getAllIntermediates(): Promise<IntermediatePrompt[]> {
   const db = await getDB();
   return await db.getAll('intermediates');
 }
 
-// Update intermediate
+/**
+ * Updates an existing intermediate prompt.
+ * @param id - The ID of the intermediate prompt to update.
+ * @param updates - Partial object containing fields to update.
+ * @returns A Promise that resolves when the update is complete.
+ * @throws Error if the intermediate prompt is not found.
+ */
 export async function updateIntermediate(
   id: string,
   updates: Partial<IntermediatePrompt>
@@ -69,13 +90,22 @@ export async function updateIntermediate(
   await db.put('intermediates', updated);
 }
 
-// Delete intermediate
+/**
+ * Deletes an intermediate prompt by its ID.
+ * @param id - The ID of the intermediate prompt to delete.
+ * @returns A Promise that resolves when the deletion is complete.
+ */
 export async function deleteIntermediate(id: string): Promise<void> {
   const db = await getDB();
   await db.delete('intermediates', id);
 }
 
-// Search intermediates by text
+/**
+ * Searches for intermediate prompts matching a query string.
+ * Matches against title, description, and tags. Case-insensitive.
+ * @param query - The search string.
+ * @returns A Promise resolving to an array of matching IntermediatePrompt objects.
+ */
 export async function searchIntermediates(query: string): Promise<IntermediatePrompt[]> {
   const db = await getDB();
   const all = await db.getAll('intermediates');
@@ -88,20 +118,33 @@ export async function searchIntermediates(query: string): Promise<IntermediatePr
   );
 }
 
-// Get intermediates by tag
+/**
+ * Retrieves intermediate prompts associated with a specific tag.
+ * @param tag - The tag to search for.
+ * @returns A Promise resolving to an array of IntermediatePrompt objects.
+ */
 export async function getIntermediatesByTag(tag: string): Promise<IntermediatePrompt[]> {
   const db = await getDB();
   return await db.getAllFromIndex('intermediates', 'tags', tag);
 }
 
-// Get children of intermediate (for branching)
+/**
+ * Retrieves child intermediate prompts for a given parent ID.
+ * Useful for finding branches or derived versions.
+ * @param parentId - The ID of the parent intermediate prompt.
+ * @returns A Promise resolving to an array of child IntermediatePrompt objects.
+ */
 export async function getIntermediateChildren(parentId: string): Promise<IntermediatePrompt[]> {
   const db = await getDB();
   const all = await db.getAll('intermediates');
   return all.filter(i => i.relationships?.parentId === parentId);
 }
 
-// Get intermediate tree (for version control visualization)
+/**
+ * Retrieves the full tree of intermediate prompts starting from a root ID.
+ * @param rootId - The ID of the root intermediate prompt.
+ * @returns A Promise resolving to an array of IntermediatePrompt objects in the tree.
+ */
 export async function getIntermediateTree(rootId: string): Promise<IntermediatePrompt[]> {
   const db = await getDB();
   const all = await db.getAll('intermediates');
@@ -127,7 +170,11 @@ export async function getIntermediateTree(rootId: string): Promise<IntermediateP
   return tree;
 }
 
-// Get intermediates sorted by creation date
+/**
+ * Retrieves all intermediate prompts sorted by creation date.
+ * @param order - The sort order, 'asc' (ascending) or 'desc' (descending). Defaults to 'desc'.
+ * @returns A Promise resolving to a sorted array of IntermediatePrompt objects.
+ */
 export async function getIntermediatesSortedByDate(
   order: 'asc' | 'desc' = 'desc'
 ): Promise<IntermediatePrompt[]> {
@@ -140,7 +187,11 @@ export async function getIntermediatesSortedByDate(
   return all;
 }
 
-// Get intermediates sorted by modification date
+/**
+ * Retrieves all intermediate prompts sorted by modification date.
+ * @param order - The sort order, 'asc' (ascending) or 'desc' (descending). Defaults to 'desc'.
+ * @returns A Promise resolving to a sorted array of IntermediatePrompt objects.
+ */
 export async function getIntermediatesSortedByModified(
   order: 'asc' | 'desc' = 'desc'
 ): Promise<IntermediatePrompt[]> {
@@ -153,14 +204,23 @@ export async function getIntermediatesSortedByModified(
   return all;
 }
 
-// Count intermediates
+/**
+ * Counts the total number of intermediate prompts in the database.
+ * @returns A Promise resolving to the count.
+ */
 export async function countIntermediates(): Promise<number> {
   const db = await getDB();
   const all = await db.getAll('intermediates');
   return all.length;
 }
 
-// Create a branch from an existing intermediate
+/**
+ * Creates a new branch from an existing intermediate prompt.
+ * Copies the source prompt and establishes a parent-child relationship.
+ * @param sourceId - The ID of the source prompt to branch from.
+ * @param branchName - The name of the new branch.
+ * @returns A Promise resolving to the new branched IntermediatePrompt, or null if source not found.
+ */
 export async function createIntermediateBranch(
   sourceId: string,
   branchName: string

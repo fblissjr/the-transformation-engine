@@ -206,6 +206,9 @@ export const IntermediateStructureJSONSchemaStrict = {
 /**
  * Helper: Get schema for specific scene type
  * Customizes required/optional sections based on scene type
+ *
+ * @param sceneType - The classification of the scene (e.g., 'dialogue', 'cinematic').
+ * @returns The JSON schema customized for the specified scene type.
  */
 export function getSchemaForSceneType(sceneType: string) {
   const baseSchema = { ...IntermediateStructureJSONSchema };

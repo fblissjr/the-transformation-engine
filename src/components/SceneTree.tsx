@@ -26,6 +26,20 @@ import { ChevronRight, ArrowRight, Scissors, Repeat } from 'lucide-react';
 
 // ==================== Type Definitions ====================
 
+/**
+ * SceneNode interface
+ *
+ * Represents a node in the scene tree.
+ *
+ * @property id - Unique identifier for the scene.
+ * @property title - Title of the scene.
+ * @property created - ISO timestamp string of creation.
+ * @property sceneNumber - Optional scene number.
+ * @property extensionMethod - The method used to extend this scene from its parent.
+ * @property parentId - ID of the parent scene.
+ * @property isOrphaned - Boolean indicating if the scene's parent was deleted.
+ * @property children - Array of child scene nodes.
+ */
 export interface SceneNode {
   id: string;
   title: string;
@@ -201,6 +215,19 @@ const SceneNodeItem: React.FC<SceneNodeItemProps> = ({
 
 // ==================== Main Component ====================
 
+/**
+ * SceneTree component
+ *
+ * Renders the entire hierarchy of scenes as a tree.
+ * Used for visualizing parent-child relationships and navigating scenes.
+ *
+ * @param rootScenes - Array of root-level SceneNodes.
+ * @param activeSceneId - ID of the currently selected scene.
+ * @param onSelectScene - Callback when a scene is selected.
+ * @param onExtendScene - Callback when extending a scene.
+ * @param onDeleteScene - Callback when deleting a scene.
+ * @returns The rendered SceneTree component.
+ */
 export const SceneTree: React.FC<SceneTreeProps> = ({
   rootScenes,
   activeSceneId,

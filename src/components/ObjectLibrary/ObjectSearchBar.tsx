@@ -5,6 +5,17 @@ interface ObjectSearchBarProps {
   onSearchChange: (query: string) => void;
 }
 
+/**
+ * ObjectSearchBar component
+ *
+ * A search input field for filtering objects in the library.
+ * Supports searching by name, description, or tags.
+ * Includes a clear button to reset the search query.
+ *
+ * @param searchQuery - The current search query string.
+ * @param onSearchChange - Callback when the search query changes.
+ * @returns The rendered ObjectSearchBar component.
+ */
 export const ObjectSearchBar: React.FC<ObjectSearchBarProps> = ({
   searchQuery,
   onSearchChange

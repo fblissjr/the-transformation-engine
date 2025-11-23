@@ -26,6 +26,11 @@ const results = {
   errors: [],
 };
 
+/**
+ * Executes a test function and logs the result.
+ * @param {string} name - The name of the test.
+ * @param {Function} fn - The test function to execute.
+ */
 function test(name, fn) {
   try {
     fn();
@@ -39,12 +44,22 @@ function test(name, fn) {
   }
 }
 
+/**
+ * Asserts that a condition is true.
+ * @param {boolean} condition - The condition to check.
+ * @param {string} [message] - The error message if the assertion fails.
+ */
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message || 'Assertion failed');
   }
 }
 
+/**
+ * Asserts that a file exists at the given path.
+ * @param {string} filepath - The path to the file.
+ * @param {string} [message] - The error message if the file does not exist.
+ */
 function assertExists(filepath, message) {
   assert(existsSync(filepath), message || `File not found: ${filepath}`);
 }

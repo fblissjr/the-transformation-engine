@@ -2,8 +2,8 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { Prompt, PromptSettings, PromptVersion } from '../../types';
 import { DEFAULT_SETTINGS } from '../../constants';
-import * as dbService from '../../services/dbService';
-import * as versionService from '../../services/versionService';
+import * as dbService from '../services/dbService';
+import * as versionService from '../services/versionService';
 
 interface ActivePromptContextType {
   activePrompt: Prompt | null;
@@ -26,6 +26,16 @@ interface ActivePromptContextType {
 
 const ActivePromptContext = createContext<ActivePromptContextType | undefined>(undefined);
 
+/**
+ * ActivePromptProvider
+ *
+ * Provides state and functions related to the currently active prompt.
+ * Manages the natural language input, settings, generated outputs, and version history.
+ * Handles selecting an existing prompt, creating a new one, updating, and restoring versions.
+ *
+ * @param children - Child components to wrap.
+ * @returns The context provider.
+ */
 export const ActivePromptProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [activePrompt, setActivePrompt] = useState<Prompt | null>(null);
   const [naturalLanguageInput, setNaturalLanguageInput] = useState<string>('');
@@ -131,6 +141,14 @@ export const ActivePromptProvider: React.FC<{children: ReactNode}> = ({ children
   return <ActivePromptContext.Provider value={value}>{children}</ActivePromptContext.Provider>;
 };
 
+/**
+ * useActivePrompt hook
+ *
+ * Custom hook to access the ActivePromptContext.
+ *
+ * @returns The context value containing active prompt state and functions.
+ * @throws Error if used outside of an ActivePromptProvider.
+ */
 export const useActivePrompt = (): ActivePromptContextType => {
   const context = useContext(ActivePromptContext);
   if (context === undefined) {

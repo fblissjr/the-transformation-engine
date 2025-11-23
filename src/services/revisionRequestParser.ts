@@ -13,6 +13,9 @@ export interface ParsedRevisionRequest {
 
 /**
  * Detects if an LLM response contains a REVISION_REQUEST block
+ *
+ * @param response - The full text response from the LLM.
+ * @returns True if a revision request block is detected.
  */
 export function containsRevisionRequest(response: string): boolean {
   return response.includes('REVISION_REQUEST:');
@@ -31,6 +34,9 @@ export function containsRevisionRequest(response: string): boolean {
  * 2. [Question 2]
  * 3. [Question 3]
  * ```
+ *
+ * @param response - The full text response from the LLM.
+ * @returns A ParsedRevisionRequest object containing the extraction results.
  */
 export function parseRevisionRequest(response: string): ParsedRevisionRequest {
   if (!containsRevisionRequest(response)) {
@@ -78,6 +84,9 @@ export function parseRevisionRequest(response: string): ParsedRevisionRequest {
  * - "1. Question text"
  * - "1) Question text"
  * - "1: Question text"
+ *
+ * @param block - The text block containing questions.
+ * @returns An array of extracted question strings.
  */
 function extractQuestions(block: string): string[] {
   const lines = block.split('\n');
@@ -98,6 +107,10 @@ function extractQuestions(block: string): string[] {
 
 /**
  * Formats user's answers to revision request questions for inclusion in next prompt
+ *
+ * @param questions - The original questions asked by the AI.
+ * @param answers - The user's provided answers.
+ * @returns A formatted markdown block string suitable for prompt context.
  */
 export function formatAnswersForPrompt(questions: string[], answers: string): string {
   const answersBlock = `

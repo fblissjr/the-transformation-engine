@@ -4,6 +4,15 @@ import { Prompt } from '../../types';
 import { usePrompts } from '../contexts/PromptContext';
 import { LogoIcon, ImportIcon } from './icons';
 
+/**
+ * SharePage component
+ *
+ * A standalone page for viewing and importing shared prompts.
+ * It reads the prompt data from the URL query parameters (base64 encoded).
+ * Users can import the shared prompt into their own workspace.
+ *
+ * @returns The rendered SharePage component.
+ */
 const SharePage: React.FC = () => {
   const [sharedPrompt, setSharedPrompt] = useState<Partial<Prompt> | null>(null);
   const [error, setError] = useState<string | null>(null);

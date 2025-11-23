@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { getDB } from '../../services/db/indexedDbService';
+import { getDB } from '..//db/indexedDbService';
 import { DB_CONFIG } from '../../config/database';
 import type {
   ImageProject,
@@ -22,6 +22,14 @@ const IMAGE_STORES = {
 // IMAGE PROJECTS
 // ============================================================================
 
+/**
+ * Creates a new image project.
+ *
+ * @param title - The title of the project.
+ * @param description - (Optional) The description of the project.
+ * @param tags - (Optional) Array of tags for the project.
+ * @returns A Promise resolving to the created ImageProject.
+ */
 export async function createImageProject(
   title: string,
   description?: string,
@@ -43,16 +51,35 @@ export async function createImageProject(
   return project;
 }
 
+/**
+ * Retrieves an image project by ID.
+ *
+ * @param id - The ID of the project.
+ * @returns A Promise resolving to the ImageProject or undefined if not found.
+ */
 export async function getImageProject(id: string): Promise<ImageProject | undefined> {
   const db = await getDB();
   return await db.get(IMAGE_STORES.IMAGE_PROJECTS, id);
 }
 
+/**
+ * Retrieves all image projects.
+ *
+ * @returns A Promise resolving to an array of ImageProject.
+ */
 export async function getAllImageProjects(): Promise<ImageProject[]> {
   const db = await getDB();
   return await db.getAll(IMAGE_STORES.IMAGE_PROJECTS);
 }
 
+/**
+ * Updates an existing image project.
+ *
+ * @param id - The ID of the project to update.
+ * @param updates - Partial updates to apply to the project.
+ * @returns A Promise resolving to the updated ImageProject.
+ * @throws Error if the project is not found.
+ */
 export async function updateImageProject(
   id: string,
   updates: Partial<Omit<ImageProject, 'id' | 'created'>>
@@ -76,6 +103,12 @@ export async function updateImageProject(
   return updated;
 }
 
+/**
+ * Deletes an image project and all associated data (generations, edits).
+ *
+ * @param id - The ID of the project to delete.
+ * @returns A Promise resolving when deletion is complete.
+ */
 export async function deleteImageProject(id: string): Promise<void> {
   const db = await getDB();
 
@@ -115,6 +148,13 @@ export interface CreateImageGenerationParams {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Creates a new image generation record.
+ *
+ * @param params - The parameters for creating the image generation.
+ * @returns A Promise resolving to the created ImageGeneration.
+ * @throws Error if the project is not found.
+ */
 export async function createImageGeneration(
   params: CreateImageGenerationParams
 ): Promise<ImageGeneration> {
@@ -152,21 +192,44 @@ export async function createImageGeneration(
   return generation;
 }
 
+/**
+ * Retrieves an image generation by ID.
+ *
+ * @param id - The ID of the image generation.
+ * @returns A Promise resolving to the ImageGeneration or undefined if not found.
+ */
 export async function getImageGeneration(id: string): Promise<ImageGeneration | undefined> {
   const db = await getDB();
   return await db.get(IMAGE_STORES.IMAGE_GENERATIONS, id);
 }
 
+/**
+ * Retrieves all image generations.
+ *
+ * @returns A Promise resolving to an array of ImageGeneration.
+ */
 export async function getAllImageGenerations(): Promise<ImageGeneration[]> {
   const db = await getDB();
   return await db.getAll(IMAGE_STORES.IMAGE_GENERATIONS);
 }
 
+/**
+ * Retrieves all image generations for a specific project.
+ *
+ * @param projectId - The ID of the project.
+ * @returns A Promise resolving to an array of ImageGeneration.
+ */
 export async function getImageGenerationsByProject(projectId: string): Promise<ImageGeneration[]> {
   const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_GENERATIONS, 'projectId', projectId);
 }
 
+/**
+ * Retrieves image generations by their status.
+ *
+ * @param status - The status to filter by ('generating', 'ready', 'error').
+ * @returns A Promise resolving to an array of ImageGeneration.
+ */
 export async function getImageGenerationsByStatus(
   status: 'generating' | 'ready' | 'error'
 ): Promise<ImageGeneration[]> {
@@ -174,6 +237,12 @@ export async function getImageGenerationsByStatus(
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_GENERATIONS, 'status', status);
 }
 
+/**
+ * Retrieves all child image generations derived from a parent image.
+ *
+ * @param parentImageId - The ID of the parent image generation.
+ * @returns A Promise resolving to an array of ImageGeneration.
+ */
 export async function getChildImageGenerations(parentImageId: string): Promise<ImageGeneration[]> {
   const db = await getDB();
   return await db.getAllFromIndex(
@@ -183,6 +252,14 @@ export async function getChildImageGenerations(parentImageId: string): Promise<I
   );
 }
 
+/**
+ * Updates an existing image generation.
+ *
+ * @param id - The ID of the generation to update.
+ * @param updates - Partial updates to apply.
+ * @returns A Promise resolving to the updated ImageGeneration.
+ * @throws Error if the generation is not found.
+ */
 export async function updateImageGeneration(
   id: string,
   updates: Partial<Omit<ImageGeneration, 'id' | 'created' | 'projectId'>>
@@ -207,6 +284,12 @@ export async function updateImageGeneration(
   return updated;
 }
 
+/**
+ * Deletes an image generation and its dependencies (children, edits, links).
+ *
+ * @param id - The ID of the generation to delete.
+ * @returns A Promise resolving when deletion is complete.
+ */
 export async function deleteImageGeneration(id: string): Promise<void> {
   const db = await getDB();
 
@@ -231,6 +314,16 @@ export async function deleteImageGeneration(id: string): Promise<void> {
   await db.delete(IMAGE_STORES.IMAGE_GENERATIONS, id);
 }
 
+/**
+ * Adds an edit operation to the history of an image generation.
+ *
+ * @param imageId - The ID of the image generation.
+ * @param operation - The type of operation performed.
+ * @param parameters - Parameters used for the operation.
+ * @param beforeImageId - (Optional) ID of the image state before editing.
+ * @returns A Promise resolving to the updated ImageGeneration.
+ * @throws Error if the generation is not found.
+ */
 export async function addEditToHistory(
   imageId: string,
   operation: string,
@@ -261,6 +354,14 @@ export async function addEditToHistory(
   return updated;
 }
 
+/**
+ * Links an image generation to a scene.
+ *
+ * @param imageId - The ID of the image generation.
+ * @param sceneId - The ID of the scene to link.
+ * @returns A Promise resolving to the updated ImageGeneration.
+ * @throws Error if the generation is not found.
+ */
 export async function linkImageToScene(
   imageId: string,
   sceneId: string
@@ -286,6 +387,14 @@ export async function linkImageToScene(
   return updated;
 }
 
+/**
+ * Unlinks an image generation from a scene.
+ *
+ * @param imageId - The ID of the image generation.
+ * @param sceneId - The ID of the scene to unlink.
+ * @returns A Promise resolving to the updated ImageGeneration.
+ * @throws Error if the generation is not found.
+ */
 export async function unlinkImageFromScene(
   imageId: string,
   sceneId: string
@@ -320,8 +429,19 @@ export interface CreateImageEditParams {
   resultImageId?: string;
   status?: 'pending' | 'processing' | 'completed' | 'failed';
   errorMessage?: string;
+  // Added properties to match usage in saveEditedImage
+  model?: string;
+  providerId?: string;
+  resultImageData?: Blob;
 }
 
+/**
+ * Creates a new image edit record.
+ *
+ * @param params - The parameters for creating the image edit.
+ * @returns A Promise resolving to the created ImageEdit.
+ * @throws Error if the associated image generation is not found.
+ */
 export async function createImageEdit(params: CreateImageEditParams): Promise<ImageEdit> {
   const db = await getDB();
 
@@ -348,26 +468,55 @@ export async function createImageEdit(params: CreateImageEditParams): Promise<Im
   return edit;
 }
 
+/**
+ * Retrieves an image edit record by ID.
+ *
+ * @param id - The ID of the image edit.
+ * @returns A Promise resolving to the ImageEdit or undefined if not found.
+ */
 export async function getImageEdit(id: string): Promise<ImageEdit | undefined> {
   const db = await getDB();
   return await db.get(IMAGE_STORES.IMAGE_EDITS, id);
 }
 
+/**
+ * Retrieves all image edit records.
+ *
+ * @returns A Promise resolving to an array of ImageEdit.
+ */
 export async function getAllImageEdits(): Promise<ImageEdit[]> {
   const db = await getDB();
   return await db.getAll(IMAGE_STORES.IMAGE_EDITS);
 }
 
+/**
+ * Retrieves all image edit records for a specific generation.
+ *
+ * @param generationId - The ID of the image generation.
+ * @returns A Promise resolving to an array of ImageEdit.
+ */
 export async function getImageEditsByGeneration(generationId: string): Promise<ImageEdit[]> {
   const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_EDITS, 'generationId', generationId);
 }
 
+/**
+ * Retrieves all image edit records for a specific project.
+ *
+ * @param projectId - The ID of the project.
+ * @returns A Promise resolving to an array of ImageEdit.
+ */
 export async function getImageEditsByProject(projectId: string): Promise<ImageEdit[]> {
   const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_EDITS, 'projectId', projectId);
 }
 
+/**
+ * Retrieves image edit records by their status.
+ *
+ * @param status - The status to filter by.
+ * @returns A Promise resolving to an array of ImageEdit.
+ */
 export async function getImageEditsByStatus(
   status: 'pending' | 'processing' | 'completed' | 'failed'
 ): Promise<ImageEdit[]> {
@@ -375,6 +524,14 @@ export async function getImageEditsByStatus(
   return await db.getAllFromIndex(IMAGE_STORES.IMAGE_EDITS, 'status', status);
 }
 
+/**
+ * Updates an existing image edit record.
+ *
+ * @param id - The ID of the edit record to update.
+ * @param updates - Partial updates to apply.
+ * @returns A Promise resolving to the updated ImageEdit.
+ * @throws Error if the edit record is not found.
+ */
 export async function updateImageEdit(
   id: string,
   updates: Partial<Omit<ImageEdit, 'id' | 'created' | 'generationId' | 'projectId'>>
@@ -399,6 +556,12 @@ export async function updateImageEdit(
   return updated;
 }
 
+/**
+ * Deletes an image edit record.
+ *
+ * @param id - The ID of the edit record to delete.
+ * @returns A Promise resolving when deletion is complete.
+ */
 export async function deleteImageEdit(id: string): Promise<void> {
   const db = await getDB();
   await db.delete(IMAGE_STORES.IMAGE_EDITS, id);
@@ -419,6 +582,13 @@ export interface CreateSceneLinkParams {
   };
 }
 
+/**
+ * Creates a new link between an image generation and a scene (intermediate prompt).
+ *
+ * @param params - The parameters for creating the scene link.
+ * @returns A Promise resolving to the created SceneLink.
+ * @throws Error if the image generation is not found.
+ */
 export async function createSceneLink(params: CreateSceneLinkParams): Promise<SceneLink> {
   const db = await getDB();
 
@@ -441,31 +611,66 @@ export async function createSceneLink(params: CreateSceneLinkParams): Promise<Sc
   return link;
 }
 
+/**
+ * Retrieves a scene link by ID.
+ *
+ * @param id - The ID of the scene link.
+ * @returns A Promise resolving to the SceneLink or undefined if not found.
+ */
 export async function getSceneLink(id: string): Promise<SceneLink | undefined> {
   const db = await getDB();
   return await db.get(IMAGE_STORES.SCENE_LINKS, id);
 }
 
+/**
+ * Retrieves all scene links.
+ *
+ * @returns A Promise resolving to an array of SceneLink.
+ */
 export async function getAllSceneLinks(): Promise<SceneLink[]> {
   const db = await getDB();
   return await db.getAll(IMAGE_STORES.SCENE_LINKS);
 }
 
+/**
+ * Retrieves all scene links associated with a specific image generation.
+ *
+ * @param imageGenerationId - The ID of the image generation.
+ * @returns A Promise resolving to an array of SceneLink.
+ */
 export async function getSceneLinksByImage(imageGenerationId: string): Promise<SceneLink[]> {
   const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.SCENE_LINKS, 'imageGenerationId', imageGenerationId);
 }
 
+/**
+ * Retrieves all scene links associated with a specific scene (intermediate prompt).
+ *
+ * @param intermediateId - The ID of the scene.
+ * @returns A Promise resolving to an array of SceneLink.
+ */
 export async function getSceneLinksByScene(intermediateId: string): Promise<SceneLink[]> {
   const db = await getDB();
   return await db.getAllFromIndex(IMAGE_STORES.SCENE_LINKS, 'intermediateId', intermediateId);
 }
 
+/**
+ * Deletes a scene link.
+ *
+ * @param id - The ID of the link to delete.
+ * @returns A Promise resolving when deletion is complete.
+ */
 export async function deleteSceneLink(id: string): Promise<void> {
   const db = await getDB();
   await db.delete(IMAGE_STORES.SCENE_LINKS, id);
 }
 
+/**
+ * Deletes all scene links associated with a specific image generation.
+ *
+ * @param imageGenerationId - The ID of the image generation.
+ * @returns A Promise resolving when all links are deleted.
+ */
 export async function deleteSceneLinksByImage(imageGenerationId: string): Promise<void> {
   const links = await getSceneLinksByImage(imageGenerationId);
   for (const link of links) {
@@ -473,6 +678,12 @@ export async function deleteSceneLinksByImage(imageGenerationId: string): Promis
   }
 }
 
+/**
+ * Deletes all scene links associated with a specific scene.
+ *
+ * @param intermediateId - The ID of the scene.
+ * @returns A Promise resolving when all links are deleted.
+ */
 export async function deleteSceneLinksByScene(intermediateId: string): Promise<void> {
   const links = await getSceneLinksByScene(intermediateId);
   for (const link of links) {
@@ -485,8 +696,11 @@ export async function deleteSceneLinksByScene(intermediateId: string): Promise<v
 // ============================================================================
 
 /**
- * High-level wrapper for saving a newly generated image
- * Used by taskRouter.executeImageGeneration()
+ * High-level wrapper for saving a newly generated image.
+ * Used by taskRouter.executeImageGeneration().
+ *
+ * @param params - Object containing project, image data, prompt, and metadata.
+ * @returns A Promise resolving to the ID of the created image generation.
  */
 export async function saveGeneratedImage(params: {
   projectId: string;
@@ -530,8 +744,11 @@ export async function saveGeneratedImage(params: {
 }
 
 /**
- * High-level wrapper for retrieving an image
- * Used by taskRouter.executeImageEdit()
+ * High-level wrapper for retrieving an image.
+ * Used by taskRouter.executeImageEdit().
+ *
+ * @param imageId - The ID of the image to retrieve.
+ * @returns A Promise resolving to an object containing base64 image data and MIME type, or null if not found.
  */
 export async function getImage(imageId: string): Promise<{
   imageData: string; // base64
@@ -558,8 +775,12 @@ export async function getImage(imageId: string): Promise<{
 }
 
 /**
- * High-level wrapper for saving an edited image
- * Used by taskRouter.executeImageEdit()
+ * High-level wrapper for saving an edited image.
+ * Used by taskRouter.executeImageEdit().
+ *
+ * @param params - Object containing source image ID, project, edit details, and result image data.
+ * @returns A Promise resolving to the ID of the new image generation record.
+ * @throws Error if source image is not found.
  */
 export async function saveEditedImage(params: {
   sourceImageId: string;
@@ -625,6 +846,7 @@ export async function saveEditedImage(params: {
     model: params.parameters.model as string || sourceGeneration.model,
     providerId: params.parameters.providerId as string || sourceGeneration.providerId,
     resultImageData: imageBlob,
+    projectId: params.projectId,
   });
 
   return generation.id;

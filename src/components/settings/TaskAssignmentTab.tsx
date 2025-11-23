@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { taskAssignmentService } from '../../../services/taskAssignmentService';
+import { taskAssignmentService } from '../../services/taskAssignmentService';
 import { useProviders } from '../../contexts/ProviderContext';
 import { TASK_IDS, TASK_METADATA, type TaskId } from '../../../types/providers';
 import { ModelPicker } from '../ModelPicker';
 import type { Model } from '../../../types/providers';
 
+/**
+ * TaskAssignmentTab component
+ *
+ * Settings tab for configuring task-specific model assignments.
+ * Allows setting a global default model and overriding it for specific tasks (e.g., primary generation, mixing).
+ *
+ * @returns The rendered TaskAssignmentTab component.
+ */
 export const TaskAssignmentTab: React.FC = () => {
   const { providers, fetchModels } = useProviders();
   const [usePerTaskAssignments, setUsePerTaskAssignments] = useState(false);

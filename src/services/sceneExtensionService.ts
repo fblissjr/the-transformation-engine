@@ -32,6 +32,9 @@ export interface GenerateExtensionParams {
 
 /**
  * Get or generate a cached parent scene summary
+ *
+ * @param parentIntermediate - The intermediate prompt of the parent scene.
+ * @returns A Promise resolving to the ParentSceneSummary.
  */
 export async function getParentSummary(
   parentIntermediate: IntermediatePrompt
@@ -223,6 +226,9 @@ function generateExtensionTitle(
 
 /**
  * Main function: Generate a scene extension
+ *
+ * @param params - Parameters for the scene extension.
+ * @returns A Promise resolving to the new IntermediatePrompt.
  */
 export async function generateSceneExtension(
   params: GenerateExtensionParams
@@ -285,6 +291,9 @@ export async function generateSceneExtension(
 
 /**
  * Get all child scenes of a parent
+ *
+ * @param parentId - The ID of the parent scene.
+ * @returns A Promise resolving to an array of child IntermediatePrompts.
  */
 export async function getChildScenes(parentId: string): Promise<IntermediatePrompt[]> {
   const db = await getDB();
@@ -299,6 +308,9 @@ export async function getChildScenes(parentId: string): Promise<IntermediateProm
 
 /**
  * Mark children as orphaned when parent is deleted
+ *
+ * @param parentId - The ID of the parent scene being deleted.
+ * @param parentTitle - The title of the parent scene.
  */
 export async function markChildrenAsOrphaned(
   parentId: string,
@@ -324,6 +336,9 @@ export async function markChildrenAsOrphaned(
 
 /**
  * Delete a scene and optionally cascade to children
+ *
+ * @param sceneId - The ID of the scene to delete.
+ * @param cascadeDelete - Whether to recursively delete child scenes.
  */
 export async function deleteSceneWithChildren(
   sceneId: string,

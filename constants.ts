@@ -7,6 +7,13 @@ import {
   MixOption,
 } from "./types";
 
+/**
+ * Primary Generation Prompt
+ *
+ * The core system prompt used for generating structured video prompts.
+ * It instructs the LLM on how to translate creative ideas into detailed,
+ * machine-readable prompts optimized for video generation models like Sora and Veo.
+ */
 export const PRIMARY_GENERATION_PROMPT = `
 You are a world-class structured prompt generator for text-to-video AI models. Your purpose is to translate a user's creative idea into a detailed, comprehensive, machine-readable prompt optimized for modern video generation systems.
 
@@ -68,6 +75,12 @@ To foster creative interpretation, you MUST NOT use proper names of well-known f
 Your response must contain ONLY the structured prompt itself, with no additional commentary, introductions, or explanations. Be comprehensive yet efficient - every word should add visual or temporal clarity.
 `;
 
+/**
+ * Synesthetic Mixer Prompt
+ *
+ * System prompt for the prompt mixing feature.
+ * Instructions for blending elements from multiple source prompts into a new, coherent scene.
+ */
 export const SYNESTHETIC_MIXER_PROMPT = `
 You are an expert creative prompt blender. Your task is to analyze and synthesize the core cinematic, emotional, and thematic elements from two or more existing structured prompts. You will then generate a single, completely new, and coherent hybrid scene. Do not simply combine the prompts; create a novel synthesis inspired by them.
 
@@ -96,6 +109,12 @@ This rule still applies. If the source prompts contain descriptions of known fig
 **Final Instruction:** Your response must contain ONLY the structured prompt itself, with no additional commentary, introductions, or explanations.
 `;
 
+/**
+ * Normalizer Prompt
+ *
+ * System prompt for converting structured output back into a natural language description.
+ * Useful for readability and cross-model compatibility.
+ */
 export const NORMALIZER_PROMPT = `
 You are an expert prompt de-constructor and creative writer. Your task is to take a structured, machine-readable prompt and translate it into a single, coherent, and **cinematic** scene description in a flowing paragraph.
 
@@ -117,6 +136,12 @@ All generated video clips are 8-10 seconds in duration. You must ensure you don'
 Write the cinematic scene description now.
 `;
 
+/**
+ * Schema Inference Prompt
+ *
+ * System prompt for inferring the best schema keys based on the user's natural language input.
+ * Helps in automatically selecting relevant tags for the generated prompt.
+ */
 export const SCHEMA_INFERENCE_PROMPT = `
 You are an expert schema designer for creative, structured prompts. Your task is to analyze a user's creative idea and suggest a set of structured keys (a schema) to represent it effectively for a text-to-video model. The keys should be concise, lowercase, and use snake_case.
 
@@ -140,6 +165,11 @@ The JSON object must contain two keys:
 Generate the JSON response now.
 `;
 
+/**
+ * Default Prompt Settings
+ *
+ * The initial configuration for prompt generation settings.
+ */
 export const DEFAULT_SETTINGS: PromptSettings = {
   format: "Standard YAML",
   textDirection: "Forwards", // Legacy, kept for backward compatibility
@@ -157,6 +187,11 @@ export const DEFAULT_SETTINGS: PromptSettings = {
   },
 };
 
+/**
+ * Application Strings
+ *
+ * Constant strings used throughout the application UI.
+ */
 export const STRINGS = {
   MIX_PROMPTS_GUIDANCE_PROMPT:
     "Optional: Provide any specific guidance for the mix:",
@@ -175,6 +210,11 @@ export const GEMINI_MODEL_NAME = "gemini-flash-latest";
 export const VEO_31_GENERATE = "veo-3.1-generate-preview";
 export const VEO_31_FAST_GENERATE = "veo-3.1-fast-generate-preview";
 
+/**
+ * Built-in Output Formats
+ *
+ * List of output formats supported by the application out of the box.
+ */
 export const BUILT_IN_FORMATS: OutputFormat[] = [
   { id: "yaml", name: "Standard YAML", isBuiltIn: true },
   { id: "markdown", name: "Markdown", isBuiltIn: true },
@@ -189,6 +229,11 @@ export const BUILT_IN_FORMATS: OutputFormat[] = [
   { id: "emoji", name: "Emoji Script", isBuiltIn: true },
 ];
 
+/**
+ * Built-in Mix Options
+ *
+ * List of pre-defined mix options (transformations) available to the user.
+ */
 export const BUILT_IN_MIX_OPTIONS: MixOption[] = [
   {
     id: "reverse",
@@ -224,6 +269,11 @@ export const BUILT_IN_MIX_OPTIONS: MixOption[] = [
   },
 ];
 
+/**
+ * Default Model Settings
+ *
+ * Initial settings for the AI model.
+ */
 export const DEFAULT_MODEL_SETTINGS: ModelSettings = {
   modelName: "gemini-flash-latest",
   maxTokens: 2048,
@@ -231,7 +281,12 @@ export const DEFAULT_MODEL_SETTINGS: ModelSettings = {
   topP: 0.95,
 };
 
-// Model-specific presets with recommended settings
+/**
+ * Model Presets
+ *
+ * Configuration presets for different target video generation models.
+ * Each preset defines limits, recommended lengths, and guidance.
+ */
 export const MODEL_PRESETS = {
   generic: {
     name: "Generic / Any Model",
@@ -406,6 +461,14 @@ export const DEFAULT_SCHEMA_KEYS = ["scene", "sound_effects", "speech"];
 
 export const SETTINGS_ID = "app-settings-singleton";
 
+/**
+ * createDefaultAppSettings
+ *
+ * Creates a default AppSettings object.
+ *
+ * @param defaultConfigId - The ID of the default configuration to activate.
+ * @returns A new AppSettings object without the ID.
+ */
 export const createDefaultAppSettings = (
   defaultConfigId: string,
 ): Omit<AppSettings, "id"> => ({
@@ -416,6 +479,13 @@ export const createDefaultAppSettings = (
   updatedAt: new Date().toISOString(),
 });
 
+/**
+ * createDefaultPromptConfig
+ *
+ * Creates a default SystemPromptConfig object.
+ *
+ * @returns A new SystemPromptConfig object without ID and timestamps.
+ */
 export const createDefaultPromptConfig = (): Omit<
   SystemPromptConfig,
   "id" | "createdAt" | "updatedAt"

@@ -5,6 +5,14 @@ import { ObjectSearchBar } from './ObjectSearchBar';
 import { ObjectList } from './ObjectList';
 import { ObjectCreatorDialog } from './ObjectCreatorDialog';
 
+/**
+ * ObjectLibraryPanel component
+ *
+ * The main panel for browsing and managing the object library.
+ * Includes type selection, search, object listing, and a button to create new objects.
+ *
+ * @returns The rendered ObjectLibraryPanel component.
+ */
 export const ObjectLibraryPanel: React.FC = () => {
   const {
     objects,

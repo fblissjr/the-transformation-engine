@@ -8,7 +8,7 @@
  * - Extract objects from unstructured data → generate schema dynamically
  */
 
-import type { TaskRouter } from '../../../services/taskRouter';
+import type { TaskRouter } from '../../taskRouter';
 import { TASK_IDS } from '../../../types/providers';
 
 export interface DeriveSchemaInput {
@@ -89,7 +89,12 @@ Output JSON format:
 IMPORTANT: Always output valid JSON only. No markdown formatting, no explanations outside the JSON structure.`;
 
 /**
- * Execute DERIVE_SCHEMA task
+ * Executes the DERIVE_SCHEMA task to analyze source material and generate an object schema.
+ *
+ * @param input - The input data containing source material, context hint, and output format.
+ * @param taskRouter - The task router instance used to execute the LLM task.
+ * @returns A Promise resolving to a DeriveSchemaOutput object containing the derived object type, schema, confidence score, and reasoning.
+ * @throws Error if the LLM response is invalid or execution fails.
  */
 export async function executeDeriveSchemaTask(
   input: DeriveSchemaInput,

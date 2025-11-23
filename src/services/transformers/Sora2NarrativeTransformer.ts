@@ -9,10 +9,19 @@ import type { IntermediateV3 } from '../../../types/intermediate';
 import type { ObjectLibraryService } from '../objectLibraryService';
 import { TransformerUtils } from './TransformerUtils';
 
+/**
+ * Transformer class for converting IntermediateV3 objects into Sora 2 Narrative Style format.
+ * This format emphasizes temporal progression and storytelling, optimizing for 300-500 words.
+ */
 export class Sora2NarrativeTransformer {
   /**
    * Transform IntermediateV3 to Sora 2 narrative style
    * 300-500 words optimal, emphasizing temporal flow
+   *
+   * @param intermediate - The intermediate V3 prompt object.
+   * @param objectLibrary - The object library service to resolve components.
+   * @returns A Promise resolving to the transformed Sora 2 narrative string.
+   * @throws Error if transformation fails.
    */
   async transform(
     intermediate: IntermediateV3,

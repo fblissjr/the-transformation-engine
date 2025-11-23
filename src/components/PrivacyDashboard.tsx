@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { networkMonitor, NetworkRequest } from '../../services/networkMonitor';
+import { networkMonitor, NetworkRequest } from '../services/networkMonitor';
 import { useProviders } from '../contexts/ProviderContext';
 
 interface PrivacyDashboardProps {
@@ -7,6 +7,17 @@ interface PrivacyDashboardProps {
   onClose: () => void;
 }
 
+/**
+ * PrivacyDashboard component
+ *
+ * A dashboard for monitoring network activity and local storage usage.
+ * Provides transparency about data handling and privacy features.
+ * Allows exporting an audit log of network requests.
+ *
+ * @param isOpen - Boolean indicating if the dashboard is visible.
+ * @param onClose - Callback to close the dashboard.
+ * @returns The rendered PrivacyDashboard component.
+ */
 export const PrivacyDashboard: React.FC<PrivacyDashboardProps> = ({ isOpen, onClose }) => {
   const { providers } = useProviders();
   const apiKey = providers.find(p => p.enabled)?.apiKeys?.[0]?.key || null;

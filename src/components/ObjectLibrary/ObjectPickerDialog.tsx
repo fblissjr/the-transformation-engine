@@ -22,6 +22,18 @@ const TYPE_COLORS: Record<string, string> = {
   custom: 'bg-gray-600'
 };
 
+/**
+ * ObjectPickerDialog component
+ *
+ * A modal dialog for selecting an object from the library.
+ * Supports filtering by object type (optionally fixed) and searching by name/description/tags.
+ *
+ * @param isOpen - Boolean indicating if the dialog is visible.
+ * @param objectType - (Optional) Pre-filter to a specific object type. If provided, type selector is hidden.
+ * @param onSelect - Callback when an object is selected.
+ * @param onClose - Callback to close the dialog.
+ * @returns The rendered ObjectPickerDialog component.
+ */
 export const ObjectPickerDialog: React.FC<ObjectPickerDialogProps> = ({
   isOpen,
   objectType: fixedType,
@@ -88,7 +100,7 @@ export const ObjectPickerDialog: React.FC<ObjectPickerDialogProps> = ({
           {!fixedType && (
             <ObjectTypeSelector
               selectedType={selectedType}
-              onTypeSelect={setSelectedType}
+              onTypeChange={setSelectedType}
             />
           )}
 

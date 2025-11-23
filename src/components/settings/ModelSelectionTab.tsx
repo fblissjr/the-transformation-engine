@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProviders } from '../../contexts/ProviderContext';
-import { taskAssignmentService } from '../../../services/taskAssignmentService';
+import { taskAssignmentService } from '../../services/taskAssignmentService';
 import { ModelPicker } from '../ModelPicker';
 import type { Model } from '../../../types/providers';
 import type { PromptSettings } from '../../../types';
@@ -11,6 +11,17 @@ interface ModelSelectionTabProps {
   onSwitchToProviders?: () => void;
 }
 
+/**
+ * ModelSelectionTab component
+ *
+ * Settings tab for configuring the default AI model for generation tasks.
+ * Allows selecting a provider and a specific model, which becomes the global default.
+ *
+ * @param settings - Current prompt settings.
+ * @param onSettingsChange - Callback when settings are updated.
+ * @param onSwitchToProviders - Optional callback to switch to the Providers tab.
+ * @returns The rendered ModelSelectionTab component.
+ */
 export const ModelSelectionTab: React.FC<ModelSelectionTabProps> = ({ settings, onSettingsChange, onSwitchToProviders }) => {
   const { providers, fetchModels } = useProviders();
   const [globalDefault, setGlobalDefault] = useState<{

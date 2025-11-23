@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode } from 'react';
 import { Prompt } from '../../types';
-import * as dbService from '../../services/dbService';
+import * as dbService from '../services/dbService';
 
 interface PromptLibraryContextType {
   prompts: Prompt[];
@@ -25,6 +25,15 @@ const PromptLibraryContext = createContext<PromptLibraryContextType | undefined>
 
 const PAGE_SIZE = 50;
 
+/**
+ * PromptLibraryProvider
+ *
+ * Manages the collection of prompts, including loading, pagination, search, and CRUD operations.
+ * Handles bulk actions like deletion and duplication.
+ *
+ * @param children - Child components to wrap.
+ * @returns The context provider.
+ */
 export const PromptLibraryProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>([]);
@@ -189,6 +198,14 @@ export const PromptLibraryProvider: React.FC<{children: ReactNode}> = ({ childre
   return <PromptLibraryContext.Provider value={value}>{children}</PromptLibraryContext.Provider>;
 };
 
+/**
+ * usePromptLibrary hook
+ *
+ * Custom hook to access the PromptLibraryContext.
+ *
+ * @returns The context value containing prompt library state and functions.
+ * @throws Error if used outside of a PromptLibraryProvider.
+ */
 export const usePromptLibrary = (): PromptLibraryContextType => {
   const context = useContext(PromptLibraryContext);
   if (context === undefined) {

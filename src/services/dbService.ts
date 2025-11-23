@@ -30,6 +30,11 @@ export const {
   generateThumbnail,
 } = indexedDbService;
 
+/**
+ * Ensures default data exists in the database.
+ * Checks for default prompt configuration and app settings.
+ * If missing, it creates them with default values.
+ */
 export async function ensureDefaultData() {
   // Ensure default prompt config exists
   const defaultConfig = await getDefaultPromptConfig();

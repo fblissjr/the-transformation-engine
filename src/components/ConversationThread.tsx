@@ -18,6 +18,19 @@ interface ConversationThreadProps {
   isLoading: boolean;
 }
 
+/**
+ * ConversationThread component
+ *
+ * Renders the conversation interface for handling revision requests, typically used
+ * when the AI needs more information to proceed with generation.
+ *
+ * @param revisionRequest - The current revision request containing questions.
+ * @param conversationHistory - Array of past conversation turns.
+ * @param onSubmitAnswers - Callback when user submits answers.
+ * @param onCancel - Callback when user cancels the conversation.
+ * @param isLoading - Boolean indicating if a request is in progress.
+ * @returns The rendered ConversationThread component.
+ */
 export const ConversationThread: React.FC<ConversationThreadProps> = ({
   revisionRequest,
   conversationHistory,

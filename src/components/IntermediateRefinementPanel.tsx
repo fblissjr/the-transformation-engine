@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import type { IntermediatePrompt, IntermediateStructure } from '../../types/intermediate';
-import { taskRouter } from '../../services/taskRouter';
+import { taskRouter } from '../services/taskRouter';
 import { TASK_IDS } from '../../types/providers';
 import { useProviders } from '../contexts/ProviderContext';
-import { generateRefinementPrompt } from '../../services/promptService';
+import { generateRefinementPrompt } from '../services/promptService';
 
 interface IntermediateRefinementPanelProps {
   intermediate: IntermediatePrompt | null;
@@ -11,11 +11,15 @@ interface IntermediateRefinementPanelProps {
 }
 
 /**
- * IntermediateRefinementPanel
+ * IntermediateRefinementPanel component
  *
  * UI for refining intermediate structures with AI assistance.
- * Shows structured fields (auto-populated from generation).
- * Provides "Refine" buttons to get AI suggestions for each field.
+ * Shows structured fields (auto-populated from generation) and provides
+ * "Refine" buttons to get AI suggestions for each field.
+ *
+ * @param intermediate - The intermediate prompt data to refine.
+ * @param onUpdate - Callback when the structure is updated.
+ * @returns The rendered IntermediateRefinementPanel component.
  */
 export const IntermediateRefinementPanel: React.FC<IntermediateRefinementPanelProps> = ({
   intermediate,

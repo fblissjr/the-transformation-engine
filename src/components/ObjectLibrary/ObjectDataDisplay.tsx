@@ -5,7 +5,17 @@ interface ObjectDataDisplayProps {
   schema?: any;
 }
 
-// Recursive component for nested data
+/**
+ * DataNode component
+ *
+ * Recursive component for rendering nested data structures (objects and arrays).
+ * Supports expanding/collapsing nested levels and rendering primitive values with color coding.
+ *
+ * @param label - The key or index label for the current node.
+ * @param value - The value of the node.
+ * @param depth - Current depth in the tree (default: 0).
+ * @returns The rendered DataNode component.
+ */
 const DataNode: React.FC<{ label: string; value: any; depth?: number }> = ({ label, value, depth = 0 }) => {
   const [isExpanded, setIsExpanded] = useState(depth < 2); // Auto-expand first 2 levels
 
@@ -84,6 +94,16 @@ const DataNode: React.FC<{ label: string; value: any; depth?: number }> = ({ lab
   );
 };
 
+/**
+ * ObjectDataDisplay component
+ *
+ * Displays a structured view of an object's data.
+ * Uses the recursive DataNode component to render nested structures.
+ *
+ * @param data - The data object to display.
+ * @param schema - (Optional) Schema definition for the data (unused currently).
+ * @returns The rendered ObjectDataDisplay component.
+ */
 export const ObjectDataDisplay: React.FC<ObjectDataDisplayProps> = ({
   data
 }) => {

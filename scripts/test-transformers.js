@@ -1,7 +1,9 @@
 // Test script for Phase 9.2 transformers
 // Run with: node scripts/test-transformers.js
 
-// Create a mock IntermediatePrompt with all structures populated
+/**
+ * Mock IntermediatePrompt with all structures populated for testing.
+ */
 const mockIntermediate = {
   id: 'test-intermediate-001',
   version: '1.0.0',

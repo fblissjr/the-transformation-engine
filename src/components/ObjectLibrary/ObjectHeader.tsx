@@ -19,6 +19,18 @@ const TYPE_COLORS: Record<string, string> = {
   custom: 'bg-gray-600'
 };
 
+/**
+ * ObjectHeader component
+ *
+ * Displays the header section for an object detail view.
+ * Includes the object's type badge, name, description, tags, and primary action buttons (Edit, Duplicate, Delete).
+ *
+ * @param object - The object record to display.
+ * @param onEdit - Callback for the edit action.
+ * @param onDelete - Callback for the delete action.
+ * @param onDuplicate - Optional callback for the duplicate action.
+ * @returns The rendered ObjectHeader component.
+ */
 export const ObjectHeader: React.FC<ObjectHeaderProps> = ({
   object,
   onEdit,

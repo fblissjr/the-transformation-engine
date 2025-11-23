@@ -7,6 +7,11 @@ import type {
   ModelCapabilities,
 } from "../../types/providers";
 
+/**
+ * OpenRouter Provider Implementation
+ * Adapts the OpenRouter API to the IProvider interface.
+ * Provides access to a wide range of LLMs via a unified API.
+ */
 export class OpenRouterProvider implements IProvider {
   readonly id: string;
   readonly name: string;
@@ -19,12 +24,24 @@ export class OpenRouterProvider implements IProvider {
   private apiKey: string;
   private baseUrl: string = "https://openrouter.ai/api/v1";
 
+  /**
+   * Constructs a new OpenRouterProvider instance.
+   * @param id - Unique identifier for this provider instance.
+   * @param name - Display name for the provider.
+   * @param apiKey - API key for authentication.
+   */
   constructor(id: string, name: string, apiKey: string) {
     this.id = id;
     this.name = name;
     this.apiKey = apiKey;
   }
 
+  /**
+   * Lists available models from the OpenRouter API.
+   * Maps OpenRouter model metadata to the Model interface.
+   * @returns A Promise resolving to an array of Model objects.
+   * @throws Error if the API request fails.
+   */
   async listModels(): Promise<Model[]> {
     const response = await fetch(`${this.baseUrl}/models`, {
       headers: {
@@ -65,6 +82,12 @@ export class OpenRouterProvider implements IProvider {
     });
   }
 
+  /**
+   * Generates content using the specified model and request parameters via OpenRouter.
+   * @param request - The generation request.
+   * @returns A Promise resolving to a GenerateResponse object.
+   * @throws Error if the API request fails.
+   */
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
     const startTime = Date.now();
 
@@ -112,6 +135,15 @@ export class OpenRouterProvider implements IProvider {
     };
   }
 
+  /**
+   * Generates content in a streaming fashion via OpenRouter.
+   * Handles SSE (Server-Sent Events) for streaming.
+   * @param request - The generation request.
+   * @param onToken - Callback for each token.
+   * @param onComplete - Callback for completion.
+   * @param onError - Callback for errors.
+   * @returns A Promise that resolves when the stream setup is complete.
+   */
   async generateStream(
     request: GenerateRequest,
     onToken: (token: string) => void,
@@ -206,6 +238,11 @@ export class OpenRouterProvider implements IProvider {
     }
   }
 
+  /**
+   * Maps OpenRouter finish reasons to the standardized format.
+   * @param reason - The raw finish reason string.
+   * @returns The mapped finish reason.
+   */
   private mapFinishReason(reason: string | undefined): "stop" | "length" | "error" {
     switch (reason) {
       case "stop":
@@ -218,6 +255,13 @@ export class OpenRouterProvider implements IProvider {
     }
   }
 
+  /**
+   * Generates a JSON response from the model via OpenRouter.
+   * Uses `response_format: { type: "json_object" }` if supported.
+   * @param request - The generation request.
+   * @returns A Promise resolving to the parsed JSON object.
+   * @throws Error if parsing fails or request fails.
+   */
   async generateJson(request: GenerateRequest): Promise<any> {
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: "POST",
@@ -252,6 +296,11 @@ export class OpenRouterProvider implements IProvider {
     }
   }
 
+  /**
+   * Extracts tags from the OpenRouter model object for categorization.
+   * @param model - The raw model object.
+   * @returns Array of tag strings.
+   */
   private extractTags(model: any): string[] {
     const tags: string[] = [];
 

@@ -33,6 +33,13 @@ export interface ExecuteTaskOptions {
   onError?: (error: Error) => void;
 }
 
+/**
+ * TaskRouter class
+ *
+ * Central hub for routing tasks to appropriate providers based on configuration.
+ * Handles task execution, streaming, conversation management, and token tracking.
+ * Supports specialized tasks like JSON generation, vision analysis, and image generation/editing.
+ */
 export class TaskRouter {
   private providerRegistry: ProviderRegistry;
 
@@ -41,7 +48,14 @@ export class TaskRouter {
   }
 
   /**
-   * Execute a task with automatic provider routing
+   * Execute a task with automatic provider routing.
+   *
+   * @param taskId - The ID of the task to execute.
+   * @param userPrompt - The user's input prompt.
+   * @param systemPrompt - The system prompt to guide the model.
+   * @param options - Execution options including conversation context and streaming callbacks.
+   * @returns The resulting ConversationTurn.
+   * @throws Error if provider or API key is missing.
    */
   async executeTask(
     taskId: TaskId,
@@ -180,7 +194,7 @@ export class TaskRouter {
   }
 
   /**
-   * Execute streaming generation
+   * Execute streaming generation.
    */
   private async executeStreaming(
     provider: IProvider,
@@ -232,7 +246,7 @@ export class TaskRouter {
   }
 
   /**
-   * Calculate cost for a generation (if pricing available)
+   * Calculate cost for a generation (if pricing available).
    */
   private calculateCost(
     response: GenerateResponse,
@@ -244,7 +258,12 @@ export class TaskRouter {
   }
 
   /**
-   * Execute a task with JSON mode (for structured outputs like schema inference)
+   * Execute a task with JSON mode (for structured outputs like schema inference).
+   *
+   * @param taskId - The ID of the task.
+   * @param userPrompt - The user input.
+   * @param systemPrompt - The system instruction.
+   * @returns The parsed JSON response.
    */
   async executeTaskJson(
     taskId: TaskId,
@@ -305,7 +324,14 @@ export class TaskRouter {
   }
 
   /**
-   * Execute a vision task with images/videos
+   * Execute a vision task with images/videos.
+   *
+   * @param taskId - The task ID.
+   * @param userPrompt - The text prompt.
+   * @param media - Array of media items (base64 data and mime type).
+   * @param systemPrompt - (Optional) System prompt.
+   * @param options - Execution options.
+   * @returns The ConversationTurn with the analysis.
    */
   async executeVisionTask(
     taskId: TaskId,
@@ -431,7 +457,13 @@ export class TaskRouter {
   }
 
   /**
-   * Execute image generation task
+   * Execute image generation task.
+   *
+   * @param projectId - The project ID.
+   * @param prompt - The image generation prompt.
+   * @param structuredYaml - Structured metadata.
+   * @param options - Optional generation parameters.
+   * @returns Object containing imageId and success status.
    */
   async executeImageGeneration(
     projectId: string,
@@ -504,7 +536,14 @@ export class TaskRouter {
   }
 
   /**
-   * Execute image editing task
+   * Execute image editing task.
+   *
+   * @param imageId - The ID of the source image.
+   * @param projectId - The project ID.
+   * @param editType - The type of edit operation.
+   * @param instruction - The instruction for editing.
+   * @param parameters - Additional parameters.
+   * @returns Object containing new imageId and success status.
    */
   async executeImageEdit(
     imageId: string,
@@ -577,7 +616,12 @@ export class TaskRouter {
   }
 
   /**
-   * Refine an existing turn (creates new turn with parentTurnId)
+   * Refine an existing turn (creates new turn with parentTurnId).
+   *
+   * @param turnId - The ID of the turn to refine.
+   * @param refinementInstruction - The instruction for refinement.
+   * @param options - Execution options.
+   * @returns The resulting ConversationTurn.
    */
   async refineTurn(
     turnId: string,

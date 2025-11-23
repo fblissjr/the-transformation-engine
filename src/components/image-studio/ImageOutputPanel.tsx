@@ -4,13 +4,15 @@ import { getImageGeneration, getImageGenerationsByProject } from '../../services
 import type { ImageGeneration } from '../../types/imageTypes';
 
 /**
- * ImageOutputPanel
+ * ImageOutputPanel component
  *
- * Displays generated images in RightPanel:
- * - Current image preview (large)
- * - Metadata (model, aspect ratio, timestamp)
- * - Actions (download, use as first frame)
- * - Generation history (recent generations)
+ * Displays the generated image, metadata, and history for the current project.
+ * Allows downloading the image and using it as a first frame for video generation (future feature).
+ *
+ * @param projectId - The ID of the current project.
+ * @param currentImageId - The ID of the currently displayed image.
+ * @param onUseAsFirstFrame - Optional callback to use the image as a first frame.
+ * @returns The rendered ImageOutputPanel component.
  */
 
 interface ImageOutputPanelProps {

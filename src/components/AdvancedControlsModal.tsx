@@ -10,6 +10,16 @@ interface AdvancedControlsModalProps {
 
 type Tab = 'dialogue' | 'soundscape' | 'pacing';
 
+/**
+ * AdvancedControlsModal component
+ *
+ * A modal dialog for configuring advanced prompt settings, including dialogue, soundscape, and pacing.
+ *
+ * @param settings - Current prompt settings.
+ * @param setSettings - State setter for prompt settings.
+ * @param onClose - Callback to close the modal.
+ * @returns The rendered AdvancedControlsModal component.
+ */
 const AdvancedControlsModal: React.FC<AdvancedControlsModalProps> = ({ settings, setSettings, onClose }) => {
   const [activeTab, setActiveTab] = useState<Tab>('dialogue');
   
@@ -96,10 +106,31 @@ const AdvancedControlsModal: React.FC<AdvancedControlsModalProps> = ({ settings,
   );
 };
 
+/**
+ * TabButton component
+ *
+ * A simple button for switching tabs in the modal.
+ *
+ * @param label - The tab label.
+ * @param isActive - Whether the tab is currently active.
+ * @param onClick - Callback when the tab is clicked.
+ * @returns The rendered TabButton component.
+ */
 const TabButton: React.FC<{ label: string; isActive: boolean; onClick: () => void }> = ({ label, isActive, onClick }) => (
   <button onClick={onClick} className={`px-4 py-2 text-sm font-semibold transition-colors outline-none ${isActive ? 'text-amber-400 border-b-2 border-amber-400' : 'text-gray-400 hover:text-white border-b-2 border-transparent'}`}>{label}</button>
 );
 
+/**
+ * TextareaControl component
+ *
+ * A labeled textarea input for entering multi-line text settings.
+ *
+ * @param label - The input label.
+ * @param value - The current value.
+ * @param placeholder - Placeholder text.
+ * @param onChange - Callback when the value changes.
+ * @returns The rendered TextareaControl component.
+ */
 const TextareaControl: React.FC<{label: string, value: string, placeholder: string, onChange: (value: string) => void}> = ({ label, value, placeholder, onChange }) => (
     <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>

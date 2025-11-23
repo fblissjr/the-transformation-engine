@@ -17,6 +17,20 @@ export type TransitionCategory =
 
 export type TransitionDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
+/**
+ * TransitionPattern interface
+ *
+ * Defines the structure of a transition pattern.
+ *
+ * @property id - Unique identifier for the pattern.
+ * @property name - Display name of the pattern.
+ * @property category - Category of the transition.
+ * @property description - Short description of the pattern.
+ * @property example - Example usage scenario.
+ * @property useCase - Recommended use cases.
+ * @property difficulty - Execution difficulty level.
+ * @property fragmentPath - Path to the markdown fragment file.
+ */
 export interface TransitionPattern {
   id: string;
   name: string;
@@ -245,9 +259,17 @@ const TRANSITION_PATTERNS: TransitionPattern[] = [
   }
 ];
 
+/**
+ * TransitionPatternService class
+ *
+ * Service for managing and retrieving transition patterns.
+ * Provides methods to search patterns, load their content, and get metadata.
+ */
 class TransitionPatternService {
   /**
    * Get all transition patterns
+   *
+   * @returns Array of all available TransitionPattern objects.
    */
   getTransitionPatterns(): TransitionPattern[] {
     return TRANSITION_PATTERNS;
@@ -255,6 +277,9 @@ class TransitionPatternService {
 
   /**
    * Get pattern by ID
+   *
+   * @param id - The ID of the pattern to retrieve.
+   * @returns The TransitionPattern object or undefined if not found.
    */
   getPatternById(id: string): TransitionPattern | undefined {
     return TRANSITION_PATTERNS.find(p => p.id === id);
@@ -262,6 +287,9 @@ class TransitionPatternService {
 
   /**
    * Get patterns by category
+   *
+   * @param category - The category to filter by.
+   * @returns Array of TransitionPattern objects in the specified category.
    */
   getPatternsByCategory(category: TransitionCategory): TransitionPattern[] {
     return TRANSITION_PATTERNS.filter(p => p.category === category);
@@ -269,6 +297,9 @@ class TransitionPatternService {
 
   /**
    * Get patterns by difficulty
+   *
+   * @param difficulty - The difficulty level to filter by.
+   * @returns Array of TransitionPattern objects with the specified difficulty.
    */
   getPatternsByDifficulty(difficulty: TransitionDifficulty): TransitionPattern[] {
     return TRANSITION_PATTERNS.filter(p => p.difficulty === difficulty);
@@ -277,6 +308,10 @@ class TransitionPatternService {
   /**
    * Load fragment content for a pattern
    * Returns the raw markdown content of the transition pattern
+   *
+   * @param id - The ID of the pattern.
+   * @returns A Promise resolving to the markdown content string.
+   * @throws Error if the pattern or fragment cannot be found.
    */
   async loadPatternFragment(id: string): Promise<string> {
     const pattern = this.getPatternById(id);
@@ -295,6 +330,9 @@ class TransitionPatternService {
 
   /**
    * Search patterns by keyword (searches name, description, useCase)
+   *
+   * @param query - The search query string.
+   * @returns Array of matching TransitionPattern objects.
    */
   searchPatterns(query: string): TransitionPattern[] {
     const lowerQuery = query.toLowerCase();
@@ -308,6 +346,8 @@ class TransitionPatternService {
 
   /**
    * Get all unique categories
+   *
+   * @returns Array of all unique category strings.
    */
   getCategories(): TransitionCategory[] {
     return ['camera', 'natural', 'match-cut', 'environmental', 'creative', 'compound'];
@@ -315,6 +355,8 @@ class TransitionPatternService {
 
   /**
    * Get category counts for UI
+   *
+   * @returns A record object mapping category names to their count of patterns.
    */
   getCategoryCounts(): Record<TransitionCategory, number> {
     const counts: Record<TransitionCategory, number> = {

@@ -9,9 +9,18 @@ import type { IntermediateV3 } from '../../../types/intermediate';
 import type { ObjectLibraryService } from '../objectLibraryService';
 import { TransformerUtils } from './TransformerUtils';
 
+/**
+ * Transformer class for converting IntermediateV3 objects into Veo 3.1 Continuous Narrative format.
+ * This method constructs a natural language paragraph, which is optimal for Veo 3.1 (300-500 words).
+ */
 export class Veo3ContinuousTransformer {
   /**
    * Transform IntermediateV3 to Veo 3.1 continuous narrative
+   *
+   * @param intermediate - The intermediate V3 prompt object.
+   * @param objectLibrary - The object library service to resolve components.
+   * @returns A Promise resolving to the transformed Veo 3.1 continuous narrative string.
+   * @throws Error if transformation fails.
    */
   async transform(
     intermediate: IntermediateV3,

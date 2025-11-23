@@ -10,17 +10,30 @@
  */
 export type ComponentBase<T> = TextComponent | ObjectReferenceComponent<T>;
 
+/**
+ * Component represented by simple text.
+ */
 export interface TextComponent {
+  /** Discriminator for component type */
   type: 'text';
+  /** The text content */
   text: string;
 }
 
+/**
+ * Component represented by a reference to an object in the library.
+ */
 export interface ObjectReferenceComponent<T> {
+  /** Discriminator for component type */
   type: 'object_reference';
-  objectId: string; // ID in object library
-  objectType: string; // 'character', 'location', 'camera', etc.
-  overrides?: Partial<T>; // Scene-specific modifications
-  resolvedData?: T; // Cached resolved object (not persisted)
+  /** ID of the object in the object library */
+  objectId: string;
+  /** Type of object (e.g., 'character', 'location', 'camera') */
+  objectType: string;
+  /** Optional overrides for object properties specific to this usage */
+  overrides?: Partial<T>;
+  /** Cached resolved object data (not persisted to DB) */
+  resolvedData?: T;
 }
 
 // ==================== Scene Components ====================
@@ -30,10 +43,15 @@ export interface ObjectReferenceComponent<T> {
  * Each component can be text-based or reference an object from the library
  */
 export interface SceneComponents {
+  /** Camera and visual style settings */
   cinematography: CinematographyComponent;
+  /** Primary subject(s) of the scene */
   subject: SubjectComponent;
+  /** Actions and movements occurring in the scene */
   action: ActionComponent;
+  /** Setting, environment, and temporal context */
   context: ContextComponent;
+  /** Mood, tone, and artistic style */
   style: StyleComponent;
 }
 
@@ -51,14 +69,21 @@ export type CinematographyComponent =
  * Structured camera data (when using object references)
  */
 export interface CameraObjectData {
+  /** Type of shot framing */
   shotType: ShotType;
+  /** Angle of the camera relative to the subject */
   angle: CameraAngle;
+  /** Camera movement definition */
   movement: CameraMovement;
+  /** Lens settings and characteristics */
   lens?: LensSettings;
+  /** Stylistic description of the camera work */
   style?: string; // 'cinematic', 'documentary', 'handheld', etc.
-  cinematicTechniques?: CinematicTechnique[]; // Advanced editing/camera techniques
+  /** Advanced cinematic techniques employed */
+  cinematicTechniques?: CinematicTechnique[];
 }
 
+/** Types of shot framing */
 export type ShotType =
   | 'extreme-wide'
   | 'wide'
@@ -68,6 +93,7 @@ export type ShotType =
   | 'close-up'
   | 'extreme-close-up';
 
+/** Camera angles */
 export type CameraAngle =
   | 'eye-level'          // Neutral, human height perspective
   | 'high-angle'         // Above subject looking down
@@ -80,7 +106,9 @@ export type CameraAngle =
   | 'over-the-shoulder'  // OTS shot, common in dialogue
   | 'point-of-view';     // POV shot from character's eyes
 
+/** Camera movement definition */
 export interface CameraMovement {
+  /** Type of movement */
   type:
     | 'static'
     | 'pan'
@@ -91,17 +119,26 @@ export interface CameraMovement {
     | 'zoom'
     | 'handheld'
     | 'steadicam';
+  /** Speed of the movement */
   speed?: 'slow' | 'medium' | 'fast';
+  /** Direction of the movement */
   direction?: string; // 'left-to-right', 'forward', 'circular', etc.
+  /** Easing function for the movement */
   easing?: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
 }
 
+/** Lens configuration */
 export interface LensSettings {
-  type?: LensType;                         // Lens type taxonomy
-  focalLength?: string;                    // '35mm', '50mm', '85mm', etc.
-  aperture?: string;                       // 'f/1.4', 'f/2.8', 'f/5.6', etc.
+  /** Type of lens */
+  type?: LensType;
+  /** Focal length (e.g., '35mm', '50mm') */
+  focalLength?: string;
+  /** Aperture setting (e.g., 'f/1.4', 'f/2.8') */
+  aperture?: string;
+  /** Depth of field description */
   depthOfField?: 'shallow' | 'medium' | 'deep';
-  opticalEffects?: OpticalEffect[];       // Special optical effects
+  /** Special optical effects */
+  opticalEffects?: OpticalEffect[];
 }
 
 /**
@@ -152,12 +189,15 @@ export type SubjectComponent =
  * For scenes with multiple subjects
  */
 export interface MultiSubjectComponent {
+  /** Discriminator for multi-subject type */
   type: 'multi_subject';
+  /** List of subjects */
   subjects: Array<
     | TextComponent
     | ObjectReferenceComponent<CharacterObjectData>
     | ObjectReferenceComponent<PropObjectData>
   >;
+  /** Description of relationship between subjects */
   relationship?: string; // How subjects relate: 'together', 'opposite sides', etc.
 }
 
@@ -165,7 +205,9 @@ export interface MultiSubjectComponent {
  * Structured character data (when using object references)
  */
 export interface CharacterObjectData {
+  /** Character name */
   name: string;
+  /** Appearance details */
   appearance: {
     head: {
       age?: string;
@@ -181,27 +223,34 @@ export interface CharacterObjectData {
       augmentations?: string[]; // For sci-fi/fantasy
     };
   };
+  /** Personality traits and state */
   personality?: {
     traits: string[];
     motivations?: string[];
     emotional_state?: string;
   };
+  /** Equipment or held items */
   equipment?: string[];
-  relationships?: Record<string, string>; // Other character IDs
+  /** Relationships with other characters (ID mapping) */
+  relationships?: Record<string, string>;
 }
 
 /**
  * Structured prop data (when using object references)
  */
 export interface PropObjectData {
+  /** Prop name */
   name: string;
+  /** Appearance details */
   appearance: {
     material: string;
     color: string;
     size: string;
     condition?: string;
   };
+  /** Prop function or usage */
   function?: string;
+  /** Symbolic meaning */
   symbolism?: string;
 }
 
@@ -212,11 +261,15 @@ export interface PropObjectData {
  * From Google Cloud Veo 3.1 guide "Temporal Elements" section
  */
 export interface TemporalPacing {
+  /** Speed of action relative to real-time */
   speed: TemporalSpeed;
+  /** Intensity of the effect */
   intensity?: 'subtle' | 'moderate' | 'extreme';
-  description?: string; // What's being shown in altered time
+  /** Description of what is being shown in altered time */
+  description?: string;
 }
 
+/** Speed of temporal pacing */
 export type TemporalSpeed =
   | 'slow-motion'    // Slower than real-time (emphasize details, drama)
   | 'normal'         // Real-time
@@ -228,19 +281,27 @@ export type TemporalSpeed =
  * Always structured (not object references, as actions are scene-specific)
  */
 export interface ActionComponent {
+  /** Discriminator for action component */
   type: 'action';
 
   // Primary action
-  verb: string; // 'walks', 'investigates', 'fights', etc.
+  /** Main verb describing the action */
+  verb: string;
+  /** Target of the action */
   target?: ActionTarget;
-  manner?: string; // 'slowly', 'cautiously', 'aggressively', etc.
+  /** Manner in which action is performed */
+  manner?: string;
 
   // Temporal info
-  duration?: string; // 'over 3 seconds', 'gradually', 'suddenly'
-  timing?: string; // 'at the start', 'halfway through', 'at the end'
-  temporalPacing?: TemporalPacing; // Time manipulation effects (slow-motion, time-lapse, etc.)
+  /** Duration of the action */
+  duration?: string;
+  /** Timing within the scene */
+  timing?: string;
+  /** Temporal pacing settings */
+  temporalPacing?: TemporalPacing;
 
   // Secondary actions (optional)
+  /** Additional concurrent or sequential actions */
   secondaryActions?: Array<{
     verb: string;
     target?: ActionTarget;
@@ -248,13 +309,18 @@ export interface ActionComponent {
   }>;
 }
 
+/** Target of an action */
 export type ActionTarget =
   | string // Simple text: 'the door', 'camera'
   | ObjectReference; // Reference to object: character ID, prop ID, etc.
 
+/** Reference to an object as an action target */
 export interface ObjectReference {
+  /** Discriminator for object reference */
   type: 'object_reference';
+  /** ID of the referenced object */
   objectId: string;
+  /** Type of the referenced object */
   objectType: string;
 }
 
@@ -265,25 +331,35 @@ export interface ObjectReference {
  * Location can be text or reference to LocationObject
  */
 export interface ContextComponent {
+  /** Discriminator for context component */
   type: 'context';
 
   // Location
+  /** Location details */
   location?: LocationComponent;
 
   // Temporal context
-  timeOfDay?: string; // 'dawn', 'midday', 'dusk', 'night', etc.
+  /** Time of day description */
+  timeOfDay?: string;
+  /** Season description */
   season?: string;
-  era?: string; // 'modern', '1940s', 'far future', etc.
+  /** Historical era description */
+  era?: string;
 
   // Environmental
+  /** Weather conditions */
   weather?: WeatherConditions;
-  atmosphere?: string; // 'tense', 'peaceful', 'chaotic', etc.
+  /** Atmospheric description */
+  atmosphere?: string;
 
   // Additional context
+  /** Cultural context notes */
   culturalContext?: string;
+  /** Historical context notes */
   historicalContext?: string;
 }
 
+/** Location component definition */
 export type LocationComponent =
   | TextComponent
   | ObjectReferenceComponent<LocationObjectData>;
@@ -316,32 +392,47 @@ export type LightingQuality =
   | 'backlit'          // Light from behind subject
   | 'silhouette';      // Subject in shadow against bright background
 
+/** Structured location data */
 export interface LocationObjectData {
+  /** Location name */
   name: string;
+  /** Setting details */
   setting: {
     geography: string; // 'urban', 'forest', 'desert', 'underwater', etc.
     architecture?: string; // 'modern', 'gothic', 'brutalist', etc.
     scale: string; // 'intimate', 'vast', 'claustrophobic', etc.
   };
+  /** Lighting conditions */
   lighting: {
     quality: LightingQuality; // Now typed with 17 lighting options
     sources: string[]; // 'sunlight', 'neon signs', 'firelight', etc.
     colorTemperature?: string; // 'warm', 'cool', 'neutral'
   };
-  details: string[]; // Notable features
-  ambientSounds?: string[]; // For audio context
+  /** Notable details */
+  details: string[];
+  /** Ambient sounds */
+  ambientSounds?: string[];
 }
 
+/** Weather condition details */
 export interface WeatherConditions {
-  condition: string; // 'clear', 'rainy', 'stormy', 'snowy', 'foggy'
+  /** Main condition (e.g., 'rainy') */
+  condition: string;
+  /** Intensity of the weather */
   intensity?: 'light' | 'moderate' | 'heavy';
+  /** Visibility conditions */
   visibility?: 'clear' | 'reduced' | 'obscured';
-  progression?: WeatherProgression; // For changing weather
+  /** Progression of weather over time */
+  progression?: WeatherProgression;
 }
 
+/** Weather progression over time */
 export interface WeatherProgression {
+  /** Starting condition */
   from: string;
+  /** Ending condition */
   to: string;
+  /** Duration of change */
   duration: string;
 }
 
@@ -397,25 +488,32 @@ export type MoodTone =
  * Always structured (not object references, as style is scene-specific)
  */
 export interface StyleComponent {
+  /** Discriminator for style component */
   type: 'style';
 
   // Visual style tags (fragment-based, composable)
-  visualStyle?: string[]; // 'cinematic', 'noir', 'saturated', 'desaturated'
+  /** List of visual style tags */
+  visualStyle?: string[];
 
   // Mood/emotion (now typed with 27 options)
+  /** List of moods or tones */
   mood?: MoodTone[];
 
   // Color palette
-  colorPalette?: string[]; // 'deep blues', 'warm oranges', 'monochrome'
+  /** Color palette description */
+  colorPalette?: string[];
 
   // References/influences (not literal copying)
-  styleReferences?: string[]; // 'film noir aesthetic', 'Blade Runner atmosphere'
+  /** Stylistic references */
+  styleReferences?: string[];
 
   // Technical style
-  technique?: string[]; // 'shallow depth of field', 'high contrast', 'soft focus'
+  /** Technical style descriptions */
+  technique?: string[];
 
   // Wildcard patterns (gemimg-inspired)
-  wildcards?: Record<string, string[]>; // { 'lighting': ['neon', 'natural', 'dramatic'] }
+  /** Wildcard pattern configurations */
+  wildcards?: Record<string, string[]>;
 }
 
 // ==================== Transition Types ====================

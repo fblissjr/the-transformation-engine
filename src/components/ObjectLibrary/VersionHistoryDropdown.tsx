@@ -9,6 +9,18 @@ interface VersionHistoryDropdownProps {
   onRevert?: (versionNumber: number) => void;
 }
 
+/**
+ * VersionHistoryDropdown component
+ *
+ * Displays a dropdown list of version history for a specific object.
+ * Allows viewing changelogs and reverting to previous versions.
+ *
+ * @param objectId - The ID of the object.
+ * @param objectType - The type of the object.
+ * @param currentVersion - The current version number of the object.
+ * @param onRevert - Callback when a version is reverted.
+ * @returns The rendered VersionHistoryDropdown component.
+ */
 export const VersionHistoryDropdown: React.FC<VersionHistoryDropdownProps> = ({
   objectId,
   objectType,

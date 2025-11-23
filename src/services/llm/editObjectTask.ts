@@ -8,7 +8,7 @@
  * - Style transformations ("make this more cyberpunk")
  */
 
-import type { TaskRouter } from '../../../services/taskRouter';
+import type { TaskRouter } from '../../taskRouter';
 import { TASK_IDS } from '../../../types/providers';
 
 export interface EditObjectInput {
@@ -105,7 +105,12 @@ IMPORTANT:
 - No markdown formatting`;
 
 /**
- * Execute EDIT_OBJECT task
+ * Executes the LLM_OBJECT_EDIT task to modify object data based on instructions.
+ *
+ * @param input - The input object containing current data, instructions, and preservation rules.
+ * @param taskRouter - The task router instance used to communicate with the LLM.
+ * @returns A Promise resolving to the EditObjectOutput containing edited data and a changelog.
+ * @throws Error if the LLM response is invalid or if execution fails.
  */
 export async function executeEditObjectTask(
   input: EditObjectInput,
@@ -203,8 +208,11 @@ export async function executeEditObjectTask(
 // ============================================================================
 
 /**
- * Get nested value from object using dot notation
- * Example: getNestedValue({ a: { b: { c: 1 } } }, 'a.b.c') => 1
+ * Retrieves a nested value from an object using dot notation.
+ *
+ * @param obj - The source object.
+ * @param path - The property path (e.g., "a.b.c").
+ * @returns The value at the specified path, or undefined if not found.
  */
 function getNestedValue(obj: any, path: string): any {
   const keys = path.split('.');
@@ -221,8 +229,11 @@ function getNestedValue(obj: any, path: string): any {
 }
 
 /**
- * Set nested value in object using dot notation
- * Example: setNestedValue({ a: { b: {} } }, 'a.b.c', 1) => { a: { b: { c: 1 } } }
+ * Sets a nested value in an object using dot notation, creating intermediate objects if necessary.
+ *
+ * @param obj - The target object to modify.
+ * @param path - The property path (e.g., "a.b.c").
+ * @param value - The value to set.
  */
 function setNestedValue(obj: any, path: string, value: any): void {
   const keys = path.split('.');

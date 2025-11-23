@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import type { Provider, Model } from '../../types/providers';
-import { providerService } from '../../services/providerService';
-import { ProviderRegistry } from '../../services/providerRegistry';
+import { providerService } from '../services/providerService';
+import { ProviderRegistry } from '../services/providerRegistry';
 
 interface ProviderContextType {
   providers: Provider[];
@@ -30,6 +30,16 @@ interface ProviderContextType {
 
 const ProviderContext = createContext<ProviderContextType | undefined>(undefined);
 
+/**
+ * ProviderProvider
+ *
+ * Manages the state and operations for AI providers.
+ * Handles adding, updating, deleting providers, managing API keys,
+ * testing connections, and fetching available models.
+ *
+ * @param children - Child components to wrap.
+ * @returns The context provider.
+ */
 export const ProviderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [activeProviderId, setActiveProviderId] = useState<string | null>(null);
@@ -203,6 +213,14 @@ export const ProviderProvider: React.FC<{ children: ReactNode }> = ({ children }
   return <ProviderContext.Provider value={value}>{children}</ProviderContext.Provider>;
 };
 
+/**
+ * useProviders hook
+ *
+ * Custom hook to access the ProviderContext.
+ *
+ * @returns The context value containing provider state and functions.
+ * @throws Error if used outside of a ProviderProvider.
+ */
 export const useProviders = () => {
   const context = useContext(ProviderContext);
   if (!context) {
