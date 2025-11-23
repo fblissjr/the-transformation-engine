@@ -9,10 +9,19 @@ import type { IntermediateV3 } from '../../../types/intermediate';
 import type { ObjectLibraryService } from '../objectLibraryService';
 import { TransformerUtils } from './TransformerUtils';
 
+/**
+ * Transformer class for converting IntermediateV3 objects into Sora 2 Technical Style format.
+ * This format emphasizes precise technical details and specifications.
+ */
 export class Sora2TechnicalTransformer {
   /**
    * Transform IntermediateV3 to Sora 2 technical style
    * More detailed and specific than narrative style
+   *
+   * @param intermediate - The intermediate V3 prompt object.
+   * @param objectLibrary - The object library service to resolve components.
+   * @returns A Promise resolving to the transformed Sora 2 technical specification string.
+   * @throws Error if transformation fails.
    */
   async transform(
     intermediate: IntermediateV3,

@@ -16,6 +16,13 @@ export interface StorageOptions {
   ttl?: number; // Time to live in milliseconds, null = no expiration
 }
 
+/**
+ * EncryptedStorageService class
+ *
+ * Handles encryption, decryption, and storage of sensitive data using the Web Crypto API.
+ * Data is stored in localStorage with an optional expiration time.
+ * The encryption key is derived from browser characteristics (fingerprinting).
+ */
 class EncryptedStorageService {
   private readonly STORAGE_PREFIX = 'enc_';
 
@@ -48,6 +55,10 @@ class EncryptedStorageService {
 
   /**
    * Encrypt and store data
+   *
+   * @param key - The storage key.
+   * @param value - The value to encrypt and store.
+   * @param options - Optional storage settings (e.g., TTL).
    */
   async set(key: string, value: string, options: StorageOptions = {}): Promise<void> {
     try {
@@ -77,6 +88,9 @@ class EncryptedStorageService {
 
   /**
    * Retrieve and decrypt data
+   *
+   * @param key - The storage key.
+   * @returns The decrypted string value, or null if not found or expired.
    */
   async get(key: string): Promise<string | null> {
     try {
@@ -114,6 +128,8 @@ class EncryptedStorageService {
 
   /**
    * Remove encrypted data
+   *
+   * @param key - The storage key to remove.
    */
   async remove(key: string): Promise<void> {
     localStorage.removeItem(this.STORAGE_PREFIX + key);
@@ -121,6 +137,9 @@ class EncryptedStorageService {
 
   /**
    * Check if key exists and is not expired
+   *
+   * @param key - The storage key.
+   * @returns True if the key exists and is valid.
    */
   async has(key: string): Promise<boolean> {
     const value = await this.get(key);
@@ -129,6 +148,9 @@ class EncryptedStorageService {
 
   /**
    * Get expiration time for a key
+   *
+   * @param key - The storage key.
+   * @returns The expiration timestamp or null.
    */
   async getExpiration(key: string): Promise<number | null> {
     const storedData = localStorage.getItem(this.STORAGE_PREFIX + key);
@@ -187,6 +209,12 @@ async function deriveKey(salt: Uint8Array): Promise<CryptoKey> {
   );
 }
 
+/**
+ * Encrypts a string using the derived key.
+ *
+ * @param data - The string data to encrypt.
+ * @returns A JSON string containing the ciphertext, IV, and salt.
+ */
 export async function encryptData(data: string): Promise<string> {
   try {
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -213,6 +241,12 @@ export async function encryptData(data: string): Promise<string> {
   }
 }
 
+/**
+ * Decrypts a JSON string containing encrypted data.
+ *
+ * @param encryptedString - The JSON string returned by encryptData.
+ * @returns The decrypted string.
+ */
 export async function decryptData(encryptedString: string): Promise<string> {
   try {
     const entry: EncryptedData = JSON.parse(encryptedString);

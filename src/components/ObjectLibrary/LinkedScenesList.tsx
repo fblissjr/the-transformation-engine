@@ -6,6 +6,17 @@ interface LinkedScenesListProps {
   onUnlink?: (sceneId: string) => void;
 }
 
+/**
+ * LinkedScenesList component
+ *
+ * Displays a list of scenes linked to a specific object.
+ * Provides actions to navigate to a scene or unlink it from the object.
+ *
+ * @param sceneIds - Array of IDs for the linked scenes.
+ * @param onNavigateToScene - Optional callback to navigate to a scene.
+ * @param onUnlink - Optional callback to unlink a scene.
+ * @returns The rendered LinkedScenesList component.
+ */
 export const LinkedScenesList: React.FC<LinkedScenesListProps> = ({
   sceneIds,
   onNavigateToScene,

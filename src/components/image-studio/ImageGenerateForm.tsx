@@ -13,22 +13,19 @@ import {
 } from './FormPrimitives';
 import { FragmentBrowser } from './FragmentBrowser';
 import { CharacterSelector } from './CharacterSelector';
-import { taskRouter } from '../../../services/taskRouter';
+import { taskRouter } from '../../services/taskRouter';
 
 /**
- * ImageGenerateForm
+ * ImageGenerateForm component
  *
- * Minimal image generation form (Week 1 MVP):
- * - Large prompt textarea
- * - Model selection (compact inline)
- * - Aspect ratio selection (compact inline)
- * - Generate button
+ * The main form for generating images.
+ * Allows users to enter a prompt, select settings like aspect ratio and image count,
+ * and progressively reveal advanced features like reference images, characters, and fragments.
  *
- * Progressive disclosure features (Week 2+) will add:
- * - Reference images
- * - Advanced settings
- * - Fragment browser
- * - Character selector
+ * @param projectId - The current project ID.
+ * @param onImageGenerated - Callback when an image is successfully generated.
+ * @param onError - Callback when an error occurs.
+ * @returns The rendered ImageGenerateForm component.
  */
 
 interface ImageGenerateFormProps {

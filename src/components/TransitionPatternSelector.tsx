@@ -26,6 +26,20 @@ import { Search, ChevronDown, Info } from 'lucide-react';
 
 // ==================== Type Definitions ====================
 
+/**
+ * TransitionPattern interface
+ *
+ * Defines the structure of a transition pattern.
+ *
+ * @property id - Unique identifier for the pattern.
+ * @property name - Display name of the pattern.
+ * @property category - Category of the pattern (camera, natural, etc.).
+ * @property description - Short description of the pattern.
+ * @property example - Example usage of the pattern.
+ * @property useCase - Best use cases for the pattern.
+ * @property difficulty - Difficulty level of executing the transition.
+ * @property fragmentPath - Path to the prompt fragment associated with this pattern.
+ */
 export interface TransitionPattern {
   id: string;
   name: string;
@@ -277,6 +291,18 @@ const MOCK_PATTERNS: TransitionPattern[] = [
 
 // ==================== Component ====================
 
+/**
+ * TransitionPatternSelector component
+ *
+ * A component for selecting a transition pattern for scene extensions.
+ * Allows filtering by search query and category.
+ * Displays details and a preview of the selected pattern.
+ *
+ * @param selectedPattern - The ID of the currently selected pattern.
+ * @param onPatternSelect - Callback when a pattern is selected.
+ * @param extensionMethod - The current extension method ('continue', 'cutTo', or 'transition').
+ * @returns The rendered TransitionPatternSelector component.
+ */
 export const TransitionPatternSelector: React.FC<TransitionPatternSelectorProps> = ({
   selectedPattern,
   onPatternSelect,

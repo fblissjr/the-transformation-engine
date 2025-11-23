@@ -23,12 +23,20 @@ interface CachedPresets {
   timestamp: number;
 }
 
+/**
+ * SchemaKeyService class
+ *
+ * Handles the lifecycle of schema key presets: loading, saving, deleting, and auto-suggesting.
+ * Maintains an in-memory cache for performance.
+ */
 class SchemaKeyService {
   private globalPresetsCache: SchemaKeyPreset[] | null = null;
   private customPresetsCache: Map<string, SchemaKeyPreset> = new Map();
 
   /**
    * Load global presets from schema_presets.json
+   *
+   * @returns A Promise resolving to an array of SchemaKeyPreset objects.
    */
   async loadGlobalPresets(): Promise<SchemaKeyPreset[]> {
     if (this.globalPresetsCache) {
@@ -67,6 +75,8 @@ class SchemaKeyService {
 
   /**
    * Get all custom user-created presets from localStorage
+   *
+   * @returns An array of SchemaKeyPreset objects.
    */
   getCustomPresets(): SchemaKeyPreset[] {
     try {
@@ -92,6 +102,8 @@ class SchemaKeyService {
 
   /**
    * Get all presets (global + custom)
+   *
+   * @returns A Promise resolving to an array of all SchemaKeyPreset objects.
    */
   async getAllPresets(): Promise<SchemaKeyPreset[]> {
     const global = await this.loadGlobalPresets();
@@ -101,6 +113,9 @@ class SchemaKeyService {
 
   /**
    * Get preset by ID (checks both global and custom)
+   *
+   * @param id - The ID of the preset to retrieve.
+   * @returns A Promise resolving to the SchemaKeyPreset object or null if not found.
    */
   async getPresetById(id: string): Promise<SchemaKeyPreset | null> {
     // Check cache first
@@ -122,6 +137,9 @@ class SchemaKeyService {
 
   /**
    * Save custom preset to localStorage
+   *
+   * @param preset - The SchemaKeyPreset object to save.
+   * @throws Error if the preset is invalid.
    */
   saveCustomPreset(preset: SchemaKeyPreset): void {
     // Validate
@@ -153,6 +171,8 @@ class SchemaKeyService {
 
   /**
    * Delete custom preset from localStorage
+   *
+   * @param id - The ID of the custom preset to delete.
    */
   deleteCustomPreset(id: string): void {
     const custom = this.getCustomPresets();
@@ -171,6 +191,10 @@ class SchemaKeyService {
    * 4. Camera movement keywords + Veo 3.1 → veo31-cinematic
    * 5. Sora 2 → sora2-standard
    * 6. Default → format-specific default or generic-versatile
+   *
+   * @param classification - The scene classification data.
+   * @param outputFormat - The desired output format ('veo3', 'sora2', or 'generic').
+   * @returns A Promise resolving to a SuggestionResult containing the suggested preset ID and reasoning.
    */
   async suggestPreset(
     classification: SceneClassification,
@@ -255,6 +279,9 @@ class SchemaKeyService {
 
   /**
    * Get presets by model family
+   *
+   * @param modelFamily - The model family to filter by ('veo3', 'sora2', or 'generic').
+   * @returns A Promise resolving to an array of SchemaKeyPreset objects.
    */
   async getPresetsByModelFamily(
     modelFamily: 'veo3' | 'sora2' | 'generic'
@@ -265,6 +292,9 @@ class SchemaKeyService {
 
   /**
    * Search presets by keyword (searches name, description, tags)
+   *
+   * @param query - The search query string.
+   * @returns A Promise resolving to an array of matching SchemaKeyPreset objects.
    */
   async searchPresets(query: string): Promise<SchemaKeyPreset[]> {
     const all = await this.getAllPresets();

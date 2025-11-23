@@ -9,9 +9,18 @@ import type { IntermediateV3 } from '../../../types/intermediate';
 import type { ObjectLibraryService } from '../objectLibraryService';
 import { TransformerUtils } from './TransformerUtils';
 
+/**
+ * Transformer class for converting IntermediateV3 objects into Veo 3.1 Attribute-Value format.
+ * This method uses key-value pairs (attribute: value) to structure the prompt.
+ */
 export class Veo3AttributeValueTransformer {
   /**
    * Transform IntermediateV3 to Veo 3.1 attribute-value format
+   *
+   * @param intermediate - The intermediate V3 prompt object.
+   * @param objectLibrary - The object library service to resolve components.
+   * @returns A Promise resolving to the transformed Veo 3.1 attribute-value string.
+   * @throws Error if transformation fails.
    */
   async transform(
     intermediate: IntermediateV3,

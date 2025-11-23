@@ -13,6 +13,16 @@ interface SettingsPageProps {
 
 type Tab = 'model' | 'providers' | 'tasks' | 'prompts' | 'tokens' | 'data';
 
+/**
+ * SettingsPage component
+ *
+ * The main settings interface for the application.
+ * Allows users to configure models, providers, tasks, system prompts, and manage data/cache.
+ *
+ * @param settings - Current prompt settings.
+ * @param onSettingsChange - Callback when settings are updated.
+ * @returns The rendered SettingsPage component.
+ */
 const SettingsPage: React.FC<SettingsPageProps> = ({ settings, onSettingsChange }) => {
   const [activeTab, setActiveTab] = useState<Tab>('model');
 
@@ -353,6 +363,17 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, onSettingsChange 
   );
 };
 
+/**
+ * TabButton component
+ *
+ * A reusable button component for switching tabs in the SettingsPage.
+ *
+ * @param label - The label for the tab.
+ * @param icon - The icon for the tab.
+ * @param isActive - Whether the tab is currently active.
+ * @param onClick - Callback when the tab is clicked.
+ * @returns The rendered TabButton component.
+ */
 const TabButton: React.FC<{ label: string; icon: string; isActive: boolean; onClick: () => void }> = ({ label, icon, isActive, onClick }) => (
   <button
     onClick={onClick}

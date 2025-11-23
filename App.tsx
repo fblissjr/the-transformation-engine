@@ -8,14 +8,22 @@ import LeftPanel from './src/components/LeftPanel';
 import CenterPanel from './src/components/CenterPanel';
 import RightPanel from './src/components/RightPanel';
 import SettingsPage from './src/components/SettingsPage';
-import { logger } from './services/loggerService';
+import { logger } from './src/services/loggerService';
 import { LogEntry } from './types';
 import { STRINGS } from './constants';
 import SharePage from './src/components/SharePage';
 import { WorkspaceModeSwitcher, WorkspaceMode } from './src/components/image-studio/WorkspaceModeSwitcher';
 import { ImageWorkspace } from './src/components/image-studio/ImageWorkspace';
-import './services/networkMonitor'; // Initialize network monitor
+import './src/services/networkMonitor'; // Initialize network monitor
 
+/**
+ * App component
+ *
+ * The main application component that sets up the routing and context providers.
+ * It manages the high-level layout and state of the application.
+ *
+ * @returns The rendered application component.
+ */
 const App: React.FC = () => {
   const [route, setRoute] = useState(window.location.pathname);
 
@@ -49,12 +57,26 @@ const App: React.FC = () => {
   );
 };
 
-// Wrapper to connect SettingsPage to PromptContext
+/**
+ * SettingsPageWrapper component
+ *
+ * A wrapper component to connect the SettingsPage to the PromptContext.
+ *
+ * @returns The rendered SettingsPage component with props.
+ */
 const SettingsPageWrapper: React.FC = () => {
   const { settings, setSettings } = usePrompts();
   return <SettingsPage settings={settings} onSettingsChange={setSettings} />;
 };
 
+/**
+ * Main component
+ *
+ * The main workspace interface of the application.
+ * It handles the layout of the left, center, and right panels, as well as the workspace mode switching.
+ *
+ * @returns The rendered main workspace component.
+ */
 const Main: React.FC = () => {
   const { error } = usePrompts();
   const [logs, setLogs] = useState<LogEntry[]>([]);

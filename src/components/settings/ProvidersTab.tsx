@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useProviders } from '../../contexts/ProviderContext';
 import type { Provider, ProviderType } from '../../../types/providers';
-import { taskAssignmentService } from '../../../services/taskAssignmentService';
+import { taskAssignmentService } from '../../services/taskAssignmentService';
 
+/**
+ * ProvidersTab component
+ *
+ * Settings tab for managing AI providers (Gemini, OpenRouter, etc.).
+ * Allows adding, testing, updating, and deleting providers and their API keys.
+ *
+ * @returns The rendered ProvidersTab component.
+ */
 export const ProvidersTab: React.FC = () => {
   const {
     providers,

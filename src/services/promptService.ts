@@ -31,6 +31,14 @@ const getFormatGuidance = (format: string): string => {
   return ""; // No additional guidance for unknown formats
 };
 
+/**
+ * Generate the primary system prompt based on settings and input.
+ *
+ * @param naturalLanguageInput - The user's creative idea.
+ * @param settings - Configuration settings including format and schema.
+ * @param config - (Optional) System prompt configuration override.
+ * @returns The constructed system prompt string.
+ */
 export const generatePrimaryPrompt = (
   naturalLanguageInput: string,
   settings: PromptSettings,
@@ -169,6 +177,12 @@ function detectTargetModel(settings: PromptSettings): string {
  */
 /**
  * Generate mixer prompt using fragment composition
+ *
+ * @param sourcePrompts - Array of prompts to mix.
+ * @param settings - Prompt settings.
+ * @param userGuidance - Specific guidance for the mix.
+ * @param config - (Optional) System prompt configuration.
+ * @returns A Promise resolving to the constructed mixer prompt string.
  */
 export async function generateMixPrompt(
   sourcePrompts: Prompt[],
@@ -242,6 +256,11 @@ export async function generateMixPrompt(
 
 /**
  * Generate normalizer prompt using fragment composition
+ *
+ * @param structuredOutput - The structured prompt to normalize.
+ * @param language - The target language for normalization.
+ * @param config - (Optional) System prompt configuration.
+ * @returns A Promise resolving to the constructed normalizer prompt string.
  */
 export async function generateNormalizePrompt(
   structuredOutput: string,
@@ -270,6 +289,12 @@ export async function generateNormalizePrompt(
 
 /**
  * Generate schema inference prompt using fragment composition
+ *
+ * @param naturalLanguageInput - The user's input text.
+ * @param existingKeys - Existing schema keys.
+ * @param mode - 'additional' or 'full' inference mode.
+ * @param config - (Optional) System prompt configuration.
+ * @returns A Promise resolving to the constructed schema inference prompt string.
  */
 export async function generateSchemaInferencePrompt(
   naturalLanguageInput: string,
@@ -311,6 +336,10 @@ Generate a *complete* new schema that best represents the user's idea from scrat
 
 /**
  * Generate refinement suggestions prompt using fragment composition
+ *
+ * @param field - The field to refine.
+ * @param currentValue - The current value of the field.
+ * @returns A Promise resolving to the constructed refinement prompt string.
  */
 export async function generateRefinementPrompt(
   field: string,
@@ -385,6 +414,9 @@ export async function generateConversionPrompt(
 /**
  * Detect target model from intermediate structure
  * Used to auto-select best transformer after generation
+ *
+ * @param intermediate - The intermediate prompt structure.
+ * @returns The detected target model ('sora2', 'veo3', or 'generic').
  */
 export function detectTargetModelFromIntermediate(intermediate: {
   structure: { temporal?: any; audio?: any };

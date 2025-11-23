@@ -11,6 +11,21 @@ interface ConfirmModalProps {
   confirmButtonClass?: string;
 }
 
+/**
+ * ConfirmModal component
+ *
+ * A reusable modal dialog for confirming user actions, such as deletions or important changes.
+ *
+ * @param isOpen - Boolean indicating if the modal is visible.
+ * @param title - The title of the modal.
+ * @param message - The confirmation message to display.
+ * @param onConfirm - Callback function executed when the user confirms.
+ * @param onCancel - Callback function executed when the user cancels.
+ * @param confirmText - (Optional) Text for the confirm button. Defaults to 'Confirm'.
+ * @param cancelText - (Optional) Text for the cancel button. Defaults to 'Cancel'.
+ * @param confirmButtonClass - (Optional) CSS classes for styling the confirm button. Defaults to 'bg-red-600 hover:bg-red-500'.
+ * @returns The rendered ConfirmModal component.
+ */
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
   isOpen,
   title,

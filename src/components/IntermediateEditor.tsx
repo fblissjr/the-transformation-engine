@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { transformToModel } from '../../services/transformers';
+import { transformToModel } from '../services/transformers';
 import type { IntermediatePrompt } from '../../types/intermediate';
 
 interface IntermediateEditorProps {
@@ -9,9 +9,16 @@ interface IntermediateEditorProps {
 }
 
 /**
- * Editable intermediate representation editor
- * Allows direct editing of markdown intermediate structure
- * Can re-export to different formats without regenerating
+ * IntermediateEditor component
+ *
+ * A rich editor for the intermediate representation of prompts (in Markdown format).
+ * Allows users to edit the semantic structure directly and preview the transformed output
+ * in different model formats (Sora 2, Veo 3, Generic).
+ *
+ * @param intermediate - The intermediate prompt data.
+ * @param onUpdate - Callback when the markdown is updated.
+ * @param onExport - Callback when the user exports the result.
+ * @returns The rendered IntermediateEditor component.
  */
 export const IntermediateEditor: React.FC<IntermediateEditorProps> = ({
   intermediate,
@@ -237,7 +244,15 @@ interface IntermediateRefinementProps {
 }
 
 /**
- * Multi-turn refinement UI for intermediate representations
+ * IntermediateRefinement component
+ *
+ * A component for iterative refinement of intermediate representations.
+ * Allows users to provide natural language instructions to refine the structure.
+ *
+ * @param intermediateId - The ID of the intermediate prompt being refined.
+ * @param onRefine - Callback to execute the refinement.
+ * @param isRefining - Boolean indicating if a refinement is in progress.
+ * @returns The rendered IntermediateRefinement component.
  */
 export const IntermediateRefinement: React.FC<IntermediateRefinementProps> = ({
   intermediateId,

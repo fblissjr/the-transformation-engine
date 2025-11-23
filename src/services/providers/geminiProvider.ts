@@ -8,6 +8,11 @@ import type {
   GenerateResponse,
 } from "../../types/providers";
 
+/**
+ * Gemini Provider Implementation
+ * Adapts Google's Gemini API to the IProvider interface.
+ * Supports text, vision, and image generation/editing.
+ */
 export class GeminiProvider implements IProvider {
   readonly id: string;
   readonly name: string;
@@ -21,6 +26,13 @@ export class GeminiProvider implements IProvider {
   private apiKey: string;
   private baseUrl: string;
 
+  /**
+   * Constructs a new GeminiProvider instance.
+   * @param id - Unique identifier for this provider instance.
+   * @param name - Display name for the provider.
+   * @param apiKey - API key for authentication.
+   * @param baseUrl - Optional base URL for the API (defaults to Google's standard endpoint).
+   */
   constructor(id: string, name: string, apiKey: string, baseUrl?: string) {
     this.id = id;
     this.name = name;
@@ -28,6 +40,12 @@ export class GeminiProvider implements IProvider {
     this.baseUrl = baseUrl || "https://generativelanguage.googleapis.com/v1beta";
   }
 
+  /**
+   * Lists available models from the Gemini API.
+   * Filters for models that support 'generateContent'.
+   * @returns A Promise resolving to an array of Model objects.
+   * @throws Error if the API request fails.
+   */
   async listModels(): Promise<Model[]> {
     try {
       const response = await fetch(`${this.baseUrl}/models?key=${this.apiKey}`);
@@ -63,6 +81,11 @@ export class GeminiProvider implements IProvider {
     }
   }
 
+  /**
+   * Generates content using the specified model and request parameters.
+   * @param request - The generation request containing model, messages, and config.
+   * @returns A Promise resolving to a GenerateResponse object.
+   */
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
     const ai = new GoogleGenAI({ apiKey: this.apiKey });
     const startTime = Date.now();
@@ -104,6 +127,14 @@ export class GeminiProvider implements IProvider {
     };
   }
 
+  /**
+   * Generates content in a streaming fashion.
+   * @param request - The generation request.
+   * @param onToken - Callback function invoked for each received token/chunk.
+   * @param onComplete - Callback function invoked when generation is complete.
+   * @param onError - Callback function invoked if an error occurs.
+   * @returns A Promise that resolves when the stream setup is complete.
+   */
   async generateStream(
     request: GenerateRequest,
     onToken: (token: string) => void,
@@ -160,6 +191,13 @@ export class GeminiProvider implements IProvider {
     }
   }
 
+  /**
+   * Generates a JSON response from the model.
+   * Enforces strict JSON output format.
+   * @param request - The generation request.
+   * @returns A Promise resolving to the parsed JSON object.
+   * @throws Error if the response cannot be parsed as JSON.
+   */
   async generateJson(request: GenerateRequest): Promise<any> {
     const ai = new GoogleGenAI({ apiKey: this.apiKey });
     const prompt = this.convertMessagesToPrompt(request.messages);
@@ -186,6 +224,12 @@ export class GeminiProvider implements IProvider {
 
   // Private helper methods
 
+  /**
+   * Converts standard message format to Gemini's specific prompt structure.
+   * Handles both text-only and multimodal (image) content.
+   * @param messages - Array of messages.
+   * @returns The prompt structure expected by Gemini API.
+   */
   private convertMessagesToPrompt(
     messages: Array<{ role: string; content: any }>
   ): any {
@@ -238,6 +282,11 @@ export class GeminiProvider implements IProvider {
     return { role: 'user', parts };
   }
 
+  /**
+   * Infers model capabilities from the model object.
+   * @param model - The raw model object from the API.
+   * @returns The parsed ModelCapabilities.
+   */
   private parseCapabilities(model: any): ModelCapabilities {
     const modelId = model.name.replace("models/", "").toLowerCase();
 
@@ -251,18 +300,33 @@ export class GeminiProvider implements IProvider {
     };
   }
 
+  /**
+   * Estimates context window size based on model ID.
+   * @param modelId - The model ID string.
+   * @returns Estimated max context tokens.
+   */
   private estimateContextSize(modelId: string): number {
     if (modelId.includes("2.5")) return 1000000;
     if (modelId.includes("1.5")) return 2000000;
     return 128000;
   }
 
+  /**
+   * Estimates max output tokens based on model ID.
+   * @param modelId - The model ID string.
+   * @returns Estimated max output tokens.
+   */
   private estimateOutputSize(modelId: string): number {
     if (modelId.includes("2.5")) return 8192;
     if (modelId.includes("1.5")) return 8192;
     return 4096;
   }
 
+  /**
+   * Extracts tags from the model object for categorization.
+   * @param model - The raw model object.
+   * @returns Array of tag strings.
+   */
   private extractTags(model: any): string[] {
     const tags: string[] = [];
     const modelId = model.name.replace("models/", "").toLowerCase();
@@ -277,7 +341,12 @@ export class GeminiProvider implements IProvider {
     return tags;
   }
 
-  // Image Generation (uses gemini-2.5-flash-image model)
+  /**
+   * Generates an image using the Gemini 2.5 Flash Image model.
+   * @param params - Parameters for image generation (prompt, aspect ratio, etc.).
+   * @returns A Promise resolving to an object containing base64 image data and MIME type.
+   * @throws Error if the response does not contain image data.
+   */
   async generateImage(params: {
     prompt: string;
     aspectRatio?: '1:1' | '3:4' | '4:3' | '9:16' | '16:9';
@@ -321,7 +390,12 @@ export class GeminiProvider implements IProvider {
     };
   }
 
-  // Image Editing (uses gemini-2.5-flash-image model with image input)
+  /**
+   * Edits an existing image using the Gemini 2.5 Flash Image model.
+   * @param params - Parameters for image editing (source image, instructions).
+   * @returns A Promise resolving to the edited image data and MIME type.
+   * @throws Error if the response does not contain edited image data.
+   */
   async editImage(params: {
     sourceImageData: string;
     sourceImageMimeType: string;

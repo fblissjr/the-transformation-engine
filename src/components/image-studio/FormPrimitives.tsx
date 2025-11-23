@@ -26,6 +26,23 @@ interface BadgeButtonProps {
   tooltip?: string; // Hover explanation
 }
 
+/**
+ * BadgeButton component
+ *
+ * A compact button with an optional icon, label, count, and badge.
+ * Used for toggle actions or displaying status.
+ *
+ * @param icon - Optional icon element.
+ * @param label - Button text label.
+ * @param count - Optional count to display next to the label.
+ * @param active - Boolean indicating active state (highlighted).
+ * @param onClick - Click handler.
+ * @param disabled - Boolean indicating disabled state.
+ * @param className - Optional additional CSS classes.
+ * @param badge - Optional badge text (e.g., "PHASE 3").
+ * @param tooltip - Optional tooltip text on hover.
+ * @returns The rendered BadgeButton component.
+ */
 export const BadgeButton: React.FC<BadgeButtonProps> = ({
   icon,
   label,
@@ -84,6 +101,20 @@ interface CompactInputProps {
   className?: string;
 }
 
+/**
+ * CompactInput component
+ *
+ * An inline input field with a label, styled compactly.
+ *
+ * @param label - Label text displayed before the input.
+ * @param value - Current value of the input.
+ * @param onChange - Change handler.
+ * @param placeholder - Optional placeholder text.
+ * @param type - HTML input type (default: 'text').
+ * @param disabled - Boolean indicating disabled state.
+ * @param className - Optional additional CSS classes.
+ * @returns The rendered CompactInput component.
+ */
 export const CompactInput: React.FC<CompactInputProps> = ({
   label,
   value,
@@ -123,6 +154,19 @@ interface CompactSelectProps {
   className?: string;
 }
 
+/**
+ * CompactSelect component
+ *
+ * An inline select dropdown with a label, styled compactly.
+ *
+ * @param label - Label text displayed before the select.
+ * @param value - Current selected value.
+ * @param onChange - Change handler.
+ * @param options - Array of options with value and label.
+ * @param disabled - Boolean indicating disabled state.
+ * @param className - Optional additional CSS classes.
+ * @returns The rendered CompactSelect component.
+ */
 export const CompactSelect: React.FC<CompactSelectProps> = ({
   label,
   value,
@@ -164,6 +208,19 @@ interface CollapsibleSectionProps {
   className?: string;
 }
 
+/**
+ * CollapsibleSection component
+ *
+ * A container that can expand or collapse its content.
+ * Used for progressive disclosure of complex forms or options.
+ *
+ * @param title - Section title.
+ * @param defaultOpen - Whether the section is open by default.
+ * @param children - Content to display when expanded.
+ * @param badge - Optional badge element displayed in the header.
+ * @param className - Optional additional CSS classes.
+ * @returns The rendered CollapsibleSection component.
+ */
 export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   title,
   defaultOpen = false,
@@ -228,6 +285,20 @@ interface PillSelectorProps {
   className?: string;
 }
 
+/**
+ * PillSelector component
+ *
+ * A multi-select component using pill-shaped buttons.
+ * Suitable for selecting tags or categories.
+ *
+ * @param category - Label for the group of options.
+ * @param options - Array of available options.
+ * @param selected - Array of currently selected option IDs.
+ * @param onChange - Callback when selection changes.
+ * @param maxSelection - Optional maximum number of selectable items.
+ * @param className - Optional additional CSS classes.
+ * @returns The rendered PillSelector component.
+ */
 export const PillSelector: React.FC<PillSelectorProps> = ({
   category,
   options,
@@ -298,6 +369,24 @@ interface RangeSliderProps {
   className?: string;
 }
 
+/**
+ * RangeSlider component
+ *
+ * A slider input for numerical values within a range.
+ * Includes labels and value display.
+ *
+ * @param label - The slider label.
+ * @param value - Current value.
+ * @param onChange - Callback when value changes.
+ * @param min - Minimum value.
+ * @param max - Maximum value.
+ * @param step - Step increment.
+ * @param leftLabel - Optional label for the minimum end.
+ * @param rightLabel - Optional label for the maximum end.
+ * @param showValue - Whether to display the current numerical value.
+ * @param className - Optional additional CSS classes.
+ * @returns The rendered RangeSlider component.
+ */
 export const RangeSlider: React.FC<RangeSliderProps> = ({
   label,
   value,
@@ -356,6 +445,20 @@ interface PrimaryButtonProps {
   className?: string;
 }
 
+/**
+ * PrimaryButton component
+ *
+ * The main call-to-action button style.
+ * Supports loading state and icons.
+ *
+ * @param children - Button content.
+ * @param onClick - Click handler.
+ * @param disabled - Boolean indicating disabled state.
+ * @param icon - Optional icon element.
+ * @param loading - Boolean indicating loading state.
+ * @param className - Optional additional CSS classes.
+ * @returns The rendered PrimaryButton component.
+ */
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   children,
   onClick,
@@ -416,6 +519,17 @@ interface SecondaryButtonProps {
   className?: string;
 }
 
+/**
+ * SecondaryButton component
+ *
+ * A secondary action button style.
+ *
+ * @param children - Button content.
+ * @param onClick - Click handler.
+ * @param disabled - Boolean indicating disabled state.
+ * @param className - Optional additional CSS classes.
+ * @returns The rendered SecondaryButton component.
+ */
 export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
   children,
   onClick,
@@ -453,6 +567,23 @@ interface TextAreaProps {
   className?: string;
 }
 
+/**
+ * TextArea component
+ *
+ * A large multi-line text input field.
+ * Includes label, icon, and helper text support.
+ *
+ * @param label - Input label.
+ * @param value - Current value.
+ * @param onChange - Change handler.
+ * @param placeholder - Optional placeholder text.
+ * @param rows - Number of rows (height).
+ * @param icon - Optional icon displayed next to label.
+ * @param helperText - Optional help text displayed below the input.
+ * @param disabled - Boolean indicating disabled state.
+ * @param className - Optional additional CSS classes.
+ * @returns The rendered TextArea component.
+ */
 export const TextArea: React.FC<TextAreaProps> = ({
   label,
   value,
@@ -487,12 +618,28 @@ export const TextArea: React.FC<TextAreaProps> = ({
 // Icon Components (Simple SVG icons)
 // ============================================================================
 
+/**
+ * SparklesIcon component
+ *
+ * Renders a sparkles icon.
+ *
+ * @param className - Optional CSS classes.
+ * @returns The SVG icon.
+ */
 export const SparklesIcon = ({ className = 'w-4 h-4' }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
   </svg>
 );
 
+/**
+ * ImageIcon component
+ *
+ * Renders an image/photo icon.
+ *
+ * @param className - Optional CSS classes.
+ * @returns The SVG icon.
+ */
 export const ImageIcon = ({ className = 'w-4 h-4' }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path
@@ -504,6 +651,14 @@ export const ImageIcon = ({ className = 'w-4 h-4' }) => (
   </svg>
 );
 
+/**
+ * UserIcon component
+ *
+ * Renders a user/person icon.
+ *
+ * @param className - Optional CSS classes.
+ * @returns The SVG icon.
+ */
 export const UserIcon = ({ className = 'w-4 h-4' }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path
@@ -515,6 +670,14 @@ export const UserIcon = ({ className = 'w-4 h-4' }) => (
   </svg>
 );
 
+/**
+ * SettingsIcon component
+ *
+ * Renders a settings/gear icon.
+ *
+ * @param className - Optional CSS classes.
+ * @returns The SVG icon.
+ */
 export const SettingsIcon = ({ className = 'w-4 h-4' }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path
@@ -532,6 +695,14 @@ export const SettingsIcon = ({ className = 'w-4 h-4' }) => (
   </svg>
 );
 
+/**
+ * WandIcon component
+ *
+ * Renders a magic wand icon.
+ *
+ * @param className - Optional CSS classes.
+ * @returns The SVG icon.
+ */
 export const WandIcon = ({ className = 'w-4 h-4' }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path

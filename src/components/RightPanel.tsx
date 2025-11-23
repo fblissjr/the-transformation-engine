@@ -5,10 +5,10 @@ import { useObjectLibrary } from '../contexts/ObjectLibraryContext';
 import { CopyIcon, RestoreIcon } from './icons';
 import { LogEntry, PromptVersion } from '../../types';
 import { VersionTree } from './VersionTree';
-import { generateConversionPrompt } from '../../services/promptService';
+import { generateConversionPrompt } from '../services/promptService';
 import IntermediateRefinementPanel from './IntermediateRefinementPanel';
-import { updateIntermediate } from '../../services/db/intermediateService';
-import { transformToModel } from '../../services/transformers';
+import { updateIntermediate } from '../services/db/intermediateService';
+import { transformToModel } from '../services/transformers';
 import { ObjectDetailView } from './ObjectLibrary/ObjectDetailView';
 
 interface RightPanelProps {
@@ -20,6 +20,19 @@ interface RightPanelProps {
 
 type Tab = 'structuredView' | 'finalOutput' | 'history' | 'debug';
 
+/**
+ * RightPanel component
+ *
+ * The right sidebar panel which displays the output, version history, debug logs, and object details.
+ * It handles viewing and editing structured and normalized outputs, exporting to different formats,
+ * and managing prompt versions.
+ *
+ * @param logs - Array of log entries to display in the debug tab.
+ * @param isLoggingEnabled - Boolean indicating if logging is currently enabled.
+ * @param setIsLoggingEnabled - State setter for logging enablement.
+ * @param onClearLogs - Callback to clear the logs.
+ * @returns The rendered RightPanel component.
+ */
 const RightPanel: React.FC<RightPanelProps> = ({
   logs,
   isLoggingEnabled,
@@ -634,6 +647,16 @@ const RightPanel: React.FC<RightPanelProps> = ({
   );
 };
 
+/**
+ * TabButton component
+ *
+ * A simple button used for navigation tabs within the RightPanel.
+ *
+ * @param label - The label for the tab.
+ * @param isActive - Whether the tab is currently active.
+ * @param onClick - Callback when the tab is clicked.
+ * @returns The rendered TabButton component.
+ */
 const TabButton: React.FC<{ label: string; isActive: boolean; onClick: () => void }> = ({ label, isActive, onClick }) => {
   return (
     <button

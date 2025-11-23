@@ -2,6 +2,14 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+/**
+ * Vitest Configuration
+ *
+ * Configures the test runner for unit and integration tests.
+ * - Uses jsdom environment for React component testing
+ * - Sets up coverage reporting thresholds
+ * - Defines path aliases for cleaner imports
+ */
 export default defineConfig({
   plugins: [react()],
   test: {

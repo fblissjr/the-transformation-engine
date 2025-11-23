@@ -14,12 +14,23 @@ interface Fragment {
   metadata: Record<string, any>;
 }
 
+/**
+ * FragmentLoader class
+ *
+ * Handles loading, parsing, caching, and composing prompt fragments.
+ * Fragments are Markdown files with optional YAML frontmatter.
+ * Supports variable interpolation and recursive inclusion of fragments.
+ */
 class FragmentLoader {
   private cache: Map<string, Fragment> = new Map();
   private loadedFragments: Set<string> = new Set(); // Track fragments used in current composition
 
   /**
    * Load a fragment from the fragments directory
+   *
+   * @param path - The relative path to the fragment file.
+   * @returns A Promise resolving to the parsed Fragment object.
+   * @throws Error if the fragment cannot be fetched or parsed.
    */
   async loadFragment(path: string): Promise<Fragment> {
     // Check cache
@@ -115,6 +126,10 @@ class FragmentLoader {
 
   /**
    * Compose a prompt by resolving @include directives and {{variables}}
+   *
+   * @param template - The template string containing include directives and variables.
+   * @param variables - A map of variable names to values for substitution.
+   * @returns A Promise resolving to the composed prompt string.
    */
   async composePrompt(
     template: string,
@@ -168,6 +183,8 @@ class FragmentLoader {
 
   /**
    * Get list of fragments used in the most recent composition
+   *
+   * @returns Array of fragment paths.
    */
   getLoadedFragments(): string[] {
     return Array.from(this.loadedFragments);

@@ -2,6 +2,12 @@ import { LogEntry } from '../types';
 
 type LogListener = (logs: LogEntry[]) => void;
 
+/**
+ * LoggerService class
+ *
+ * Manages application logs, providing functionality to log messages, clear logs,
+ * and subscribe to log updates. Can be enabled or disabled.
+ */
 class LoggerService {
   private logs: LogEntry[] = [];
   private listeners: Set<LogListener> = new Set();
@@ -23,15 +29,27 @@ class LoggerService {
     this.listeners.forEach(listener => listener([...this.logs]));
   }
   
+  /**
+   * Enable or disable logging.
+   * @param enabled - Whether logging should be enabled.
+   */
   setEnabled(enabled: boolean) {
     this.isEnabled = enabled;
   }
   
+  /**
+   * Clear all stored logs and notify listeners.
+   */
   clearLogs() {
     this.logs = [];
     this.notifyListeners();
   }
 
+  /**
+   * Add a new log entry.
+   * @param message - The log message.
+   * @param type - The type of log ('info', 'error', or 'success'). Defaults to 'info'.
+   */
   log(message: string, type: 'info' | 'error' | 'success' = 'info') {
     if (!this.isEnabled) {
       return;
@@ -52,11 +70,19 @@ class LoggerService {
     }
   }
 
+  /**
+   * Subscribe to log updates.
+   * @param listener - The function to call when logs change.
+   */
   subscribe(listener: LogListener) {
     this.listeners.add(listener);
     listener([...this.logs]); // Immediately provide current logs
   }
 
+  /**
+   * Unsubscribe from log updates.
+   * @param listener - The listener function to remove.
+   */
   unsubscribe(listener: LogListener) {
     this.listeners.delete(listener);
   }

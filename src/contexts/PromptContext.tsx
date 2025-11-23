@@ -6,13 +6,18 @@ import { GenerationProvider, useGeneration } from './GenerationContext';
 import { MediaProvider, useMedia } from './MediaContext';
 
 /**
- * Composite Provider that wraps all context providers
+ * PromptProvider component
  *
- * Context hierarchy:
- * 1. PromptLibraryContext - Prompt list, search, CRUD (independent)
- * 2. ActivePromptContext - Current prompt, settings, versions (independent)
- * 3. MediaContext - Media uploads, vision API (depends on ActivePromptContext)
- * 4. GenerationContext - LLM API calls, loading states (depends on 1, 2, 3)
+ * A composite provider that wraps the application with all necessary context providers:
+ * - PromptLibraryContext: Manages the list of prompts.
+ * - ActivePromptContext: Manages the state of the currently active prompt.
+ * - MediaContext: Manages media references and analysis.
+ * - GenerationContext: Manages LLM generation processes.
+ *
+ * This ensures that all components have access to the required state and functions.
+ *
+ * @param children - Child components to wrap.
+ * @returns The composite context provider.
  */
 export const PromptProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   return (
@@ -29,14 +34,12 @@ export const PromptProvider: React.FC<{children: ReactNode}> = ({ children }) =>
 };
 
 /**
- * Backward-compatible hook that combines all contexts
- * This allows existing components to continue working without changes
+ * usePrompts hook
  *
- * Components can gradually migrate to use specific hooks:
- * - usePromptLibrary() - for LeftPanel
- * - useActivePrompt() - for CenterPanel, RightPanel
- * - useGeneration() - for CenterPanel, RightPanel
- * - useMedia() - for CenterPanel
+ * A comprehensive hook that aggregates state and functions from all prompt-related contexts.
+ * This allows components to access all prompt functionality through a single hook, maintaining backward compatibility.
+ *
+ * @returns An object containing properties and methods from PromptLibraryContext, ActivePromptContext, GenerationContext, and MediaContext.
  */
 export const usePrompts = () => {
   const library = usePromptLibrary();

@@ -18,6 +18,17 @@ const OBJECT_TYPE_CONFIG = {
   custom: { label: 'Custom Object', icon: '⚙️', description: 'Any other type of object' }
 } as const;
 
+/**
+ * ObjectCreatorDialog component
+ *
+ * A modal dialog for creating new objects in the object library.
+ * Provides a two-step process: selecting the object type and then entering details.
+ *
+ * @param isOpen - Boolean indicating if the dialog is visible.
+ * @param onClose - Callback to close the dialog.
+ * @param onCreated - Callback executed when an object is successfully created.
+ * @returns The rendered ObjectCreatorDialog component.
+ */
 export const ObjectCreatorDialog: React.FC<ObjectCreatorDialogProps> = ({
   isOpen,
   onClose,

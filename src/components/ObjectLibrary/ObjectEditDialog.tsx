@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useObjectLibrary } from '../../contexts/ObjectLibraryContext';
-import { taskRouter } from '../../../services/taskRouter';
+import { taskRouter } from '../../services/taskRouter';
 import { executeEditObjectTask } from '../../services/llm/editObjectTask';
 import type { ObjectStoreRecord } from '../../../types/objectTypes';
 import type { EditObjectOutput } from '../../services/llm/editObjectTask';
@@ -12,6 +12,18 @@ interface ObjectEditDialogProps {
   onSaved: () => void;
 }
 
+/**
+ * ObjectEditDialog component
+ *
+ * A modal dialog for editing an existing object using LLM-powered instructions.
+ * Provides an interface to input edit instructions, preview changes, and apply them.
+ *
+ * @param isOpen - Boolean indicating if the dialog is visible.
+ * @param object - The object record to edit.
+ * @param onClose - Callback to close the dialog.
+ * @param onSaved - Callback executed when changes are successfully saved.
+ * @returns The rendered ObjectEditDialog component.
+ */
 export const ObjectEditDialog: React.FC<ObjectEditDialogProps> = ({
   isOpen,
   object,

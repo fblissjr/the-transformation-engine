@@ -272,6 +272,8 @@ export const IntermediateStructureV1Schema = z.union([
 
 /**
  * Validate an intermediate structure and return typed result
+ * @param data - The data to validate.
+ * @returns A ZodSafeParseReturnType containing the validation result.
  */
 export function validateIntermediateStructure(data: unknown) {
   return IntermediateStructureSchema.safeParse(data);
@@ -279,6 +281,8 @@ export function validateIntermediateStructure(data: unknown) {
 
 /**
  * Validate a complete intermediate prompt
+ * @param data - The data to validate.
+ * @returns A ZodSafeParseReturnType containing the validation result.
  */
 export function validateIntermediatePrompt(data: unknown) {
   return IntermediatePromptSchema.safeParse(data);
@@ -286,6 +290,9 @@ export function validateIntermediatePrompt(data: unknown) {
 
 /**
  * Validate with detailed error messages
+ * @param data - The data to validate.
+ * @param schema - The Zod schema to validate against.
+ * @returns An object containing validity status and detailed errors/warnings.
  */
 export function validateWithDetails(data: unknown, schema: z.ZodSchema) {
   const result = schema.safeParse(data);
@@ -313,9 +320,15 @@ export function validateWithDetails(data: unknown, schema: z.ZodSchema) {
 // ==================== Type Inference ====================
 
 // Export inferred TypeScript types from Zod schemas
+/** Validated intermediate structure type */
 export type ValidatedIntermediateStructure = z.infer<typeof IntermediateStructureSchema>;
+/** Validated intermediate prompt type */
 export type ValidatedIntermediatePrompt = z.infer<typeof IntermediatePromptSchema>;
+/** Validated visual section type */
 export type ValidatedVisualSection = z.infer<typeof VisualSectionSchema>;
+/** Validated temporal section type */
 export type ValidatedTemporalSection = z.infer<typeof TemporalSectionSchema>;
+/** Validated audio section type */
 export type ValidatedAudioSection = z.infer<typeof AudioSectionSchema>;
+/** Validated camera section type */
 export type ValidatedCameraSection = z.infer<typeof CameraSectionSchema>;

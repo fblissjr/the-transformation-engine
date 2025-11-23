@@ -4,6 +4,14 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
 
+/**
+ * Vite Configuration
+ *
+ * Configures the build tool, dev server, and test runner.
+ * - React plugin for JSX support
+ * - HTTPS server setup (requires generated certs)
+ * - Vitest configuration for unit tests
+ */
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],

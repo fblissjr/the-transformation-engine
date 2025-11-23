@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 /**
- * FragmentBrowser
+ * FragmentBrowser component
  *
- * Full-screen modal for browsing and inserting fragments into prompts.
- * - 6 category tabs (Lighting, Camera, Style, Editing, Composition, Color)
- * - Search functionality across all fragments
- * - Click to insert fragment at cursor position
- * - Loads fragments from public/image-studio/fragments/
+ * Full-screen modal for browsing and inserting prompt fragments.
+ * Organized by categories (Lighting, Camera, Style, etc.) with search functionality.
+ * Clicking a fragment inserts its content into the prompt editor.
+ *
+ * @param isOpen - Boolean indicating if the modal is visible.
+ * @param onClose - Callback to close the modal.
+ * @param onInsertFragment - Callback executed when a fragment is selected, passing the fragment content.
+ * @returns The rendered FragmentBrowser component.
  */
 
 interface Fragment {

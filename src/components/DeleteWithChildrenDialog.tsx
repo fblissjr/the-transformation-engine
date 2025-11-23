@@ -9,12 +9,18 @@ interface DeleteWithChildrenDialogProps {
 }
 
 /**
- * DeleteWithChildrenDialog
+ * DeleteWithChildrenDialog component
  *
- * Modal dialog for deleting a scene that has children.
+ * Modal dialog for deleting a scene that has children (derived scenes).
  * Offers two options:
  * 1. Delete only this scene (orphan children)
  * 2. Delete this + all children (cascade delete)
+ *
+ * @param scene - The intermediate prompt scene being deleted.
+ * @param children - The array of child scenes derived from the scene.
+ * @param onConfirm - Callback function executed on confirmation, accepting a boolean for cascade delete.
+ * @param onCancel - Callback function executed on cancellation.
+ * @returns The rendered DeleteWithChildrenDialog component.
  */
 export const DeleteWithChildrenDialog: React.FC<DeleteWithChildrenDialogProps> = ({
   scene,

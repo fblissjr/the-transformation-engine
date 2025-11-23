@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { MediaReference } from '../../types';
-import * as dbService from '../../services/dbService';
-import { taskRouter } from '../../services/taskRouter';
+import * as dbService from '../services/dbService';
+import { taskRouter } from '../services/taskRouter';
 import { TASK_IDS } from '../../types/providers';
 
 interface MediaContextType {
@@ -18,6 +18,16 @@ interface MediaContextType {
 
 const MediaContext = createContext<MediaContextType | undefined>(undefined);
 
+/**
+ * MediaProvider
+ *
+ * Manages media references (images/videos) and their AI-powered analysis.
+ * Supports adding, removing, and describing media files.
+ * Automatically analyzes uploaded media to provide context for prompts.
+ *
+ * @param children - Child components to wrap.
+ * @returns The context provider.
+ */
 export const MediaProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [mediaReferences, setMediaReferences] = useState<MediaReference[]>([]);
   const [isDescribing, setIsDescribing] = useState(false);
@@ -196,6 +206,14 @@ Be specific and cinematic in your description. This will be used to generate sim
   return <MediaContext.Provider value={value}>{children}</MediaContext.Provider>;
 };
 
+/**
+ * useMedia hook
+ *
+ * Custom hook to access the MediaContext.
+ *
+ * @returns The context value containing media state and functions.
+ * @throws Error if used outside of a MediaProvider.
+ */
 export const useMedia = (): MediaContextType => {
   const context = useContext(MediaContext);
   if (context === undefined) {

@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import type { IntermediatePrompt } from '../../types/intermediate';
-import { getAllIntermediates } from '../../services/db/intermediateService';
+import { getAllIntermediates } from '../services/db/intermediateService';
 import { SceneExtensionDialog } from './SceneExtensionDialog';
 import { DeleteWithChildrenDialog } from './DeleteWithChildrenDialog';
 import { Toast } from './Toast';
-import { getChildScenes, deleteSceneWithChildren } from '../../services/sceneExtensionService';
+import { getChildScenes, deleteSceneWithChildren } from '../services/sceneExtensionService';
 
 interface IntermediatesViewProps {}
 
 /**
- * IntermediatesView
+ * IntermediatesView component
  *
- * Library view for all saved intermediate prompts.
- * Shows list of intermediates with "Extend This Scene" action.
+ * A library view displaying all saved intermediate prompts.
+ * It provides functionalities to view, extend, and delete scenes.
+ * Supports handling of parent/child relationships during deletion.
+ *
+ * @returns The rendered IntermediatesView component.
  */
 export const IntermediatesView: React.FC<IntermediatesViewProps> = () => {
   const [intermediates, setIntermediates] = useState<IntermediatePrompt[]>([]);

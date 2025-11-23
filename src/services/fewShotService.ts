@@ -228,6 +228,11 @@ const VEO3_EXAMPLE_REGISTRY: Record<string, { path: string; metadata: any }> = {
 
 /**
  * Select relevant few-shot examples based on user input and model
+ *
+ * @param userInput - The user's natural language input.
+ * @param maxExamples - Maximum number of examples to return.
+ * @param model - The target model ('sora2' or 'veo3').
+ * @returns A formatted string of relevant examples.
  */
 export async function selectFewShotExamples(
   userInput: string,
@@ -340,6 +345,9 @@ export async function selectFewShotExamples(
 /**
  * Check if user input should trigger few-shot examples
  * Returns model type if few-shot should be used, null otherwise
+ *
+ * @param schemaKeys - List of schema keys selected by the user or inferred.
+ * @returns 'sora2', 'veo3', or null.
  */
 export function shouldUseFewShot(schemaKeys: string[]): 'sora2' | 'veo3' | null {
   // Check for Veo 3

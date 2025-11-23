@@ -3,6 +3,9 @@
 // Supports transformation to Sora 2, Veo 3, and future models on-demand
 
 // ==================== Scene Types ====================
+/**
+ * Classification of scene types for organizational purposes.
+ */
 export type SceneType =
   | 'dialogue'        // Conversation-focused scenes
   | 'cinematic'       // Narrative-driven scenes with camera work
@@ -21,18 +24,26 @@ export type SceneType =
  * Always structured JSON, never Markdown
  */
 export interface IntermediateStructure {
-  format: 'structured';              // Always "structured" in v2.0 (not "markdown")
-  version: '2.0.0';                  // Intermediate format version
-  sceneType: SceneType;              // Scene classification
+  /** Discriminator for structured format */
+  format: 'structured';
+  /** Schema version */
+  version: '2.0.0';
+  /** Classification of the scene type */
+  sceneType: SceneType;
 
+  /** Content sections of the intermediate representation */
   sections: {
-    visual: VisualSection;           // REQUIRED - visual elements
-    temporal?: TemporalSection[];    // OPTIONAL - time progression
-    audio?: AudioSection;            // OPTIONAL - sound elements
-    camera?: CameraSection;          // OPTIONAL - cinematic details
+    /** REQUIRED - visual elements */
+    visual: VisualSection;
+    /** OPTIONAL - time progression */
+    temporal?: TemporalSection[];
+    /** OPTIONAL - sound elements */
+    audio?: AudioSection;
+    /** OPTIONAL - cinematic details */
+    camera?: CameraSection;
   };
 
-  // Transformation metadata (now uses shared IntermediateMetadata interface)
+  /** Transformation metadata */
   metadata?: IntermediateMetadata;
 }
 
@@ -43,13 +54,20 @@ export interface IntermediateStructure {
  * Foundation of every scene - visual elements
  */
 export interface VisualSection {
-  subject: string[];                 // Who or what is in the scene
-  setting: string;                   // Where the scene takes place
-  environment: string;               // Environmental details
-  colors: string;                    // Dominant color palette
-  lighting: string;                  // Lighting characteristics
-  composition: string;               // Framing and arrangement
-  style: string;                     // Visual aesthetic
+  /** Who or what is in the scene */
+  subject: string[];
+  /** Where the scene takes place */
+  setting: string;
+  /** Environmental details */
+  environment: string;
+  /** Dominant color palette */
+  colors: string;
+  /** Lighting characteristics */
+  lighting: string;
+  /** Framing and arrangement */
+  composition: string;
+  /** Visual aesthetic */
+  style: string;
 }
 
 /**
@@ -57,11 +75,16 @@ export interface VisualSection {
  * For scenes with time progression
  */
 export interface TemporalSection {
-  time: string;                      // Time range, e.g., "0-3s", "3-7s"
-  description: string;               // What happens during this segment
-  camera?: string;                   // Camera behavior during segment
-  visual?: string;                   // Visual changes during segment
-  audio?: string;                    // Audio changes during segment
+  /** Time range, e.g., "0-3s", "3-7s" */
+  time: string;
+  /** What happens during this segment */
+  description: string;
+  /** Camera behavior during segment */
+  camera?: string;
+  /** Visual changes during segment */
+  visual?: string;
+  /** Audio changes during segment */
+  audio?: string;
 }
 
 /**
@@ -69,10 +92,14 @@ export interface TemporalSection {
  * For scenes with notable sound elements
  */
 export interface AudioSection {
-  dialogue?: string[];               // Quoted speech
-  ambient?: string[];                // Background environmental sounds
-  soundEffects?: string[];           // Specific sound effects (foley)
-  music?: string;                    // Musical elements description
+  /** Quoted speech */
+  dialogue?: string[];
+  /** Background environmental sounds */
+  ambient?: string[];
+  /** Specific sound effects (foley) */
+  soundEffects?: string[];
+  /** Musical elements description */
+  music?: string;
 }
 
 /**
@@ -80,10 +107,14 @@ export interface AudioSection {
  * For cinematic camera work
  */
 export interface CameraSection {
-  movement?: string;                 // Camera motion
-  angles?: string[];                 // Specific camera angles/shots
-  techniques?: string;               // Cinematic techniques
-  lensDetails?: string;              // Lens, focal length, aperture
+  /** Camera motion */
+  movement?: string;
+  /** Specific camera angles/shots */
+  angles?: string[];
+  /** Cinematic techniques */
+  techniques?: string;
+  /** Lens, focal length, aperture */
+  lensDetails?: string;
 }
 
 // ==================== Legacy Support (for migration) ====================
@@ -178,23 +209,40 @@ export interface SceneClassification {
  * Defines optimal prompt structure for specific model families and scene types
  */
 export interface SchemaKeyPreset {
-  id: string;                               // e.g., "veo31-standard"
-  name: string;                             // Display name
-  description: string;                      // Usage guidance
+  /** Unique ID, e.g., "veo31-standard" */
+  id: string;
+  /** Display name */
+  name: string;
+  /** Usage guidance */
+  description: string;
+  /** Model family compatibility */
   modelFamily: 'veo3' | 'sora2' | 'generic';
-  modelVersions: string[];                  // Compatible model IDs
+  /** Compatible model IDs */
+  modelVersions: string[];
+  /** Prompting strategy type */
   promptingStrategy: 'continuous' | 'timestamp' | 'scene_type_specific' | 'transition' | 'physics_based' | 'versatile';
-  sceneType?: SceneType;                    // Optional scene type association
-  optimalLength?: string;                   // Word count guidance
-  duration?: string;                        // For timestamp prompts
-  segmentDuration?: string;                 // For timestamp prompts
-  segmentCount?: number;                    // For timestamp prompts
-  schemaKeys: SchemaKey[];                  // Array of schema keys
-  tags: string[];                           // Searchable tags
-  recommendedFor: string[];                 // Use cases
-  notes?: string;                           // Additional guidance
-  isGlobal: boolean;                        // Global preset vs custom
-  isDefault?: boolean;                      // Default for model family
+  /** Optional scene type association */
+  sceneType?: SceneType;
+  /** Word count guidance */
+  optimalLength?: string;
+  /** Duration guidance */
+  duration?: string;
+  /** Segment duration guidance */
+  segmentDuration?: string;
+  /** Segment count guidance */
+  segmentCount?: number;
+  /** Array of schema keys included */
+  schemaKeys: SchemaKey[];
+  /** Searchable tags */
+  tags: string[];
+  /** Recommended use cases */
+  recommendedFor: string[];
+  /** Additional guidance notes */
+  notes?: string;
+  /** Global preset vs custom */
+  isGlobal: boolean;
+  /** Default preset for model family */
+  isDefault?: boolean;
 }
 
 /**
@@ -202,13 +250,20 @@ export interface SchemaKeyPreset {
  * Individual key in a schema preset
  */
 export interface SchemaKey {
-  key: string;                              // Key identifier
-  description: string;                      // What this key represents
-  required: boolean;                        // Is this key required?
+  /** Key identifier */
+  key: string;
+  /** What this key represents */
+  description: string;
+  /** Is this key required? */
+  required: boolean;
+  /** Categorization of the key */
   category: 'core' | 'enhancement' | 'per_segment';
-  structure?: 'array' | 'object';           // Data structure hint
-  format?: string;                          // Format specification
-  enum?: string[];                          // Allowed values
+  /** Data structure hint */
+  structure?: 'array' | 'object';
+  /** Format specification */
+  format?: string;
+  /** Allowed values */
+  enum?: string[];
 }
 
 /**
@@ -216,13 +271,20 @@ export interface SchemaKey {
  * Metadata for intermediates including scene classification and schema selection
  */
 export interface IntermediateMetadata {
-  generatedAt?: string;                     // ISO timestamp
-  transformationType?: string;              // e.g., "mix", "extend", "reverse"
+  /** Generation timestamp (ISO) */
+  generatedAt?: string;
+  /** Type of transformation applied */
+  transformationType?: string;
+  /** Parameters used for transformation */
   transformationParams?: Record<string, any>;
-  parentId?: string;                        // Parent intermediate ID
-  sceneClassification?: SceneClassification;  // NEW: Scene classification tags
-  selectedSchemaPreset?: string;            // NEW: Selected preset ID
-  promptingStrategy?: 'timestamp' | 'continuous';  // NEW: Prompting strategy
+  /** ID of parent intermediate */
+  parentId?: string;
+  /** Scene classification tags */
+  sceneClassification?: SceneClassification;
+  /** Selected preset ID */
+  selectedSchemaPreset?: string;
+  /** Selected prompting strategy */
+  promptingStrategy?: 'timestamp' | 'continuous';
 }
 
 // ==================== Scene Extension Types ====================
@@ -232,10 +294,14 @@ export interface IntermediateMetadata {
  * Controls what elements to preserve when extending a scene
  */
 export interface PreservationOptions {
-  characters: boolean;        // Keep character identity, appearance, clothing
-  environment: boolean;       // Keep location, setting, weather
-  visualStyle: boolean;       // Keep colors, lighting, aesthetic
-  audio: boolean;            // Continue music, ambient sounds
+  /** Keep character identity, appearance, clothing */
+  characters: boolean;
+  /** Keep location, setting, weather */
+  environment: boolean;
+  /** Keep colors, lighting, aesthetic */
+  visualStyle: boolean;
+  /** Continue music, ambient sounds */
+  audio: boolean;
 }
 
 /**
@@ -243,11 +309,16 @@ export interface PreservationOptions {
  * Cached summary of parent scene for extension context
  */
 export interface ParentSceneSummary {
-  characters: string[];      // ["Detective Harris", "Suspect"]
-  location: string;          // "Dark interrogation room"
-  lastMoment: string;        // "Detective leans forward..."
-  visualStyle: string;       // "High-contrast noir lighting"
-  audioState: string;        // "Fluorescent buzz, no music"
+  /** List of characters present */
+  characters: string[];
+  /** Location description */
+  location: string;
+  /** Description of the last moment */
+  lastMoment: string;
+  /** Visual style description */
+  visualStyle: string;
+  /** Audio state description */
+  audioState: string;
 }
 
 /**
@@ -255,12 +326,18 @@ export interface ParentSceneSummary {
  * Metadata for scenes created via extension
  */
 export interface ExtensionMetadata {
-  parentSceneId: string;                           // ID of parent intermediate
-  method: 'continue' | 'cutTo' | 'transition';     // Extension method used
-  userDescription?: string;                        // User's "what happens next" input
-  preservation: PreservationOptions;               // What was preserved
-  sceneNumber?: number;                            // Assigned scene number (S1, S2, etc.)
-  parentSummary?: ParentSceneSummary;             // Cached parent summary
+  /** ID of parent intermediate */
+  parentSceneId: string;
+  /** Extension method used */
+  method: 'continue' | 'cutTo' | 'transition';
+  /** User's "what happens next" input */
+  userDescription?: string;
+  /** What elements were preserved */
+  preservation: PreservationOptions;
+  /** Assigned scene number */
+  sceneNumber?: number;
+  /** Cached parent summary */
+  parentSummary?: ParentSceneSummary;
 }
 
 /**
@@ -268,10 +345,14 @@ export interface ExtensionMetadata {
  * Metadata for scenes whose parent was deleted
  */
 export interface OrphanMetadata {
+  /** Is this scene orphaned? */
   isOrphaned: boolean;
+  /** ID of the original parent */
   originalParentId: string;
+  /** Title of the original parent */
   originalParentTitle: string;
-  orphanedAt: string;  // ISO timestamp
+  /** Timestamp of orphaning (ISO) */
+  orphanedAt: string;
 }
 
 // ==================== Container Types ====================
@@ -282,25 +363,37 @@ export interface OrphanMetadata {
  */
 export interface IntermediatePrompt {
   // Metadata (required)
+  /** Unique ID */
   id: string;
-  version: string;                   // Semantic versioning: "2.0.0"
+  /** Semantic versioning: "2.0.0" */
+  version: string;
+  /** Creation timestamp */
   created: Date;
+  /** Modification timestamp */
   modified: Date;
+  /** Prompt title */
   title: string;
+  /** Prompt description */
   description?: string;
+  /** Prompt tags */
   tags: string[];
 
   // Sources (what created this intermediate)
+  /** Source inputs that created this intermediate */
   sources: PromptSources;
 
   // Structure (the actual content - model-agnostic)
-  structure: IntermediateStructure | IntermediateStructureV1;  // Support both during migration
+  /** The actual intermediate content structure */
+  structure: IntermediateStructure | IntermediateStructureV1;
 
   // Relationships (for version control / branching)
+  /** Relationships to other intermediates */
   relationships?: IntermediateRelationships;
 
   // Scene Extension (Phase 1 MVP)
+  /** Metadata for scene extensions */
   extensionMetadata?: ExtensionMetadata;
+  /** Metadata for orphaned scenes */
   orphanMetadata?: OrphanMetadata;
 }
 
@@ -309,11 +402,16 @@ export interface IntermediatePrompt {
  * Tracks what inputs created this intermediate
  */
 export interface PromptSources {
-  text?: string;                     // Natural language input
-  images?: string[];                 // Blob URLs or external URLs
-  videos?: string[];                 // Blob URLs or external URLs
-  basePrompts?: string[];            // IDs of prompts to mix
-  template?: string;                 // Template ID
+  /** Natural language input */
+  text?: string;
+  /** Image source URLs */
+  images?: string[];
+  /** Video source URLs */
+  videos?: string[];
+  /** IDs of base prompts used for mixing */
+  basePrompts?: string[];
+  /** Template ID used */
+  template?: string;
 }
 
 /**
@@ -321,10 +419,14 @@ export interface PromptSources {
  * Version control and branching
  */
 export interface IntermediateRelationships {
-  parentId?: string;                 // Forked from this intermediate
-  childIds?: string[];               // Variations of this intermediate
-  mixedFrom?: string[];              // Blended from these intermediates
-  branchName?: string;               // Branch identifier
+  /** ID of the parent prompt */
+  parentId?: string;
+  /** IDs of child prompts (variations) */
+  childIds?: string[];
+  /** IDs of prompts this was mixed from */
+  mixedFrom?: string[];
+  /** Branch identifier name */
+  branchName?: string;
 }
 
 // ==================== Validation ====================
@@ -334,18 +436,27 @@ export interface IntermediateRelationships {
  * Result of validating an intermediate structure
  */
 export interface ValidationResult {
+  /** Whether the structure is valid */
   valid: boolean;
+  /** List of validation errors */
   errors: ValidationError[];
+  /** List of validation warnings */
   warnings: ValidationWarning[];
 }
 
+/** Validation error detail */
 export interface ValidationError {
+  /** Field causing the error */
   field: string;
+  /** Error message */
   message: string;
 }
 
+/** Validation warning detail */
 export interface ValidationWarning {
+  /** Field causing the warning */
   field: string;
+  /** Warning message */
   message: string;
 }
 
@@ -353,6 +464,8 @@ export interface ValidationWarning {
 
 /**
  * Check if structure is v2.0 format
+ * @param structure - The structure to check.
+ * @returns True if the structure is v2.0 format.
  */
 export function isIntermediateStructureV2(
   structure: IntermediateStructure | IntermediateStructureV1
@@ -362,6 +475,8 @@ export function isIntermediateStructureV2(
 
 /**
  * Check if structure is legacy markdown format
+ * @param structure - The structure to check.
+ * @returns True if the structure is markdown format.
  */
 export function isMarkdownFormat(
   structure: IntermediateStructure | IntermediateStructureV1
@@ -390,37 +505,52 @@ import type { PromptingStrategy } from './promptingTypes';
  */
 export interface IntermediateV3 {
   // Metadata
+  /** Unique ID */
   id: string;
-  promptId: string; // Links to original user prompt
-  version: 3; // Schema version
+  /** Links to original user prompt */
+  promptId: string;
+  /** Schema version (3) */
+  version: 3;
 
   // Structured components with explicit boundaries
+  /** Core scene components */
   components: SceneComponents;
 
   // Object library references (optional, for reusable objects)
+  /** References to objects in the library */
   linkedObjects?: LinkedObjects;
 
   // Audio with preserved Veo 3.1 syntax
+  /** Audio segments with Veo syntax */
   audio?: AudioSegment[];
 
   // Timestamp-based prompting (optional, for time-segmented scenes)
+  /** Segments for timestamp-based prompting */
   timestamps?: TimestampSegment[];
 
   // Prompting strategy metadata
+  /** Strategy used for prompting */
   promptingStrategy?: PromptingStrategy;
 
   // Scene metadata
+  /** Scene title */
   title: string;
+  /** Creation timestamp */
   created: Date;
+  /** Modification timestamp */
   modified: Date;
 
   // Scene relationships (for scene extension/composition)
+  /** ID of the parent scene */
   parentSceneId?: string;
+  /** IDs of child scenes */
   childSceneIds?: string[];
 }
 
 /**
  * Check if intermediate is v3.0 format
+ * @param intermediate - The object to check.
+ * @returns True if the object is an IntermediateV3.
  */
 export function isIntermediateV3(
   intermediate: any

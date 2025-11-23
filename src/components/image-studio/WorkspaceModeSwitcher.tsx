@@ -1,10 +1,14 @@
 import React from 'react';
 
 /**
- * WorkspaceModeSwitcher
+ * WorkspaceModeSwitcher component
  *
- * Top-level mode switcher for Video | Image workspaces.
- * Clean, prominent toggle that maintains consistent aesthetic.
+ * A navigation component for switching between the Video and Image workspaces.
+ * Provides a clean toggle interface consistent with the application's aesthetic.
+ *
+ * @param currentMode - The current workspace mode ('video' or 'image').
+ * @param onModeChange - Callback when the mode is changed.
+ * @returns The rendered WorkspaceModeSwitcher component.
  */
 
 export type WorkspaceMode = 'video' | 'image';

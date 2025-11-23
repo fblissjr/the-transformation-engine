@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { IntermediatePrompt, PreservationOptions } from '../../types/intermediate';
 import { ParentSceneSummary } from './ParentSceneSummary';
-import { generateSceneExtension, GenerateExtensionParams } from '../../services/sceneExtensionService';
+import { generateSceneExtension, GenerateExtensionParams } from '../services/sceneExtensionService';
 import { TransitionPatternSelector } from './TransitionPatternSelector';
 
 interface SceneExtensionDialogProps {
@@ -58,6 +58,18 @@ const InfoIcon: React.FC<{ className?: string; title?: string }> = ({ className,
   </svg>
 );
 
+/**
+ * SceneExtensionDialog component
+ *
+ * A dialog for extending an existing scene. It allows the user to choose between
+ * 'continue', 'cutTo', or 'transition' methods, provide a description for the new scene,
+ * and select which elements (characters, environment, etc.) to preserve.
+ *
+ * @param parentIntermediate - The parent intermediate prompt to extend from.
+ * @param onClose - Callback to close the dialog.
+ * @param onGenerated - Callback when the new extended scene is successfully generated.
+ * @returns The rendered SceneExtensionDialog component.
+ */
 export const SceneExtensionDialog: React.FC<SceneExtensionDialogProps> = ({
   parentIntermediate,
   onClose,

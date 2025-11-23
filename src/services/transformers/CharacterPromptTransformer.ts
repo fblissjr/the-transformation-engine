@@ -66,6 +66,10 @@ export interface CharacterPromptOptions {
   useEmphasis?: boolean;
 }
 
+/**
+ * Transformer class for generating hybrid Markdown + JSON prompts for character generation.
+ * This format is optimized for models like Gemini 2.5 Flash to ensure high field adherence and consistency.
+ */
 export class CharacterPromptTransformer {
   /**
    * Transform CharacterObjectData to hybrid Markdown + JSON prompt
@@ -76,8 +80,8 @@ export class CharacterPromptTransformer {
    * - Stable at temperature=1.0
    *
    * @param character - Character data from object library
-   * @param options - Optional generation parameters
-   * @returns Hybrid Markdown + JSON prompt string
+   * @param options - Optional generation parameters including style, camera settings, and framing.
+   * @returns A Promise resolving to the hybrid Markdown + JSON prompt string.
    */
   async transform(
     character: CharacterObjectData,

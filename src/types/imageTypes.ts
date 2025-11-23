@@ -7,74 +7,123 @@
 
 // Quality scoring (4D framework from Pico-Banana dataset)
 export interface QualityScores {
-  promptAdherence: number;    // 0-10
-  technicalQuality: number;   // 0-10
-  aestheticAppeal: number;    // 0-10
-  composition: number;        // 0-10
+  /** How well the image adheres to the prompt (0-10) */
+  promptAdherence: number;
+  /** Technical quality score (resolution, artifacts, etc.) (0-10) */
+  technicalQuality: number;
+  /** Aesthetic appeal score (0-10) */
+  aestheticAppeal: number;
+  /** Composition score (0-10) */
+  composition: number;
 }
 
 // Edit history tracking
 export interface EditHistoryEntry {
+  /** Timestamp of the edit operation */
   timestamp: number;
-  operation: string;           // Pico-Banana operation type
+  /** Type of operation performed (Pico-Banana operation type) */
+  operation: string;
+  /** Parameters used for the operation */
   parameters: Record<string, unknown>;
+  /** ID of the image before this edit */
   beforeImageId?: string;
 }
 
 // Image project container
 export interface ImageProject {
+  /** Unique identifier for the project */
   id: string;
-  title: string;               // Matches Main DB IntermediatePrompt.title
+  /** Project title */
+  title: string;
+  /** Optional project description */
   description?: string;
-  created: Date;               // Matches Main DB pattern
-  modified: Date;              // Matches Main DB pattern
+  /** Creation date */
+  created: Date;
+  /** Last modification date */
+  modified: Date;
+  /** Optional tags for categorization */
   tags?: string[];
+  /** Additional metadata */
   metadata?: Record<string, unknown>;
 }
 
 // Generated/edited image
 export interface ImageGeneration {
+  /** Unique identifier for the generated image */
   id: string;
-  projectId: string;           // FK → imageProjects
-  created: Date;               // Matches Main DB pattern
-  modified: Date;              // Matches Main DB pattern
-  imageData: Blob;             // Full resolution image
-  thumbnailData?: Blob;        // 200x200 preview
-  prompt: string;              // Original text prompt
-  template?: string;           // Pico-Banana template ID
-  model: string;               // e.g., "gemini-2.5-flash-image"
-  providerId: string;          // FK → providers (shared with video)
-  structuredYaml: string;      // YAML representation of image metadata
+  /** ID of the project this image belongs to */
+  projectId: string;
+  /** Creation date */
+  created: Date;
+  /** Last modification date */
+  modified: Date;
+  /** Full resolution image data as a Blob */
+  imageData: Blob;
+  /** Optional thumbnail data (e.g., 200x200 preview) */
+  thumbnailData?: Blob;
+  /** The original text prompt used to generate the image */
+  prompt: string;
+  /** Optional Pico-Banana template ID */
+  template?: string;
+  /** Model used for generation (e.g., "gemini-2.5-flash-image") */
+  model: string;
+  /** ID of the provider used (links to providers store) */
+  providerId: string;
+  /** YAML representation of image metadata */
+  structuredYaml: string;
+  /** Optional quality scores */
   qualityScores?: QualityScores;
-  linkedSceneIds: string[];    // FKs → intermediates (video scenes)
-  parentImageId?: string;      // FK → imageGenerations (edit lineage)
+  /** IDs of linked video scenes (intermediates) */
+  linkedSceneIds: string[];
+  /** ID of the parent image if this is an edit or variation */
+  parentImageId?: string;
+  /** History of edits applied to this image */
   editHistory?: EditHistoryEntry[];
+  /** Current status of the generation */
   status: 'generating' | 'ready' | 'error';
+  /** Error message if generation failed */
   errorMessage?: string;
+  /** Additional metadata */
   metadata?: Record<string, unknown>;
 }
 
 // Edit operation record (Pico-Banana-based)
 export interface ImageEdit {
+  /** Unique identifier for the edit operation */
   id: string;
-  generationId: string;        // FK → imageGenerations (semantic precision)
-  projectId: string;           // FK → imageProjects
-  created: Date;               // Matches Main DB pattern
-  editType: string;            // One of 35 Pico-Banana operations
-  instruction: string;         // Natural language edit instruction
+  /** ID of the generation being edited */
+  generationId: string;
+  /** ID of the project */
+  projectId: string;
+  /** Creation date */
+  created: Date;
+  /** Type of edit operation (one of 35 Pico-Banana operations) */
+  editType: string;
+  /** Natural language instruction for the edit */
+  instruction: string;
+  /** Parameters specific to the edit type */
   parameters: Record<string, unknown>;
-  resultImageId?: string;      // FK → imageGenerations (result of edit)
+  /** ID of the resulting image generation */
+  resultImageId?: string;
+  /** Status of the edit operation */
   status: 'pending' | 'processing' | 'completed' | 'failed';
+  /** Error message if edit failed */
   errorMessage?: string;
 }
 
 // Cross-workspace link (image → video scene)
 export interface SceneLink {
+  /** Unique identifier for the link */
   id: string;
-  imageGenerationId: string;   // FK → imageGenerations
-  intermediateId: string;      // FK → intermediates (video scenes)
+  /** ID of the image generation */
+  imageGenerationId: string;
+  /** ID of the intermediate (video scene) */
+  intermediateId: string;
+  /** Type of relationship between image and scene */
   linkType: 'first_frame' | 'reference' | 'ingredient' | 'style_ref';
-  created: Date;               // Matches Main DB pattern
+  /** Creation date */
+  created: Date;
+  /** Metadata about the link */
   metadata?: {
     linkReason?: string;
     autoGenerated?: boolean;

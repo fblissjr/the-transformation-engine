@@ -7,7 +7,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SceneClassification, SchemaKeyPreset } from '../../types/intermediate';
-import { schemaKeyService } from '../../services/schemaKeyService';
+import { schemaKeyService } from '../services/schemaKeyService';
 
 interface SceneClassificationContextType {
   // Scene Classification (5D taxonomy)
@@ -57,6 +57,16 @@ interface SceneClassificationProviderProps {
   children: ReactNode;
 }
 
+/**
+ * SceneClassificationProvider
+ *
+ * Provides context for scene classification and schema presets.
+ * Persists state to localStorage for continuity.
+ * Handles logic for selecting presets and triggering auto-suggestions.
+ *
+ * @param children - Child components to wrap.
+ * @returns The context provider.
+ */
 export function SceneClassificationProvider({ children }: SceneClassificationProviderProps) {
   // Scene Classification State
   const [classification, setClassificationState] = useState<SceneClassification>(() => {
@@ -217,6 +227,14 @@ export function SceneClassificationProvider({ children }: SceneClassificationPro
   );
 }
 
+/**
+ * useSceneClassification hook
+ *
+ * Custom hook to access the SceneClassificationContext.
+ *
+ * @returns The context value containing classification state and functions.
+ * @throws Error if used outside of a SceneClassificationProvider.
+ */
 export function useSceneClassification(): SceneClassificationContextType {
   const context = useContext(SceneClassificationContext);
   if (context === undefined) {

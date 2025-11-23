@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { tokenTrackingService } from '../../../services/tokenTrackingService';
+import { tokenTrackingService } from '../../services/tokenTrackingService';
 import { useProviders } from '../../contexts/ProviderContext';
 import { TASK_METADATA } from '../../../types/providers';
 
+/**
+ * TokenUsageTab component
+ *
+ * Settings tab for viewing and managing token usage statistics.
+ * Displays session totals, provider breakdown, and task breakdown.
+ * Allows exporting usage data to JSON or CSV and resetting the session tracking.
+ *
+ * @returns The rendered TokenUsageTab component.
+ */
 export const TokenUsageTab: React.FC = () => {
   const { providers } = useProviders();
   const [sessionTotals, setSessionTotals] = useState({

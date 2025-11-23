@@ -3,12 +3,28 @@ import type { Provider, ProviderKey, ProviderType } from "../types/providers";
 import { encryptData, decryptData } from "./encryptedStorage";
 import { getDB } from "./db/indexedDbService";
 
+/**
+ * ProviderService class
+ *
+ * Manages the lifecycle of AI providers and their API keys.
+ * Supports adding, updating, deleting, and retrieving providers and keys.
+ * Handles key encryption, decryption, and expiration.
+ * Provides utility for testing provider connections.
+ */
 export class ProviderService {
   private async getDb(): Promise<IDBPDatabase> {
     return getDB();
   }
 
   // Provider CRUD
+  /**
+   * Adds a new provider.
+   *
+   * @param name - The display name of the provider.
+   * @param type - The type of the provider (e.g., 'gemini', 'openrouter').
+   * @param baseUrl - The base URL for the provider's API.
+   * @returns The newly created Provider object.
+   */
   async addProvider(
     name: string,
     type: ProviderType,
@@ -29,6 +45,14 @@ export class ProviderService {
     return provider;
   }
 
+  /**
+   * Updates an existing provider.
+   *
+   * @param id - The ID of the provider to update.
+   * @param updates - The partial updates to apply.
+   * @returns The updated Provider object.
+   * @throws Error if the provider is not found.
+   */
   async updateProvider(
     id: string,
     updates: Partial<Omit<Provider, "id" | "createdAt">>
@@ -50,6 +74,11 @@ export class ProviderService {
     return updated;
   }
 
+  /**
+   * Deletes a provider and all its associated keys.
+   *
+   * @param id - The ID of the provider to delete.
+   */
   async deleteProvider(id: string): Promise<void> {
     const db = await this.getDb();
 
@@ -62,16 +91,32 @@ export class ProviderService {
     await db.delete("providers", id);
   }
 
+  /**
+   * Retrieves a provider by ID.
+   *
+   * @param id - The ID of the provider.
+   * @returns The Provider object or undefined if not found.
+   */
   async getProvider(id: string): Promise<Provider | undefined> {
     const db = await this.getDb();
     return db.get("providers", id);
   }
 
+  /**
+   * Retrieves all providers.
+   *
+   * @returns An array of all Provider objects.
+   */
   async getAllProviders(): Promise<Provider[]> {
     const db = await this.getDb();
     return db.getAll("providers");
   }
 
+  /**
+   * Retrieves only enabled providers.
+   *
+   * @returns An array of enabled Provider objects.
+   */
   async getEnabledProviders(): Promise<Provider[]> {
     const db = await this.getDb();
     const all = await db.getAll("providers");
@@ -79,6 +124,15 @@ export class ProviderService {
   }
 
   // Provider Key CRUD
+  /**
+   * Adds an API key for a provider.
+   *
+   * @param providerId - The ID of the provider.
+   * @param apiKey - The API key string.
+   * @param label - (Optional) A label for the key.
+   * @param ttl - (Optional) Time-to-live in milliseconds. Defaults to 7 days.
+   * @returns The created ProviderKey object.
+   */
   async addProviderKey(
     providerId: string,
     apiKey: string,
@@ -104,11 +158,22 @@ export class ProviderService {
     return key;
   }
 
+  /**
+   * Deletes a provider key.
+   *
+   * @param keyId - The ID of the key to delete.
+   */
   async deleteProviderKey(keyId: string): Promise<void> {
     const db = await this.getDb();
     await db.delete("providerKeys", keyId);
   }
 
+  /**
+   * Retrieves and decrypts a provider key by ID.
+   *
+   * @param keyId - The ID of the key.
+   * @returns The decrypted API key string or null if not found or expired.
+   */
   async getProviderKey(keyId: string): Promise<string | null> {
     const db = await this.getDb();
     const key = await db.get("providerKeys", keyId);
@@ -125,6 +190,13 @@ export class ProviderService {
     return decryptData(key.encryptedKey);
   }
 
+  /**
+   * Retrieves all valid keys for a specific provider.
+   * Automatically cleans up expired keys.
+   *
+   * @param providerId - The ID of the provider.
+   * @returns An array of valid ProviderKey objects.
+   */
   async getKeysForProvider(providerId: string): Promise<ProviderKey[]> {
     const db = await this.getDb();
     const allKeys = await db.getAllFromIndex("providerKeys", "providerId", providerId);
@@ -142,6 +214,12 @@ export class ProviderService {
     return validKeys;
   }
 
+  /**
+   * Retrieves the first valid decrypted API key for a provider.
+   *
+   * @param providerId - The ID of the provider.
+   * @returns The decrypted API key string or null if no valid keys exist.
+   */
   async getFirstValidKey(providerId: string): Promise<string | null> {
     const keys = await this.getKeysForProvider(providerId);
     if (keys.length === 0) return null;
@@ -150,6 +228,13 @@ export class ProviderService {
     return this.getProviderKey(keys[0].id);
   }
 
+  /**
+   * Updates the expiration time of a provider key.
+   *
+   * @param keyId - The ID of the key to update.
+   * @param ttl - The new time-to-live in milliseconds.
+   * @throws Error if the key is not found.
+   */
   async updateKeyExpiration(keyId: string, ttl: number): Promise<void> {
     const db = await this.getDb();
     const key = await db.get("providerKeys", keyId);
@@ -165,6 +250,11 @@ export class ProviderService {
   }
 
   // Utility
+  /**
+   * Removes all expired provider keys from the database.
+   *
+   * @returns The number of expired keys removed.
+   */
   async cleanupExpiredKeys(): Promise<number> {
     const db = await this.getDb();
     const allKeys = await db.getAll("providerKeys");
@@ -178,6 +268,12 @@ export class ProviderService {
     return expiredKeys.length;
   }
 
+  /**
+   * Tests the connection to a provider by attempting to list models.
+   *
+   * @param providerId - The ID of the provider to test.
+   * @returns Object containing success status, potential error message, and model count.
+   */
   async testConnection(providerId: string): Promise<{
     success: boolean;
     error?: string;

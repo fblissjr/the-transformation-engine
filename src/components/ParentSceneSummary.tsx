@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { IntermediatePrompt, ParentSceneSummary as ParentSceneSummaryType } from '../../types/intermediate';
-import { getParentSummary } from '../../services/sceneExtensionService';
+import { getParentSummary } from '../services/sceneExtensionService';
 
 interface ParentSceneSummaryProps {
   parentIntermediate: IntermediatePrompt;
@@ -25,6 +25,15 @@ const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+/**
+ * ParentSceneSummary component
+ *
+ * Renders a summary of a parent scene, useful for providing context when extending a scene.
+ * The summary is collapsible and fetches data asynchronously.
+ *
+ * @param parentIntermediate - The intermediate prompt of the parent scene.
+ * @returns The rendered ParentSceneSummary component.
+ */
 export const ParentSceneSummary: React.FC<ParentSceneSummaryProps> = ({ parentIntermediate }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [summary, setSummary] = useState<ParentSceneSummaryType | null>(null);

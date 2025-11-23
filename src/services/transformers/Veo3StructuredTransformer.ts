@@ -9,10 +9,19 @@ import type { IntermediateV3 } from '../../../types/intermediate';
 import type { ObjectLibraryService } from '../objectLibraryService';
 import { TransformerUtils } from './TransformerUtils';
 
+/**
+ * Transformer class for converting IntermediateV3 objects into Veo 3.1 Structured JSON format.
+ * This method outputs a complete structured representation of the prompt.
+ */
 export class Veo3StructuredTransformer {
   /**
    * Transform IntermediateV3 to Veo 3.1 structured format (JSON)
    * Outputs complete structured representation
+   *
+   * @param intermediate - The intermediate V3 prompt object.
+   * @param objectLibrary - The object library service to resolve components.
+   * @returns A Promise resolving to the transformed Veo 3.1 structured JSON string.
+   * @throws Error if transformation fails.
    */
   async transform(
     intermediate: IntermediateV3,

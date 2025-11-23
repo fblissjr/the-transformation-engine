@@ -1,4 +1,10 @@
 /** @type {import('tailwindcss').Config} */
+/**
+ * Tailwind CSS Configuration
+ *
+ * Defines the content sources to scan for utility classes
+ * and extends the default theme with custom animations and keyframes.
+ */
 export default {
   content: [
     "./index.html",

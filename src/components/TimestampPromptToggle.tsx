@@ -35,6 +35,18 @@ interface TimestampPromptToggleProps {
 
 // ==================== Component ====================
 
+/**
+ * TimestampPromptToggle component
+ *
+ * A toggle control for switching between 'timestamp' (time-segmented) and 'continuous' (narrative) prompting strategies.
+ * Includes tooltips and guidance for each strategy.
+ *
+ * @param strategy - The currently selected prompting strategy.
+ * @param onStrategyChange - Callback when the strategy is changed.
+ * @param disabled - (Optional) Whether the toggle is disabled.
+ * @param disabledReason - (Optional) Reason for being disabled, displayed if provided.
+ * @returns The rendered TimestampPromptToggle component.
+ */
 export const TimestampPromptToggle: React.FC<TimestampPromptToggleProps> = ({
   strategy,
   onStrategyChange,

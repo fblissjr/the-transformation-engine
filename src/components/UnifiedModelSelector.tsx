@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProviders } from '../contexts/ProviderContext';
-import { taskAssignmentService } from '../../services/taskAssignmentService';
+import { taskAssignmentService } from '../services/taskAssignmentService';
 import type { Model } from '../../types/providers';
 
 interface UnifiedModelSelectorProps {
@@ -8,10 +8,14 @@ interface UnifiedModelSelectorProps {
 }
 
 /**
- * Unified Model Selector - Single source of truth for model selection
+ * UnifiedModelSelector component
  *
- * This component reads from and writes to taskAssignmentService.getGlobalDefault()
- * It's used in the generation page and syncs with the Settings page.
+ * Single source of truth for model selection in the generation interface.
+ * It reads from and writes to `taskAssignmentService.getGlobalDefault()`.
+ * This component synchronizes with the settings page.
+ *
+ * @param onModelChange - Optional callback when the model selection changes.
+ * @returns The rendered UnifiedModelSelector component.
  */
 export const UnifiedModelSelector: React.FC<UnifiedModelSelectorProps> = ({ onModelChange }) => {
   const { providers, fetchModels } = useProviders();

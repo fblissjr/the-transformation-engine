@@ -52,9 +52,13 @@ export const DB_CONFIG = {
 } as const;
 
 // Export individual constants for backward compatibility
+/** The name of the IndexedDB database */
 export const DB_NAME = DB_CONFIG.name;
+/** The current schema version of the database */
 export const DB_VERSION = DB_CONFIG.version;
+/** Object containing all store names used in the database */
 export const STORE_NAMES = DB_CONFIG.stores;
 
 // Type-safe store name type
+/** Type representing valid store names in the database */
 export type StoreName = typeof DB_CONFIG.stores[keyof typeof DB_CONFIG.stores];

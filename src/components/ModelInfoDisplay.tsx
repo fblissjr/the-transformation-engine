@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useProviders } from '../contexts/ProviderContext';
-import { taskAssignmentService } from '../../services/taskAssignmentService';
+import { taskAssignmentService } from '../services/taskAssignmentService';
 import { TASK_IDS, TASK_METADATA } from '../../types/providers';
 import type { Model, TaskAssignment } from '../../types/providers';
 
 /**
- * Read-only display showing which model and sampler settings will be used for generation
- * Links to Settings for changes
+ * ModelInfoDisplay component
+ *
+ * Displays the currently configured model and sampler settings for generation.
+ * It is a read-only view that provides a link to the Settings page for making changes.
+ *
+ * @returns The rendered ModelInfoDisplay component.
  */
 export const ModelInfoDisplay: React.FC = () => {
   const { providers, fetchModels } = useProviders();

@@ -172,6 +172,14 @@ const SCREENSHOTS = [
   },
 ];
 
+/**
+ * Captures a screenshot for a specific scenario and viewport.
+ * @param {object} browser - The Playwright browser instance.
+ * @param {object} screenshot - The screenshot definition object.
+ * @param {object} viewport - The viewport configuration.
+ * @param {string} viewportName - The name of the viewport ('desktop' or 'mobile').
+ * @param {boolean} shouldInjectMockData - Whether to inject mock data before capturing.
+ */
 async function captureScreenshot(browser, screenshot, viewport, viewportName, shouldInjectMockData = true) {
   const context = await browser.newContext({
     viewport,
@@ -237,6 +245,11 @@ async function captureScreenshot(browser, screenshot, viewport, viewportName, sh
   }
 }
 
+/**
+ * Main function to run all screenshot captures.
+ * @param {string|null} viewportFilter - Optional filter for viewport ('desktop' or 'mobile').
+ * @param {boolean} cleanFirst - Whether to clean IndexedDB before starting.
+ */
 async function captureAll(viewportFilter = null, cleanFirst = false) {
   console.log('\n🎬 Starting Screenshot Capture with Mock Data\n');
   console.log(`📁 Output directory: ${assetsDir}`);

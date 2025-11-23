@@ -1,6 +1,12 @@
 import { Prompt, PromptVersion, GenerationMetadata } from '../types';
 import * as dbService from './dbService';
 
+/**
+ * Retrieves all versions associated with a specific prompt.
+ *
+ * @param promptId - The ID of the prompt.
+ * @returns A Promise resolving to an array of PromptVersion objects.
+ */
 export async function getVersions(promptId: string): Promise<PromptVersion[]> {
   try {
     return await dbService.getVersions(promptId);
@@ -10,6 +16,15 @@ export async function getVersions(promptId: string): Promise<PromptVersion[]> {
   }
 }
 
+/**
+ * Adds a new version for a prompt.
+ *
+ * @param prompt - The prompt object to version.
+ * @param metadata - (Optional) Metadata about the generation.
+ * @param parentVersionId - (Optional) The ID of the parent version.
+ * @param branchName - (Optional) The name of the branch this version belongs to. Defaults to 'main'.
+ * @returns A Promise resolving when the version is added.
+ */
 export async function addVersion(
   prompt: Prompt,
   metadata?: GenerationMetadata,
@@ -43,6 +58,12 @@ export async function addVersion(
   }
 }
 
+/**
+ * Deletes all versions associated with a specific prompt.
+ *
+ * @param promptId - The ID of the prompt.
+ * @returns A Promise resolving when the versions are deleted.
+ */
 export async function deleteVersions(promptId: string): Promise<void> {
     try {
         await dbService.deleteVersions(promptId);
@@ -54,6 +75,11 @@ export async function deleteVersions(promptId: string): Promise<void> {
 /**
  * Create a new branch from an existing version
  * This creates a new version with the same content but a new branch name
+ *
+ * @param promptId - The ID of the prompt.
+ * @param sourceVersionId - The ID of the version to branch from.
+ * @param newBranchName - The name of the new branch.
+ * @returns A Promise resolving to the new PromptVersion or null if creation failed.
  */
 export async function createBranch(
   promptId: string,
@@ -102,6 +128,9 @@ export async function createBranch(
 /**
  * Get the version tree structure for a prompt
  * Returns versions organized by branch with parent-child relationships
+ *
+ * @param promptId - The ID of the prompt.
+ * @returns A Promise resolving to an object containing branches and root versions.
  */
 export async function getVersionTree(promptId: string): Promise<{
   branches: { [branchName: string]: PromptVersion[] };

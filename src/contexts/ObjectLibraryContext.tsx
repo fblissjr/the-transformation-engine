@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { objectLibraryService } from '../../src/services/objectLibraryService';
+import { objectLibraryService } from '../services/objectLibraryService';
 import type { ObjectStoreRecord } from '../../types/objectTypes';
 
 // Object type constants
@@ -42,6 +42,16 @@ interface ObjectLibraryContextType {
 
 const ObjectLibraryContext = createContext<ObjectLibraryContextType | undefined>(undefined);
 
+/**
+ * ObjectLibraryProvider
+ *
+ * Manages the state and operations for the Universal Object Library.
+ * Handles fetching, creating, updating, deleting, and duplicating objects across all types.
+ * Provides context for accessing object data and selection state.
+ *
+ * @param children - Child components to wrap.
+ * @returns The context provider.
+ */
 export const ObjectLibraryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [objects, setObjects] = useState<ObjectStoreRecord[]>([]);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
@@ -198,6 +208,14 @@ export const ObjectLibraryProvider: React.FC<{ children: ReactNode }> = ({ child
   );
 };
 
+/**
+ * useObjectLibrary hook
+ *
+ * Custom hook to access the ObjectLibraryContext.
+ *
+ * @returns The context value containing object library state and functions.
+ * @throws Error if used outside of an ObjectLibraryProvider.
+ */
 export const useObjectLibrary = () => {
   const context = useContext(ObjectLibraryContext);
   if (!context) {

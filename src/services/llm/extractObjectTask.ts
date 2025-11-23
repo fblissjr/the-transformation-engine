@@ -8,7 +8,7 @@
  * - Convert unstructured description → structured object data
  */
 
-import type { TaskRouter } from '../../../services/taskRouter';
+import type { TaskRouter } from '../../taskRouter';
 import { TASK_IDS } from '../../../types/providers';
 
 export interface ExtractObjectInput {
@@ -70,7 +70,12 @@ Output JSON format:
 IMPORTANT: Always output valid JSON only. No markdown formatting, no explanations outside the JSON structure.`;
 
 /**
- * Execute EXTRACT_OBJECT task
+ * Executes the LLM_EXTRACT_OBJECT task to extract structured data from source material.
+ *
+ * @param input - The input containing source material, object type, schema, and context.
+ * @param taskRouter - The task router instance used to execute the extraction task.
+ * @returns A Promise resolving to the ExtractObjectOutput containing extracted data, confidence score, ambiguities, and reasoning.
+ * @throws Error if the LLM response is invalid or if execution fails.
  */
 export async function executeExtractObjectTask(
   input: ExtractObjectInput,
