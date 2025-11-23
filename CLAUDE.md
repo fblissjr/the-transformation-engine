@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-11-20 | **Status**: v2.1.0-alpha (Phase 2.3 Complete, Phase 5 Next)
+> **Last Updated**: 2025-11-23 | **Status**: v2.2.1-alpha (Image Studio Week 2 + UX Complete, Merged to Dev)
 
 ---
 
@@ -73,6 +73,13 @@ The living-docs contain modular files covering:
 
 #### Recent Documentation Updates
 
+**Image Studio** (2025-11-23):
+- **[internal/living-docs/25_IMAGE_STUDIO.md](./internal/living-docs/25_IMAGE_STUDIO.md)** - Week 2 MVP + UX Quick Wins complete, merged to dev
+- **[internal/image-gen-edit/WEEK1_MVP_COMPLETION.md](./internal/image-gen-edit/WEEK1_MVP_COMPLETION.md)** - Week 1 implementation (7 components)
+- **[internal/image-gen-edit/WEEK2_COMPLETION_SUMMARY.md](./internal/image-gen-edit/WEEK2_COMPLETION_SUMMARY.md)** - Week 2 implementation (FragmentBrowser, CharacterSelector, 46 fragments)
+- **[internal/image-gen-edit/UX_QUICK_WINS_SUMMARY.md](./internal/image-gen-edit/UX_QUICK_WINS_SUMMARY.md)** - UX improvements (keyboard nav, mobile responsive, "Coming Soon" pattern)
+- **[internal/gemini_ux_research/](./internal/gemini_ux_research/)** - Gemini's strategic research + experimental POCs (preserved for Phase 4-5)
+
 **Veo 3.1 Integration** (2025-11-20):
 - **[internal/veo3/PHASE2.3_COMPLETION_SUMMARY.md](./internal/veo3/PHASE2.3_COMPLETION_SUMMARY.md)** - Phase 2.3 implementation summary (89 new typed options)
 - **[internal/veo3/VEO31_DIRECTOR_ARCHITECTURE_ANALYSIS.md](./internal/veo3/VEO31_DIRECTOR_ARCHITECTURE_ANALYSIS.md)** - Architectural analysis (15,000+ words)
@@ -127,16 +134,29 @@ The living-docs contain modular files covering:
 - **[STRUCTURED_DATA_ARCHITECTURE.md](./internal/living-docs/STRUCTURED_DATA_ARCHITECTURE.md)** - Any-to-Any philosophy
 
 ### Image Studio
-**Status**: Phase 1 Complete ✅ | Phase 2 Next (UI Components)
+**Status**: Week 2 MVP + UX Quick Wins Complete ✅ | Merged to Dev ✅ | Phase 3 Backend Integration Next
 
-**Architecture**: Consolidated to single Main DB v11 (video + image stores)
+**Architecture**: Consolidated to single Main DB v12 (video + image stores)
+
+**What's Complete**:
+- Week 1 MVP: 3-panel workspace, Video|Image mode switcher, 7 components (1,085 lines)
+- Week 2 MVP: FragmentBrowser (56 fragments), CharacterSelector (6 characters), progressive disclosure UI (950 lines)
+- UX Quick Wins: "Coming Soon" badges, keyboard nav, mobile responsive, test fixes
+- Branch: Merged to `dev` (commit 92a4bef), pushed to origin
+- Tests: 82/85 passing (3 CenterPanel tests skipped)
 
 **Implementation Guides**:
-- **[IMAGE_STUDIO_README.md](./docs/IMAGE_STUDIO_README.md)** - Quick overview
-- **[IMPLEMENTATION_STATUS.md](./internal/image-gen-edit/IMPLEMENTATION_STATUS.md)** - Complete implementation guide
-- **[PHASE2_QUICKSTART.md](./internal/image-gen-edit/PHASE2_QUICKSTART.md)** - Phase 2 guide
+- **[internal/living-docs/25_IMAGE_STUDIO.md](./internal/living-docs/25_IMAGE_STUDIO.md)** - Complete guide (updated 2025-11-23)
+- **[internal/image-gen-edit/WEEK1_MVP_COMPLETION.md](./internal/image-gen-edit/WEEK1_MVP_COMPLETION.md)** - Week 1 summary
+- **[internal/image-gen-edit/WEEK2_COMPLETION_SUMMARY.md](./internal/image-gen-edit/WEEK2_COMPLETION_SUMMARY.md)** - Week 2 summary
+- **[internal/image-gen-edit/UX_QUICK_WINS_SUMMARY.md](./internal/image-gen-edit/UX_QUICK_WINS_SUMMARY.md)** - UX improvements
+
+**Gemini Research** (Preserved for Future):
+- **[internal/gemini_ux_research/](./internal/gemini_ux_research/)** - Strategic research + experimental components (Timeline Editor, Visual Cinematographer, Entity Graph) on `option2-ux` branch for Phase 4-5 reference
 
 **Dataset**: Pico-Banana-400K (35 editing operations) - See **[pico_data/INDEX.md](./internal/image-gen-edit/pico_data/INDEX.md)**
+
+**Next Steps**: Phase 3 - Backend integration (reference images API, advanced settings, character library connection)
 
 ### Historical Documentation
 - **[internal/history/](./internal/history/)** - Phase completion reports, architecture proposals, planning docs organized by phase and topic
