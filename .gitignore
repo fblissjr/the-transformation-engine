@@ -58,3 +58,4 @@ Thumbs.db
 
 # Generated files (created by setup.sh with local paths)
 nginx.conf.local
+internal/
