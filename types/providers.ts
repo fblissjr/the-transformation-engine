@@ -270,6 +270,7 @@ export const TASK_IDS = {
   IMAGE_EDITING: "image_editing",
   IMAGE_ANALYSIS: "image_analysis",
   IMAGE_QUALITY_SCORING: "image_quality_scoring",
+  IMAGE_INTERMEDIATE_GENERATION: "image_intermediate_generation",
   // Object Library tasks (Intermediate v3.0)
   LLM_DERIVE_SCHEMA: "llm_derive_schema",
   LLM_EXTRACT_OBJECT: "llm_extract_object",
@@ -431,6 +432,16 @@ export const TASK_METADATA: Record<TaskId, TaskMetadata> = {
     requiresJsonMode: true,
     defaultTemperature: 1.0,
     defaultMaxTokens: 1024,
+  },
+  [TASK_IDS.IMAGE_INTERMEDIATE_GENERATION]: {
+    id: TASK_IDS.IMAGE_INTERMEDIATE_GENERATION,
+    name: "Image Intermediate Generation",
+    description: "Generate structured YAML intermediate from text prompt",
+    requiresVision: false,
+    requiresVideo: false,
+    requiresJsonMode: false,
+    defaultTemperature: 1.0,
+    defaultMaxTokens: 2048,
   },
   [TASK_IDS.LLM_DERIVE_SCHEMA]: {
     id: TASK_IDS.LLM_DERIVE_SCHEMA,

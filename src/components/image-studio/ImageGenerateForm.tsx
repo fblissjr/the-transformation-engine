@@ -14,6 +14,8 @@ import {
 import { FragmentBrowser } from './FragmentBrowser';
 import { CharacterSelector } from './CharacterSelector';
 import { taskRouter } from '../../services/taskRouter';
+import { TASK_IDS } from '../../../types/providers';
+import { FragmentLoader } from '../../services/fragmentLoader';
 
 /**
  * ImageGenerateForm component
@@ -180,12 +182,25 @@ export const ImageGenerateForm: React.FC<ImageGenerateFormProps> = ({
     setIsGenerating(true);
 
     try {
+      // Step 1: Generate structured intermediate from text prompt
+      const fragmentLoader = new FragmentLoader();
+      const systemPrompt = await fragmentLoader.load('image/image_intermediate.md');
+
+      const intermediateTurn = await taskRouter.executeTask(
+        TASK_IDS.IMAGE_INTERMEDIATE_GENERATION,
+        prompt,
+        systemPrompt
+      );
+
+      const structuredYaml = intermediateTurn.response;
+
+      // Step 2: Generate image with structured YAML
       // Note: Reference images not yet integrated with backend
       // Will be added in Phase 3 when Gemini API supports it
       const result = await taskRouter.executeImageGeneration(
         projectId,
         prompt,
-        '', // structuredYaml - empty for now, Phase 3 will use CharacterPromptTransformer
+        structuredYaml, // Now populated with structured intermediate!
         {
           aspectRatio,
           numImages,
