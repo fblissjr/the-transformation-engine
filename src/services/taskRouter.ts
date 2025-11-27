@@ -477,7 +477,7 @@ export class TaskRouter {
       metadata?: Record<string, unknown>;
     } = {}
   ): Promise<{ imageId: string; success: boolean; error?: string }> {
-    const { saveGeneratedImage } = await import('../src/services/imageDbService');
+    const { saveGeneratedImage } = await import('./imageDbService');
 
     try {
       // 1. Get task assignment for IMAGE_GENERATION
@@ -552,7 +552,7 @@ export class TaskRouter {
     instruction: string,
     parameters: Record<string, unknown>
   ): Promise<{ imageId: string; success: boolean; error?: string }> {
-    const { getImage, saveEditedImage } = await import('../src/services/imageDbService');
+    const { getImage, saveEditedImage } = await import('./imageDbService');
 
     try {
       // 1. Get task assignment for IMAGE_EDITING

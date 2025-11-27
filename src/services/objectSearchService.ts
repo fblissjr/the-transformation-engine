@@ -1,4 +1,4 @@
-import { getDB } from '..//db/indexedDbService';
+import { getDB } from './db/indexedDbService';
 import { DB_CONFIG } from '../../config/database';
 import type { ObjectStoreRecord } from '../../types/objectTypes';
 import { objectLibraryService } from './objectLibraryService';

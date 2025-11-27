@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { MediaReference } from '../types';
-import * as dbService from '../services/dbService';
+import * as dbService from '../src/services/dbService';
 
 /**
  * Custom hook to manage blob URLs for media references

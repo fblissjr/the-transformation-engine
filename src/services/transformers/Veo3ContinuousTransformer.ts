@@ -41,17 +41,11 @@ export class Veo3ContinuousTransformer {
         cinematography = TransformerUtils.formatCamera(cameraData);
       }
 
-      // STEP 2: Resolve subject component
-      let subject: string;
-      if (components.subject.type === 'text') {
-        subject = components.subject.text;
-      } else {
-        const characterData = await TransformerUtils.resolveComponent(
-          components.subject,
-          objectLibrary
-        );
-        subject = TransformerUtils.formatCharacter(characterData);
-      }
+      // STEP 2: Resolve subject component (handles text, object_reference, and multi_subject)
+      const subject = await TransformerUtils.resolveSubjectComponent(
+        components.subject,
+        objectLibrary
+      );
 
       // STEP 3: Format action component
       const action = TransformerUtils.formatAction(components.action);

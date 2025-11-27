@@ -1,7 +1,7 @@
 import type { Transformer } from './types';
 import { sora2Transformer } from './sora2Transformer';
 import { veo3Transformer } from './veo3Transformer';
-import { genericTransformer } from './genericTransformer';
+import { genericTransformerV2 } from './genericTransformerV2';
 import type { IntermediatePrompt, StructuredFormat } from '../../types/intermediate';
 import { parseMarkdownIntermediate } from './markdownParser';
 
@@ -15,7 +15,7 @@ export function registerTransformer(transformer: Transformer): void {
 
 // Get transformer by model ID
 export function getTransformer(modelId: string): Transformer {
-  return transformers.get(modelId) || genericTransformer;
+  return transformers.get(modelId) || genericTransformerV2;
 }
 
 // Get all available transformers
@@ -66,14 +66,16 @@ export function detectBestTransformer(
   }
 
   // Default to generic
-  return genericTransformer;
+  return genericTransformerV2;
 }
 
 // Initialize transformers on module load
 registerTransformer(sora2Transformer);
 registerTransformer(veo3Transformer);
-registerTransformer(genericTransformer);
+registerTransformer(genericTransformerV2);
 
 // Export transformers
-export { sora2Transformer, veo3Transformer, genericTransformer };
+export { sora2Transformer, veo3Transformer, genericTransformerV2 };
+// V3 transformers (async, for IntermediateV3 format)
+export { genericTransformer } from './genericTransformer';
 export * from './types';

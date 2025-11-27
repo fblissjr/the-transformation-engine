@@ -41,16 +41,11 @@ export class GenericTransformer {
         cinematography = TransformerUtils.formatCamera(cameraData);
       }
 
-      let subject: string;
-      if (components.subject.type === 'text') {
-        subject = components.subject.text;
-      } else {
-        const characterData = await TransformerUtils.resolveComponent(
-          components.subject,
-          objectLibrary
-        );
-        subject = TransformerUtils.formatCharacter(characterData);
-      }
+      // Resolve subject (handles text, object_reference, and multi_subject)
+      const subject = await TransformerUtils.resolveSubjectComponent(
+        components.subject,
+        objectLibrary
+      );
 
       const action = TransformerUtils.formatAction(components.action);
       const context = await TransformerUtils.resolveContextComponent(

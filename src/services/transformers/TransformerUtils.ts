@@ -9,9 +9,14 @@ import type {
   CameraObjectData,
   CharacterObjectData,
   LocationObjectData,
+  PropObjectData,
   ActionComponent,
   ContextComponent,
   StyleComponent,
+  SubjectComponent,
+  MultiSubjectComponent,
+  TextComponent,
+  ObjectReferenceComponent,
 } from '../../../types/componentTypes';
 import type { AudioSegment } from '../../../types/audioTypes';
 
@@ -404,5 +409,409 @@ export class TransformerUtils {
     }
 
     return this.formatContext(resolved);
+  }
+
+  // ============================================================================
+  // SUBJECT RESOLUTION (NEW - supports multi_subject)
+  // ============================================================================
+
+  /**
+   * Resolve subject component which can be text, object_reference, or multi_subject
+   *
+   * @param subject - The subject component to resolve.
+   * @param objectLibrary - The object library service to fetch object data.
+   * @returns A Promise resolving to the formatted subject string.
+   */
+  static async resolveSubjectComponent(
+    subject: SubjectComponent,
+    objectLibrary: ObjectLibraryService
+  ): Promise<string> {
+    if (subject.type === 'text') {
+      return subject.text;
+    }
+
+    if (subject.type === 'object_reference') {
+      const data = await this.resolveComponent(subject, objectLibrary);
+      // Determine if it's a character or prop based on objectType
+      if (subject.objectType === 'character') {
+        return this.formatCharacter(data as CharacterObjectData);
+      } else if (subject.objectType === 'prop') {
+        return this.formatProp(data as PropObjectData);
+      }
+      return String(data);
+    }
+
+    if (subject.type === 'multi_subject') {
+      return this.formatMultiSubject(subject, objectLibrary);
+    }
+
+    return '';
+  }
+
+  /**
+   * Format multi-subject component to natural language
+   *
+   * @param multiSubject - The multi-subject component.
+   * @param objectLibrary - The object library service to resolve references.
+   * @returns A Promise resolving to formatted string.
+   */
+  static async formatMultiSubject(
+    multiSubject: MultiSubjectComponent,
+    objectLibrary: ObjectLibraryService
+  ): Promise<string> {
+    const subjectDescriptions: string[] = [];
+
+    for (const subj of multiSubject.subjects) {
+      if (subj.type === 'text') {
+        subjectDescriptions.push(subj.text);
+      } else if (subj.type === 'object_reference') {
+        const data = await this.resolveComponent(subj, objectLibrary);
+        if (subj.objectType === 'character') {
+          subjectDescriptions.push(this.formatCharacter(data as CharacterObjectData));
+        } else if (subj.objectType === 'prop') {
+          subjectDescriptions.push(this.formatProp(data as PropObjectData));
+        }
+      }
+    }
+
+    let result = subjectDescriptions.join(' and ');
+
+    // Add relationship context if present
+    if (multiSubject.relationship) {
+      result += `, ${multiSubject.relationship}`;
+    }
+
+    return result;
+  }
+
+  /**
+   * Format prop data to natural language
+   *
+   * @param prop - The prop object data.
+   * @returns A string describing the prop.
+   */
+  static formatProp(prop: PropObjectData): string {
+    const parts: string[] = [];
+
+    if (prop.name) {
+      parts.push(prop.name);
+    }
+
+    if (prop.appearance) {
+      const app = prop.appearance;
+      if (app.material) parts.push(app.material);
+      if (app.color) parts.push(app.color);
+      if (app.size) parts.push(app.size);
+      if (app.condition) parts.push(app.condition);
+    }
+
+    if (prop.function) {
+      parts.push(`(${prop.function})`);
+    }
+
+    return parts.join(', ');
+  }
+
+  // ============================================================================
+  // MODEL-SPECIFIC FORMATTING (NEW)
+  // ============================================================================
+
+  /**
+   * Format camera movement with imperial measurements for Sora 2
+   * Example: "Dolly forward 4 ft at 1 ft/s"
+   *
+   * @param camera - The camera object data.
+   * @returns A string with imperial measurements.
+   */
+  static formatCameraImperial(camera: CameraObjectData): string {
+    const parts: string[] = [];
+
+    if (camera.shotType) {
+      parts.push(`${camera.shotType} shot`);
+    }
+
+    if (camera.movement && camera.movement.type !== 'static') {
+      const movement = camera.movement;
+      let movementDesc = movement.type.charAt(0).toUpperCase() + movement.type.slice(1);
+
+      // Add direction with imperial distance estimate
+      if (movement.direction) {
+        movementDesc += ` ${movement.direction}`;
+      }
+
+      // Add speed as ft/s
+      if (movement.speed) {
+        const speedMap: Record<string, string> = {
+          slow: '1 ft/s',
+          medium: '3 ft/s',
+          fast: '6 ft/s',
+        };
+        const speedFt = speedMap[movement.speed] || '2 ft/s';
+        movementDesc += ` at ${speedFt}`;
+      }
+
+      // Add distance estimate based on movement type
+      const distanceMap: Record<string, string> = {
+        dolly: '4 ft',
+        track: '6 ft',
+        crane: '8 ft',
+        steadicam: '10 ft',
+      };
+      const distanceFt = distanceMap[movement.type] || '4 ft';
+      movementDesc += ` covering ${distanceFt}`;
+
+      parts.push(movementDesc);
+    }
+
+    if (camera.angle && camera.angle !== 'eye-level') {
+      parts.push(camera.angle);
+    }
+
+    return parts.join(', ');
+  }
+
+  /**
+   * Format lighting with Kelvin temperature and ratios for Sora 2
+   * Example: "5600K key; 2:1 key/fill"
+   *
+   * @param location - The location object data.
+   * @returns A string with motivated lighting description.
+   */
+  static formatLightingMotivated(location: LocationObjectData): string {
+    const parts: string[] = [];
+
+    if (location.lighting) {
+      const lighting = location.lighting;
+
+      // Map lighting quality to Kelvin
+      const kelvinMap: Record<string, string> = {
+        'natural-daylight': '5600K',
+        'golden-hour': '3200K',
+        'blue-hour': '6500K',
+        'overcast': '6000K',
+        'moonlight': '4100K',
+        'fluorescent': '4200K',
+        'neon': '2700K',
+        'firelight': '1900K',
+        'film-noir': '3400K',
+        'high-key': '5200K',
+        'low-key': '3800K',
+      };
+
+      const kelvin = kelvinMap[lighting.quality] || '5000K';
+      parts.push(`${kelvin} key`);
+
+      // Add key/fill ratio based on lighting quality
+      const ratioMap: Record<string, string> = {
+        'film-noir': '8:1 key/fill',
+        'low-key': '4:1 key/fill',
+        'high-key': '1:1 key/fill',
+        'natural-daylight': '2:1 key/fill',
+      };
+      const ratio = ratioMap[lighting.quality] || '2:1 key/fill';
+      parts.push(ratio);
+
+      // Add sources
+      if (lighting.sources && lighting.sources.length > 0) {
+        parts.push(`from ${lighting.sources.slice(0, 2).join(' and ')}`);
+      }
+    }
+
+    return parts.join('; ');
+  }
+
+  /**
+   * Format audio segments with expanded descriptions (45+ words for Veo 3.1)
+   *
+   * @param audioSegments - Array of audio segments.
+   * @returns Expanded audio description.
+   */
+  static formatAudioExpanded(audioSegments: AudioSegment[] | undefined): string {
+    if (!audioSegments || audioSegments.length === 0) {
+      return '';
+    }
+
+    const expanded: string[] = [];
+
+    for (const audio of audioSegments) {
+      let description = audio.originalSyntax || '';
+
+      // Expand based on audio type
+      if (audio.type === 'dialogue') {
+        // Add delivery context for dialogue
+        description += ` The voice carries emotion and presence, grounding the scene with human connection.`;
+      } else if (audio.type === 'music') {
+        // Expand music descriptions
+        description += ` The music establishes atmosphere and emotional undercurrent throughout the scene.`;
+      } else if (audio.type === 'ambient') {
+        // Expand ambient descriptions
+        description += ` These ambient sounds create an immersive soundscape that transports the viewer into the scene.`;
+      } else if (audio.type === 'sfx') {
+        // Expand SFX descriptions
+        description += ` The sound effect punctuates the action with precise audio cues.`;
+      }
+
+      expanded.push(description);
+    }
+
+    return expanded.join('\n\n');
+  }
+
+  /**
+   * Format depth layers for Veo 3.1 (foreground/midground/background)
+   *
+   * @param context - The context component.
+   * @param location - Optional resolved location data.
+   * @returns A string describing depth layers.
+   */
+  static formatDepthLayers(
+    context: ContextComponent,
+    location?: LocationObjectData
+  ): string {
+    const layers: string[] = [];
+
+    // Derive layers from location details
+    if (location?.details) {
+      // Split details into depth layers based on keywords
+      for (const detail of location.details) {
+        const lower = detail.toLowerCase();
+        if (lower.includes('close') || lower.includes('foreground') || lower.includes('front')) {
+          layers.push(`Foreground: ${detail}`);
+        } else if (lower.includes('background') || lower.includes('distant') || lower.includes('far')) {
+          layers.push(`Background: ${detail}`);
+        } else {
+          layers.push(`Midground: ${detail}`);
+        }
+      }
+    }
+
+    // Default layers if none found
+    if (layers.length === 0) {
+      layers.push('Foreground: Primary subject in sharp focus');
+      layers.push('Midground: Environmental context elements');
+      layers.push('Background: Atmospheric depth with subtle detail');
+    }
+
+    return layers.slice(0, 3).join('. ');
+  }
+
+  /**
+   * Format timestamped progression for Sora 2 three-paragraph structure
+   *
+   * @param timestamps - Array of timestamp segments.
+   * @returns Three-paragraph formatted string.
+   */
+  static formatTimestampedProgression(
+    timestamps: Array<{ timeRange: string; components: any; audio?: any[] }>
+  ): string {
+    if (!timestamps || timestamps.length === 0) {
+      return '';
+    }
+
+    const paragraphs: string[] = [];
+
+    // Convert timestamps to Sora 2 timecode format [0:00-0:03]
+    for (const ts of timestamps) {
+      // Parse time range like "(0s-3s)" to "[0:00-0:03]"
+      const match = ts.timeRange.match(/\((\d+)s?-(\d+)s?\)/);
+      if (match) {
+        const start = parseInt(match[1], 10);
+        const end = parseInt(match[2], 10);
+        const timecode = `[0:${start.toString().padStart(2, '0')}-0:${end.toString().padStart(2, '0')}]`;
+        paragraphs.push(timecode);
+      }
+    }
+
+    return paragraphs.join('\n\n');
+  }
+
+  /**
+   * Detect scene type from intermediate
+   *
+   * @param intermediate - The intermediate to analyze.
+   * @returns Scene type: 'dialogue', 'cinematic', 'action', 'product', or 'unknown'.
+   */
+  static detectSceneType(intermediate: {
+    audio?: AudioSegment[];
+    timestamps?: any[];
+    components?: {
+      action?: ActionComponent;
+      subject?: SubjectComponent;
+    };
+    promptingStrategy?: {
+      method?: string;
+    };
+  }): 'dialogue' | 'cinematic' | 'action' | 'product' | 'unknown' {
+    // Check for dialogue scenes
+    const hasDialogue = intermediate.audio?.some(a => a.type === 'dialogue');
+    if (hasDialogue) {
+      return 'dialogue';
+    }
+
+    // Check for action scenes
+    const actionVerb = intermediate.components?.action?.verb?.toLowerCase() || '';
+    const actionVerbs = ['chases', 'runs', 'fights', 'jumps', 'crashes', 'dodges', 'sprints', 'attacks', 'escapes', 'draws', 'confronts', 'battles', 'strikes'];
+    if (actionVerbs.some(v => actionVerb.includes(v))) {
+      return 'action';
+    }
+
+    // Check for product scenes
+    const productVerbs = ['showcases', 'reveals', 'displays', 'presents', 'demonstrates'];
+    if (productVerbs.some(v => actionVerb.includes(v))) {
+      return 'product';
+    }
+
+    // Check for cinematic (timestamp-based or establishing shots)
+    if (intermediate.timestamps && intermediate.timestamps.length > 0) {
+      return 'cinematic';
+    }
+    if (intermediate.promptingStrategy?.method === 'timestamp_segmented') {
+      return 'cinematic';
+    }
+    if (actionVerb.includes('establishes') || actionVerb.includes('drives') || actionVerb.includes('flies')) {
+      return 'cinematic';
+    }
+
+    return 'unknown';
+  }
+
+  /**
+   * Format focus strategy for Sora 2
+   * Example: "rack focus at 0:05"
+   *
+   * @param camera - The camera object data.
+   * @param timestamps - Optional timestamp segments.
+   * @returns A string describing focus strategy with timing.
+   */
+  static formatFocusStrategy(
+    camera: CameraObjectData,
+    timestamps?: Array<{ timeRange: string }>
+  ): string {
+    const techniques = camera.cinematicTechniques || [];
+    const hasRackFocus = techniques.includes('rack-focus');
+    const lens = camera.lens;
+
+    const parts: string[] = [];
+
+    if (lens?.depthOfField === 'shallow' || hasRackFocus) {
+      // Determine timing for rack focus
+      let timing = '0:05';
+      if (timestamps && timestamps.length > 1) {
+        // Use midpoint of scene
+        const match = timestamps[1]?.timeRange?.match(/\((\d+)s/);
+        if (match) {
+          const seconds = parseInt(match[1], 10);
+          timing = `0:${seconds.toString().padStart(2, '0')}`;
+        }
+      }
+
+      if (hasRackFocus) {
+        parts.push(`rack focus at ${timing}`);
+      } else if (lens?.depthOfField === 'shallow') {
+        parts.push(`shallow focus with selective attention at ${timing}`);
+      }
+    }
+
+    return parts.join(', ') || 'deep focus throughout';
   }
 }
