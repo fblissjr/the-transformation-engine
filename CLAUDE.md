@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-11-25 | **Status**: Phase 6.2 COMPLETE - 216 tests passing, ready for E2E tests
+> **Last Updated**: 2025-12-22 | **Status**: v13 REFACTOR COMPLETE - 80 tests passing, ~5,000 lines removed (16% reduction)
 
 ---
 
@@ -10,8 +10,8 @@
 
 This single-page guide provides:
 - Current phase and status
-- What just happened (Phases 1-5 summary)
-- Next immediate tasks (Phase 6 priorities)
+- What was done in the v13 refactor
+- Next immediate tasks
 - Essential files to read (prioritized)
 - Quick commands (npm run dev, test, build)
 
@@ -62,7 +62,7 @@ Any Source → LLM Derives Schema → Structured Object → LLM Transforms → A
 - **Architecture Constraints:**
   - **Zero Legacy Code:** All generation routes through `taskRouter`.
   - **JSON Mode:** Use native JSON generation for structured outputs.
-  - **Data Safety:** Main DB v12 / Image DB v1. Fresh-install only (NO MIGRATIONS). Breaking schema changes are acceptable; old data will be lost.
+  - **Data Safety:** Main DB v13 (16 stores). Fresh-install only (NO MIGRATIONS). Breaking schema changes are acceptable; old data will be lost.
   - **Privacy:** API Keys are user-provided and stored encrypted (AES-GCM).
 
 ## 2. Documentation Maintenance
@@ -81,16 +81,11 @@ Any Source → LLM Derives Schema → Structured Object → LLM Transforms → A
 ### Active Development Zones
 - **Session Continuity (START HERE):** `internal/living-docs/SESSION_CONTINUITY.md`
   - *Purpose:* Fast onboarding for new sessions - current status, recent work, next tasks
-- **Implementation Roadmap:** `internal/living-docs/IMPLEMENTATION_CHECKLIST_V3.md`
-  - *Context:* Phases 1-6.2 complete. 216 tests passing. Ready for E2E tests.
-- **Object System (Complete):** `internal/living-docs/OBJECT_SYSTEM_SCHEMA.md`
-  - Services: `objectLibraryService.ts` (842 lines), `objectSearchService.ts` (411 lines)
-  - 8+ transformers with model-specific formatting (imperial, Kelvin, focus, audio)
-- **Test Fixtures:** `tests/fixtures/syntheticTestData.ts`
-  - 2 dialogue, 2 cinematic, 2 action, 2 product intermediates
-  - 3 characters, 2 locations, 3 cameras, 2 props, 2 audio objects
+- **Refactor History:** `internal/history/2025-12-22_V13_REFACTOR_SUMMARY.md`
+  - *Context:* v13 refactor complete - Object System removed, CenterPanel extracted, types simplified
+  - *Status:* ~25,545 lines (down from ~30,500)
 - **Image Studio:** `internal/living-docs/25_IMAGE_STUDIO.md` (Phase 2.5 Complete)
-- **Database Schema:** `internal/living-docs/26_IMAGE_DATABASE.md` (Main DB v12, Image DB v1)
+- **Database Schema:** `config/database.ts` (Main DB v13, 16 stores)
 
 ### System Components
 - **Prompting:** `internal/living-docs/17_PROMPTING_SYSTEM.md` (Fragments, Templates).
@@ -108,8 +103,33 @@ Any Source → LLM Derives Schema → Structured Object → LLM Transforms → A
 - **History:** `internal/history/` (Phase completion reports).
 
 ## 4. Tech Stack & Commands
-- **Stack:** React 19.2, Vite 6.3.6, Tailwind v4, IndexedDB v12/v1, Vitest.
+- **Stack:** React 19.2, Vite 6.3.6, Tailwind v4, IndexedDB v13, Vitest.
 - **Start:** `npm run dev`
 - **Build:** `npm run build`
-- **Test:** `npm run test:run` (216 tests)
+- **Test:** `npm run test:run` (80 tests)
 - **Test Coverage:** `npm run test:coverage`
+
+## 5. v13 Refactor Summary (2025-12-22)
+
+**ALL PHASES COMPLETE** - ~5,000 lines removed (16% reduction):
+
+| Phase | What Changed | Impact |
+|-------|--------------|--------|
+| Phase 1 | Object System + duplicate transformers deleted | -6,200 lines |
+| Phase 3 | Shared transformer utilities created | Cleaner code |
+| Phase 4 | CenterPanel extracted to workspace/ components | 1,400 → 889 lines |
+| Phase 5 | Unused V3 types + componentTypes deleted | -772 lines |
+| Phase 6 | Database consolidated from 26 → 16 stores | v13 schema |
+
+**Current Transformers** (in `src/services/transformers/`):
+- `sora2Transformer.ts` - Sora 2 YAML format
+- `veo3Transformer.ts` - Veo 3 format
+- `genericTransformerV2.ts` - Generic fallback
+- `shared.ts` - Common utilities
+
+**Extracted Components** (in `src/components/workspace/`):
+- `MixOptionsPanel.tsx` - Mix options CRUD
+- `TemplateSelector.tsx` - Template detection
+- `SchemaDesigner.tsx` - Schema keys, presets
+
+See `internal/history/2025-12-22_V13_REFACTOR_SUMMARY.md` for full details.

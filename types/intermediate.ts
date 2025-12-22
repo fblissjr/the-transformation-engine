@@ -117,78 +117,6 @@ export interface CameraSection {
   lensDetails?: string;
 }
 
-// ==================== Legacy Support (for migration) ====================
-
-/**
- * @deprecated Use IntermediateStructure v2.0 instead
- * Kept for backward compatibility during migration
- */
-export interface MarkdownFormat {
-  format: 'markdown';
-  content: string;
-}
-
-/**
- * @deprecated Use IntermediateStructure v2.0 instead
- * Legacy v1.0 structure
- */
-export interface StructuredFormatV1 {
-  temporal?: TemporalStructureV1;
-  visual?: VisualStructureV1;
-  audio?: AudioStructureV1;
-  camera?: CameraStructureV1;
-  narrative?: NarrativeStructure;
-}
-
-/**
- * @deprecated Legacy type union
- */
-export type IntermediateStructureV1 = StructuredFormatV1 | MarkdownFormat;
-
-// Legacy v1.0 interfaces (deprecated but kept for migration)
-export interface TemporalStructureV1 {
-  totalDuration?: number;
-  segments: TemporalSegmentV1[];
-}
-
-export interface TemporalSegmentV1 {
-  startTime: number;
-  endTime: number;
-  description: string;
-  camera?: string;
-  visual?: string;
-  audio?: string;
-}
-
-export interface VisualStructureV1 {
-  setting?: string;
-  subjects?: string[];
-  environment?: string;
-  colors?: string;
-  lighting?: string;
-  composition?: string;
-  style?: string;
-}
-
-export interface AudioStructureV1 {
-  dialogue?: string;
-  ambient?: string;
-  soundEffects?: string;
-  music?: string;
-}
-
-export interface CameraStructureV1 {
-  movement?: string;
-  angles?: string;
-  techniques?: string;
-}
-
-export interface NarrativeStructure {
-  beginning?: string;
-  middle?: string;
-  end?: string;
-  arc?: string;
-}
 
 // ==================== Schema Key Preset Types ====================
 
@@ -384,7 +312,7 @@ export interface IntermediatePrompt {
 
   // Structure (the actual content - model-agnostic)
   /** The actual intermediate content structure */
-  structure: IntermediateStructure | IntermediateStructureV1;
+  structure: IntermediateStructure;
 
   // Relationships (for version control / branching)
   /** Relationships to other intermediates */
@@ -463,97 +391,20 @@ export interface ValidationWarning {
 // ==================== Type Guards ====================
 
 /**
- * Check if structure is v2.0 format
+ * Check if structure is valid IntermediateStructure v2.0 format
  * @param structure - The structure to check.
- * @returns True if the structure is v2.0 format.
+ * @returns True if the structure is valid v2.0 format.
  */
-export function isIntermediateStructureV2(
-  structure: IntermediateStructure | IntermediateStructureV1
+export function isValidIntermediateStructure(
+  structure: unknown
 ): structure is IntermediateStructure {
-  return 'format' in structure && structure.format === 'structured' && 'version' in structure;
-}
-
-/**
- * Check if structure is legacy markdown format
- * @param structure - The structure to check.
- * @returns True if the structure is markdown format.
- */
-export function isMarkdownFormat(
-  structure: IntermediateStructure | IntermediateStructureV1
-): structure is MarkdownFormat {
-  return 'format' in structure && structure.format === 'markdown';
-}
-
-// ==================== Intermediate v3.0 Types ====================
-
-import type { SceneComponents } from './componentTypes';
-import type { AudioSegment, TimestampSegment } from './audioTypes';
-import type { LinkedObjects } from './objectTypes';
-import type { PromptingStrategy } from './promptingTypes';
-
-/**
- * IntermediateV3 - Structured scene representation with explicit
- * component boundaries and object references
- *
- * Supports all 6 Veo 3.1 prompting methods:
- * 1. Continuous narrative
- * 2. 5-Component formula (cinematography/subject/action/context/style)
- * 3. Timestamp-segmented
- * 4. Attribute-value pairs
- * 5. Structured JSON/YAML
- * 6. Audio-specific syntax
- */
-export interface IntermediateV3 {
-  // Metadata
-  /** Unique ID */
-  id: string;
-  /** Links to original user prompt */
-  promptId: string;
-  /** Schema version (3) */
-  version: 3;
-
-  // Structured components with explicit boundaries
-  /** Core scene components */
-  components: SceneComponents;
-
-  // Object library references (optional, for reusable objects)
-  /** References to objects in the library */
-  linkedObjects?: LinkedObjects;
-
-  // Audio with preserved Veo 3.1 syntax
-  /** Audio segments with Veo syntax */
-  audio?: AudioSegment[];
-
-  // Timestamp-based prompting (optional, for time-segmented scenes)
-  /** Segments for timestamp-based prompting */
-  timestamps?: TimestampSegment[];
-
-  // Prompting strategy metadata
-  /** Strategy used for prompting */
-  promptingStrategy?: PromptingStrategy;
-
-  // Scene metadata
-  /** Scene title */
-  title: string;
-  /** Creation timestamp */
-  created: Date;
-  /** Modification timestamp */
-  modified: Date;
-
-  // Scene relationships (for scene extension/composition)
-  /** ID of the parent scene */
-  parentSceneId?: string;
-  /** IDs of child scenes */
-  childSceneIds?: string[];
-}
-
-/**
- * Check if intermediate is v3.0 format
- * @param intermediate - The object to check.
- * @returns True if the object is an IntermediateV3.
- */
-export function isIntermediateV3(
-  intermediate: any
-): intermediate is IntermediateV3 {
-  return intermediate && typeof intermediate.version === 'number' && intermediate.version === 3;
+  return (
+    typeof structure === 'object' &&
+    structure !== null &&
+    'format' in structure &&
+    (structure as IntermediateStructure).format === 'structured' &&
+    'version' in structure &&
+    'sceneType' in structure &&
+    'sections' in structure
+  );
 }

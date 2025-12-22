@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { usePrompts } from '../contexts/PromptContext';
 import { useGeneration } from '../contexts/GenerationContext';
-import { useObjectLibrary } from '../contexts/ObjectLibraryContext';
 import { CopyIcon, RestoreIcon } from './icons';
 import { LogEntry, PromptVersion } from '../../types';
 import { VersionTree } from './VersionTree';
@@ -9,7 +8,6 @@ import { generateConversionPrompt } from '../services/promptService';
 import IntermediateRefinementPanel from './IntermediateRefinementPanel';
 import { updateIntermediate } from '../services/db/intermediateService';
 import { transformToModel } from '../services/transformers';
-import { ObjectDetailView } from './ObjectLibrary/ObjectDetailView';
 
 interface RightPanelProps {
   logs: LogEntry[];
@@ -23,7 +21,7 @@ type Tab = 'structuredView' | 'finalOutput' | 'history' | 'debug';
 /**
  * RightPanel component
  *
- * The right sidebar panel which displays the output, version history, debug logs, and object details.
+ * The right sidebar panel which displays the output, version history, and debug logs.
  * It handles viewing and editing structured and normalized outputs, exporting to different formats,
  * and managing prompt versions.
  *
@@ -61,7 +59,6 @@ const RightPanel: React.FC<RightPanelProps> = ({
     handleExportFormatChange,
   } = useGeneration();
 
-  const { selectedObjectId, selectedObjectType, clearSelection } = useObjectLibrary();
   const [activeTab, setActiveTab] = useState<Tab>('finalOutput'); // Default to Final Output
   const [editedStructuredOutput, setEditedStructuredOutput] = useState('');
   const [editedNormalizedOutput, setEditedNormalizedOutput] = useState('');
@@ -179,32 +176,6 @@ const RightPanel: React.FC<RightPanelProps> = ({
       </div>
     );
   };
-
-  // If an object is selected, show ObjectDetailView
-  if (selectedObjectId && selectedObjectType) {
-    return (
-      <aside className="w-full h-full bg-gray-900 border-l border-gray-800 flex flex-col">
-        {/* Header with back button */}
-        <div className="p-4 border-b border-gray-800 flex items-center gap-3">
-          <button
-            onClick={clearSelection}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="text-sm font-medium">Back</span>
-          </button>
-          <div className="text-gray-500 text-sm">|</div>
-          <h2 className="text-white text-sm font-semibold">Object Details</h2>
-        </div>
-        {/* Object Detail View */}
-        <div className="flex-1 overflow-hidden">
-          <ObjectDetailView objectId={selectedObjectId} objectType={selectedObjectType} />
-        </div>
-      </aside>
-    );
-  }
 
   return (
     <aside className="w-full h-full bg-gray-900 border-l border-gray-800 flex flex-col p-3 sm:p-4 gap-3 sm:gap-4">

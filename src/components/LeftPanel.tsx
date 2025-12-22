@@ -6,14 +6,13 @@ import ShareModal from './ShareModal';
 import { PrivacyDashboard } from './PrivacyDashboard';
 import { IntermediatesView } from './IntermediatesView';
 import { SceneTree } from './SceneTree';
-import { ObjectLibraryPanel } from './ObjectLibrary/ObjectLibraryPanel';
 import { Prompt } from '../../types';
 
 interface LeftPanelProps {
   onDeleteRequest?: (promptId: string, promptTitle: string) => void; // Now optional
 }
 
-type LeftPanelTab = 'prompts' | 'scenes' | 'objects';
+type LeftPanelTab = 'prompts' | 'scenes';
 type ScenesViewMode = 'list' | 'tree';
 
 /**
@@ -219,16 +218,6 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
         >
           Scenes
         </button>
-        <button
-          onClick={() => setActiveTab('objects')}
-          className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-            activeTab === 'objects'
-              ? 'bg-gray-800 text-amber-500 border-b-2 border-amber-500'
-              : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
-          }`}
-        >
-          Objects
-        </button>
       </div>
 
       <div className="p-3 sm:p-4 border-b border-gray-800 flex items-center gap-2 shrink-0">
@@ -412,16 +401,13 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ onDeleteRequest }) => {
           </div>
         )}
       </div>
-    ) : activeTab === 'scenes' ? (
+    ) : (
       // Scenes view
       scenesViewMode === 'list' ? (
         <IntermediatesView />
       ) : (
         <SceneTree />
       )
-    ) : (
-      // Objects view
-      <ObjectLibraryPanel />
     )}
 
       {/* Import/Export Section - Prompts tab only */}

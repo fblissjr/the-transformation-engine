@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { PromptProvider, usePrompts } from './src/contexts/PromptContext';
 import { ProviderProvider } from './src/contexts/ProviderContext';
 import { SceneClassificationProvider } from './src/contexts/SceneClassificationContext';
-import { ObjectLibraryProvider } from './src/contexts/ObjectLibraryContext';
 import LeftPanel from './src/components/LeftPanel';
 import CenterPanel from './src/components/CenterPanel';
 import RightPanel from './src/components/RightPanel';
@@ -48,9 +47,7 @@ const App: React.FC = () => {
     <ProviderProvider>
       <PromptProvider>
         <SceneClassificationProvider>
-          <ObjectLibraryProvider>
-            {renderRoute()}
-          </ObjectLibraryProvider>
+          {renderRoute()}
         </SceneClassificationProvider>
       </PromptProvider>
     </ProviderProvider>

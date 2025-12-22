@@ -16,7 +16,6 @@ dist-ssr/
 
 # Other
 .claude/*
-internal/*
 
 # External reference symlinks (local machine paths)
 internal/reference/

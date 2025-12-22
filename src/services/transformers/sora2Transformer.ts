@@ -1,6 +1,6 @@
-import type { IntermediatePrompt, StructuredFormat } from '../../types/intermediate';
+import type { IntermediatePrompt } from '../../types/intermediate';
 import type { Transformer } from './types';
-import { parseMarkdownIntermediate, type ParsedIntermediate } from './markdownParser';
+import { normalizeStructure, getData, formatTime } from './shared';
 
 export const sora2Transformer: Transformer = {
   name: 'Sora 2 Transformer',
@@ -8,13 +8,8 @@ export const sora2Transformer: Transformer = {
   description: 'Transforms intermediate to Sora 2 YAML format (10s clips, 2500 char limit)',
 
   transform(intermediate: IntermediatePrompt): string {
-    // Parse markdown content if present (type guard)
-    const structure: StructuredFormat | ParsedIntermediate = 'format' in intermediate.structure && intermediate.structure.format === 'markdown'
-      ? parseMarkdownIntermediate(intermediate.structure.content)
-      : intermediate.structure as StructuredFormat;
-
-    // Handle 'sections' wrapper (Phase 2 format)
-    const data = (structure as any).sections || structure;
+    const structure = normalizeStructure(intermediate);
+    const data = getData(structure);
 
     let output = '';
 
@@ -123,9 +118,7 @@ export const sora2Transformer: Transformer = {
   },
 
   validate(intermediate: IntermediatePrompt) {
-    const structure: StructuredFormat | ParsedIntermediate = 'format' in intermediate.structure && intermediate.structure.format === 'markdown'
-      ? parseMarkdownIntermediate(intermediate.structure.content)
-      : intermediate.structure as StructuredFormat;
+    const structure = normalizeStructure(intermediate);
 
     const errors: any[] = [];
     const warnings: any[] = [];
@@ -164,9 +157,7 @@ export const sora2Transformer: Transformer = {
   },
 
   estimateLength(intermediate: IntermediatePrompt): number {
-    const structure: StructuredFormat | ParsedIntermediate = 'format' in intermediate.structure && intermediate.structure.format === 'markdown'
-      ? parseMarkdownIntermediate(intermediate.structure.content)
-      : intermediate.structure as StructuredFormat;
+    const structure = normalizeStructure(intermediate);
 
     // Rough estimation
     let length = 100; // Base YAML structure
@@ -200,10 +191,3 @@ export const sora2Transformer: Transformer = {
     return length;
   },
 };
-
-// Helper: Format seconds to MM:SS
-function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}

@@ -1,6 +1,6 @@
-import type { IntermediatePrompt, StructuredFormat } from '../../types/intermediate';
+import type { IntermediatePrompt } from '../../types/intermediate';
 import type { Transformer } from './types';
-import { parseMarkdownIntermediate, type ParsedIntermediate } from './markdownParser';
+import { normalizeStructure, getData, countWords } from './shared';
 
 export const veo3Transformer: Transformer = {
   name: 'Veo 3 Transformer',
@@ -8,13 +8,8 @@ export const veo3Transformer: Transformer = {
   description: 'Transforms intermediate to Veo 3 YAML format (8s clips, audio-first, 200-400 words)',
 
   transform(intermediate: IntermediatePrompt): string {
-    // Parse markdown content if present (type guard)
-    const structure: StructuredFormat | ParsedIntermediate = 'format' in intermediate.structure && intermediate.structure.format === 'markdown'
-      ? parseMarkdownIntermediate(intermediate.structure.content)
-      : intermediate.structure as StructuredFormat;
-
-    // Handle 'sections' wrapper (Phase 2 format)
-    const data = (structure as any).sections || structure;
+    const structure = normalizeStructure(intermediate);
+    const data = getData(structure);
 
     let output = '';
 
@@ -137,9 +132,7 @@ export const veo3Transformer: Transformer = {
   },
 
   validate(intermediate: IntermediatePrompt) {
-    const structure: StructuredFormat | ParsedIntermediate = 'format' in intermediate.structure && intermediate.structure.format === 'markdown'
-      ? parseMarkdownIntermediate(intermediate.structure.content)
-      : intermediate.structure as StructuredFormat;
+    const structure = normalizeStructure(intermediate);
 
     const errors: any[] = [];
     const warnings: any[] = [];
@@ -186,15 +179,10 @@ export const veo3Transformer: Transformer = {
   },
 
   estimateLength(intermediate: IntermediatePrompt): number {
-    const structure: StructuredFormat | ParsedIntermediate = 'format' in intermediate.structure && intermediate.structure.format === 'markdown'
-      ? parseMarkdownIntermediate(intermediate.structure.content)
-      : intermediate.structure as StructuredFormat;
+    const structure = normalizeStructure(intermediate);
 
     // Rough word count estimation (200-400 words optimal)
     let words = 0;
-
-    // Each field contributes words
-    const countWords = (text?: string) => text ? text.split(/\s+/).length : 0;
 
     if (structure.visual) {
       words += countWords(structure.visual.setting);

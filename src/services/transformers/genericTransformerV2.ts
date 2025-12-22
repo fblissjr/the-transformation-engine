@@ -3,9 +3,9 @@
  * Model-agnostic fallback transformer for IntermediatePrompt format
  */
 
-import type { IntermediatePrompt, StructuredFormat } from '../../types/intermediate';
+import type { IntermediatePrompt } from '../../types/intermediate';
 import type { Transformer } from './types';
-import { parseMarkdownIntermediate, type ParsedIntermediate } from './markdownParser';
+import { normalizeStructure, getData, countWords } from './shared';
 
 export const genericTransformerV2: Transformer = {
   name: 'Generic Transformer',
@@ -13,13 +13,8 @@ export const genericTransformerV2: Transformer = {
   description: 'Model-agnostic transformer for any video generation model',
 
   transform(intermediate: IntermediatePrompt): string {
-    // Parse markdown content if present
-    const structure: StructuredFormat | ParsedIntermediate = 'format' in intermediate.structure && intermediate.structure.format === 'markdown'
-      ? parseMarkdownIntermediate(intermediate.structure.content)
-      : intermediate.structure as StructuredFormat;
-
-    // Handle 'sections' wrapper
-    const data = (structure as any).sections || structure;
+    const structure = normalizeStructure(intermediate);
+    const data = getData(structure);
 
     const parts: string[] = [];
 
@@ -86,9 +81,7 @@ export const genericTransformerV2: Transformer = {
   },
 
   validate(intermediate: IntermediatePrompt) {
-    const structure: StructuredFormat | ParsedIntermediate = 'format' in intermediate.structure && intermediate.structure.format === 'markdown'
-      ? parseMarkdownIntermediate(intermediate.structure.content)
-      : intermediate.structure as StructuredFormat;
+    const structure = normalizeStructure(intermediate);
 
     const errors: any[] = [];
     const warnings: any[] = [];
@@ -109,11 +102,7 @@ export const genericTransformerV2: Transformer = {
   },
 
   estimateLength(intermediate: IntermediatePrompt): number {
-    const structure: StructuredFormat | ParsedIntermediate = 'format' in intermediate.structure && intermediate.structure.format === 'markdown'
-      ? parseMarkdownIntermediate(intermediate.structure.content)
-      : intermediate.structure as StructuredFormat;
-
-    const countWords = (text?: string) => text ? text.split(/\s+/).length : 0;
+    const structure = normalizeStructure(intermediate);
     let words = 0;
 
     if (structure.visual) {
