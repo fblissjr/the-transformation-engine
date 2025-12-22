@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { objectLibraryService } from '../../../src/services/objectLibraryService';
-import { getDB } from '../../../services/db/indexedDbService';
+import { getDB } from '../../../src/services/db/indexedDbService';
 import 'fake-indexeddb/auto';
 
 describe('ObjectLibraryService', () => {

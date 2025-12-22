@@ -1,6 +1,19 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-11-23 | **Status**: v2.2.1-alpha (Phase 2.5 Complete - Image Studio Fixed)
+> **Last Updated**: 2025-11-25 | **Status**: Phase 6.2 COMPLETE - 216 tests passing, ready for E2E tests
+
+---
+
+## Quick Start (New Session)
+
+**"Let's continue where we left off"** → Read: **[internal/living-docs/SESSION_CONTINUITY.md](./internal/living-docs/SESSION_CONTINUITY.md)**
+
+This single-page guide provides:
+- Current phase and status
+- What just happened (Phases 1-5 summary)
+- Next immediate tasks (Phase 6 priorities)
+- Essential files to read (prioritized)
+- Quick commands (npm run dev, test, build)
 
 ---
 
@@ -66,10 +79,18 @@ Any Source → LLM Derives Schema → Structured Object → LLM Transforms → A
 - **Data Schema:** `internal/living-docs/15_INTERMEDIATE_FORMAT.md` (JSON Structure).
 
 ### Active Development Zones
-- **Image Studio (Current Focus):** `internal/living-docs/25_IMAGE_STUDIO.md`
-  - *Context:* Phase 2.5 Complete. Generates structured intermediates.
-- **Veo 3.1 Integration:** `internal/veo3/PHASE2.3_COMPLETION_SUMMARY.md`
-- **Database Schema:** `internal/living-docs/26_IMAGE_DATABASE.md` (and check code for Main DB v12).
+- **Session Continuity (START HERE):** `internal/living-docs/SESSION_CONTINUITY.md`
+  - *Purpose:* Fast onboarding for new sessions - current status, recent work, next tasks
+- **Implementation Roadmap:** `internal/living-docs/IMPLEMENTATION_CHECKLIST_V3.md`
+  - *Context:* Phases 1-6.2 complete. 216 tests passing. Ready for E2E tests.
+- **Object System (Complete):** `internal/living-docs/OBJECT_SYSTEM_SCHEMA.md`
+  - Services: `objectLibraryService.ts` (842 lines), `objectSearchService.ts` (411 lines)
+  - 8+ transformers with model-specific formatting (imperial, Kelvin, focus, audio)
+- **Test Fixtures:** `tests/fixtures/syntheticTestData.ts`
+  - 2 dialogue, 2 cinematic, 2 action, 2 product intermediates
+  - 3 characters, 2 locations, 3 cameras, 2 props, 2 audio objects
+- **Image Studio:** `internal/living-docs/25_IMAGE_STUDIO.md` (Phase 2.5 Complete)
+- **Database Schema:** `internal/living-docs/26_IMAGE_DATABASE.md` (Main DB v12, Image DB v1)
 
 ### System Components
 - **Prompting:** `internal/living-docs/17_PROMPTING_SYSTEM.md` (Fragments, Templates).
@@ -87,6 +108,8 @@ Any Source → LLM Derives Schema → Structured Object → LLM Transforms → A
 - **History:** `internal/history/` (Phase completion reports).
 
 ## 4. Tech Stack & Commands
-- **Stack:** React 19.2, Vite 6.3.6, Tailwind v4, IndexedDB v12/v1.
+- **Stack:** React 19.2, Vite 6.3.6, Tailwind v4, IndexedDB v12/v1, Vitest.
 - **Start:** `npm run dev`
 - **Build:** `npm run build`
+- **Test:** `npm run test:run` (216 tests)
+- **Test Coverage:** `npm run test:coverage`
