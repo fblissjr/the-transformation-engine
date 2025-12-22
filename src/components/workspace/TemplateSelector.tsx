@@ -1,11 +1,42 @@
 import React from 'react';
 
-type TemplateModel = 'sora2' | 'veo3' | 'generic';
+export type TemplateModel = 'sora2' | 'veo3' | 'generic';
 
 interface TemplateSelectorProps {
   schemaKeys: string[];
   templateOverride: 'auto' | 'generic';
   onTemplateOverrideChange: (value: 'auto' | 'generic') => void;
+}
+
+/**
+ * Detect template model from schema keys
+ * Exported for reuse in other components
+ */
+export function detectTemplateModel(
+  schemaKeys: string[],
+  templateOverride: 'auto' | 'generic'
+): TemplateModel {
+  if (templateOverride === 'generic') return 'generic';
+
+  const keySet = new Set(schemaKeys.map(k => k.toLowerCase()));
+
+  // Veo 3 indicators (audio-first model)
+  const veo3Keys = ['audio_elements', 'dialogue', 'voiceover_script', 'ambient_audio', 'subject', 'veo3_specs'];
+  const veo3Score = veo3Keys.filter(k => keySet.has(k)).length;
+
+  // Sora 2 indicators (visual-first with temporal progression)
+  const sora2Keys = ['temporal_progression', 'cinematography', 'visual_description', 'technical_specs'];
+  const sora2Score = sora2Keys.filter(k => keySet.has(k)).length;
+
+  // Decision: Use highest score, prefer Veo 3 on tie (audio is distinctive)
+  if (veo3Score > sora2Score || (veo3Score === sora2Score && veo3Score > 0)) {
+    return 'veo3';
+  }
+  if (sora2Score > 0) {
+    return 'sora2';
+  }
+
+  return 'generic';
 }
 
 /**
@@ -19,31 +50,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   templateOverride,
   onTemplateOverrideChange,
 }) => {
-  const detectTemplateModel = (): TemplateModel => {
-    if (templateOverride === 'generic') return 'generic';
-
-    const keySet = new Set(schemaKeys.map(k => k.toLowerCase()));
-
-    // Veo 3 indicators (audio-first model)
-    const veo3Keys = ['audio_elements', 'dialogue', 'voiceover_script', 'ambient_audio', 'subject', 'veo3_specs'];
-    const veo3Score = veo3Keys.filter(k => keySet.has(k)).length;
-
-    // Sora 2 indicators (visual-first with temporal progression)
-    const sora2Keys = ['temporal_progression', 'cinematography', 'visual_description', 'technical_specs'];
-    const sora2Score = sora2Keys.filter(k => keySet.has(k)).length;
-
-    // Decision: Use highest score, prefer Veo 3 on tie (audio is distinctive)
-    if (veo3Score > sora2Score || (veo3Score === sora2Score && veo3Score > 0)) {
-      return 'veo3';
-    }
-    if (sora2Score > 0) {
-      return 'sora2';
-    }
-
-    return 'generic';
-  };
-
-  const detectedTemplate = detectTemplateModel();
+  const detectedTemplate = detectTemplateModel(schemaKeys, templateOverride);
 
   const templateInfo = {
     sora2: {

@@ -39,20 +39,3 @@ export interface ValidationWarning {
   field: string;
   message: string;
 }
-
-/**
- * Transformer options for customization
- */
-export interface TransformerOptions {
-  /** Maximum output length (characters) */
-  maxLength?: number;
-
-  /** Whether to include all optional fields */
-  includeOptional?: boolean;
-
-  /** Custom field mapping */
-  fieldMapping?: Record<string, string>;
-
-  /** Format style (compact vs verbose) */
-  style?: 'compact' | 'verbose';
-}

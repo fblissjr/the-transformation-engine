@@ -17,7 +17,7 @@ import { SceneClassificationPanel } from './SceneClassificationPanel';
 import { TimestampPromptToggle } from './TimestampPromptToggle';
 import { SchemaKeyPresetSelector } from './SchemaKeyPresetSelector';
 import { useSceneClassification } from '../contexts/SceneClassificationContext';
-import { MixOptionsPanel, SchemaDesigner, TemplateSelector } from './workspace';
+import { MixOptionsPanel, SchemaDesigner, TemplateSelector, detectTemplateModel } from './workspace';
 
 /**
  * CenterPanel component
@@ -235,6 +235,9 @@ const CenterPanel: React.FC = () => {
       alert('Generation failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
+
+  // Detect template model for preview display
+  const detectedTemplate = detectTemplateModel(settings.schemaKeys, templateOverride);
 
   return (
     <main className="flex-1 h-full flex flex-col bg-gray-950">
