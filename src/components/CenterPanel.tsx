@@ -18,6 +18,9 @@ import { TimestampPromptToggle } from './TimestampPromptToggle';
 import { SchemaKeyPresetSelector } from './SchemaKeyPresetSelector';
 import { useSceneClassification } from '../contexts/SceneClassificationContext';
 import { MixOptionsPanel, SchemaDesigner, TemplateSelector, detectTemplateModel } from './workspace';
+import { WildcardExperimenter } from './workspace/WildcardExperimenter';
+import { FragmentBrowser } from './workspace/FragmentBrowser';
+import { WildcardAutocomplete } from './workspace/WildcardAutocomplete';
 
 /**
  * CenterPanel component
@@ -98,6 +101,8 @@ const CenterPanel: React.FC = () => {
 
   // Collapsible sections state
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [showWildcardsSection, setShowWildcardsSection] = useState(false);
+  const [activeWildcardsTab, setActiveWildcardsTab] = useState<'experimenter' | 'fragments'>('experimenter');
 
 
   // Initialize mixOptions with built-in options if not set
@@ -251,13 +256,12 @@ const CenterPanel: React.FC = () => {
             </label>
             <span className="text-xs text-gray-500">Describe your scene, character, or concept</span>
           </div>
-          <textarea
-            id="main-input"
-            rows={4}
-            className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-100 placeholder:text-gray-500 text-sm"
-            placeholder="A chef teaches a cooking class in a busy kitchen..."
+          <WildcardAutocomplete
             value={naturalLanguageInput}
-            onChange={e => setNaturalLanguageInput(e.target.value)}
+            onChange={setNaturalLanguageInput}
+            placeholder="A chef teaches a cooking class in a busy kitchen... (Use {category} for wildcards)"
+            className="bg-gray-900 border-gray-700 focus:ring-amber-500"
+            rows={4}
           />
 
           {/* Media Upload Section */}
@@ -526,6 +530,81 @@ const CenterPanel: React.FC = () => {
           isLoading={isLoading}
           hasInput={!!naturalLanguageInput}
         />
+
+        {/* Wildcards & Fragments Section - Collapsible */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setShowWildcardsSection(!showWildcardsSection)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-800/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+              </svg>
+              <span className="text-sm font-medium text-white">Wildcards & Fragments</span>
+              <span className="text-xs text-gray-500">(A/B Testing, Reusable Components)</span>
+            </div>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform ${showWildcardsSection ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showWildcardsSection && (
+            <div className="border-t border-gray-800">
+              {/* Tab Buttons */}
+              <div className="flex border-b border-gray-700">
+                <button
+                  onClick={() => setActiveWildcardsTab('experimenter')}
+                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                    activeWildcardsTab === 'experimenter'
+                      ? 'text-purple-400 border-b-2 border-purple-500 bg-gray-800/50'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Wildcard Experimenter
+                </button>
+                <button
+                  onClick={() => setActiveWildcardsTab('fragments')}
+                  className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                    activeWildcardsTab === 'fragments'
+                      ? 'text-purple-400 border-b-2 border-purple-500 bg-gray-800/50'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Fragment Browser
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              <div className="h-[400px]">
+                {activeWildcardsTab === 'experimenter' ? (
+                  <WildcardExperimenter
+                    initialTemplate={naturalLanguageInput}
+                    onSelectResult={(result) => {
+                      setNaturalLanguageInput(result);
+                    }}
+                  />
+                ) : (
+                  <FragmentBrowser
+                    onComposePrompt={(composed) => {
+                      // Append or replace the input
+                      if (naturalLanguageInput.trim()) {
+                        setNaturalLanguageInput(prev => prev + '\n\n' + composed.text);
+                      } else {
+                        setNaturalLanguageInput(composed.text);
+                      }
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Bottom Bar - Collapsible Advanced Section */}

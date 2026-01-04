@@ -9,11 +9,11 @@ export const DB_CONFIG = {
   // Database name (NEVER change this - would lose all user data)
   name: 'TransformationEngineDB',
 
-  // Schema version - BREAKING CHANGE: v12 → v13 (removed Object Library stores)
+  // Schema version - BREAKING CHANGE: v13 → v14 (added Wildcard & Fragment stores)
   // Old data will be lost - export/import not required (solo dev project)
-  version: 13,
+  version: 14,
 
-  // Store names (16 stores total)
+  // Store names (19 stores total)
   stores: {
     // Core video generation stores
     prompts: 'prompts',
@@ -36,6 +36,11 @@ export const DB_CONFIG = {
     imageGenerations: 'imageGenerations',
     imageEdits: 'imageEdits',
     sceneLinks: 'sceneLinks',
+
+    // Wildcard & Fragment stores (v14)
+    wildcardCategories: 'wildcardCategories',
+    fragments: 'fragments',
+    fragmentRelationships: 'fragmentRelationships',
   }
 } as const;
 

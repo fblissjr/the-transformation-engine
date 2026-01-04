@@ -3,7 +3,15 @@
  *
  * Loads prompt fragments from /fragments/ directory
  * and composes them into complete prompts.
+ *
+ * Supports:
+ * - @include[path/to/fragment.md] directives
+ * - {{variable}} interpolation with defaults
+ * - {{#if variable}}...{{/if}} conditionals
+ * - {wildcard} dynamic substitution (via wildcardService)
  */
+
+import { wildcardService } from './wildcardService';
 
 interface Fragment {
   id: string;
@@ -125,16 +133,28 @@ class FragmentLoader {
   }
 
   /**
-   * Compose a prompt by resolving @include directives and {{variables}}
+   * Compose a prompt by resolving @include directives, {{variables}}, and {wildcards}
    *
    * @param template - The template string containing include directives and variables.
    * @param variables - A map of variable names to values for substitution.
+   * @param options - Additional options for composition.
    * @returns A Promise resolving to the composed prompt string.
    */
   async composePrompt(
     template: string,
-    variables: Record<string, string | null> = {}
+    variables: Record<string, string | null> = {},
+    options: {
+      resolveWildcards?: boolean;
+      wildcardOverrides?: Record<string, string | number>;
+      wildcardSeed?: number;
+    } = {}
   ): Promise<string> {
+    const {
+      resolveWildcards = true,
+      wildcardOverrides = {},
+      wildcardSeed,
+    } = options;
+
     // Reset fragment tracking for new composition
     this.loadedFragments.clear();
 
@@ -175,10 +195,27 @@ class FragmentLoader {
       }
     }
 
-    // Replace {{variables}}
+    // Replace {{variables}} (double braces)
     output = this.interpolateVariables(output, variables);
 
+    // Resolve {wildcards} (single braces) if enabled
+    if (resolveWildcards && this.hasWildcards(output)) {
+      await wildcardService.load();
+      output = wildcardService.resolve(output, wildcardOverrides, wildcardSeed);
+    }
+
     return output;
+  }
+
+  /**
+   * Check if text contains wildcard syntax {category} or {category:modifier}
+   * Excludes double-brace {{variable}} syntax
+   */
+  private hasWildcards(text: string): boolean {
+    // Match {word} but not {{word}}
+    // Look for single braces that aren't part of double braces
+    const wildcardPattern = /(?<!\{)\{([a-zA-Z_][a-zA-Z0-9_]*)(:[^}]*)?\}(?!\})/;
+    return wildcardPattern.test(text);
   }
 
   /**

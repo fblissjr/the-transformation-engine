@@ -5,7 +5,7 @@
  * Breaking schema changes are acceptable - old data will be lost.
  *
  * Database name: TransformationEngineDB (NEVER changes)
- * Schema version: 13 (v12 → v13 BREAKING: removed Object Library stores)
+ * Schema version: 14 (v13 → v14 BREAKING: added Wildcard & Fragment stores)
  */
 
 import { IDBPDatabase } from 'idb';
@@ -17,7 +17,7 @@ import { IDBPDatabase } from 'idb';
  * @param db - The IndexedDB database instance
  */
 export function createFreshSchema(db: IDBPDatabase) {
-  console.log('[IndexedDB] Creating fresh database schema v13');
+  console.log('[IndexedDB] Creating fresh database schema v14');
 
   // Core Stores (Phases 1-9)
   const prompts = db.createObjectStore('prompts', { keyPath: 'id' });
@@ -92,5 +92,20 @@ export function createFreshSchema(db: IDBPDatabase) {
   sceneLinks.createIndex('intermediateId', 'intermediateId', { unique: false });
   sceneLinks.createIndex('created', 'created', { unique: false });
 
-  console.log('[IndexedDB] Schema v13 created successfully (16 stores: core + providers + image studio)');
+  // Wildcard & Fragment Stores (v14)
+  const wildcardCategories = db.createObjectStore('wildcardCategories', { keyPath: 'id' });
+  wildcardCategories.createIndex('name', 'name', { unique: true });
+  wildcardCategories.createIndex('isCustom', 'isCustom', { unique: false });
+
+  const fragments = db.createObjectStore('fragments', { keyPath: 'id' });
+  fragments.createIndex('category', 'category', { unique: false });
+  fragments.createIndex('subcategory', 'subcategory', { unique: false });
+  fragments.createIndex('sourceCount', 'sourceCount', { unique: false });
+  fragments.createIndex('name', 'name', { unique: false });
+
+  const fragmentRelationships = db.createObjectStore('fragmentRelationships', { keyPath: 'id' });
+  fragmentRelationships.createIndex('fragmentId', 'fragmentId', { unique: false });
+  fragmentRelationships.createIndex('suggests', 'suggests', { unique: false });
+
+  console.log('[IndexedDB] Schema v14 created successfully (19 stores: core + providers + image studio + wildcards/fragments)');
 }
