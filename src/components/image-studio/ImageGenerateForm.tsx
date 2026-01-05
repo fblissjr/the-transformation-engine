@@ -10,7 +10,7 @@ import {
 } from './FormPrimitives';
 import { FragmentSelector, fileFragmentSource } from '../shared/FragmentSelector';
 import { CharacterSelector } from './CharacterSelector';
-import { WildcardAutocomplete, WildcardAutocompleteRef } from '../workspace/WildcardAutocomplete';
+import { WildcardAutocomplete, WildcardAutocompleteRef } from '../shared/WildcardAutocomplete';
 import { taskRouter } from '../../services/taskRouter';
 import { TASK_IDS } from '../../../types/providers';
 import { FragmentLoader } from '../../services/fragmentLoader';

@@ -19,8 +19,8 @@ import { SchemaKeyPresetSelector } from './SchemaKeyPresetSelector';
 import { useSceneClassification } from '../contexts/SceneClassificationContext';
 import { MixOptionsPanel, SchemaDesigner, TemplateSelector, detectTemplateModel } from './workspace';
 import { WildcardExperimenter } from './workspace/WildcardExperimenter';
-import { FragmentBrowser } from './workspace/FragmentBrowser';
-import { WildcardAutocomplete } from './workspace/WildcardAutocomplete';
+import { FragmentSelector, indexedDBFragmentSource } from './shared/FragmentSelector';
+import { WildcardAutocomplete } from './shared/WildcardAutocomplete';
 
 /**
  * CenterPanel component
@@ -590,9 +590,20 @@ const CenterPanel: React.FC = () => {
                     }}
                   />
                 ) : (
-                  <FragmentBrowser
+                  <FragmentSelector
+                    mode="panel"
+                    dataSource={indexedDBFragmentSource}
+                    enableComposition={true}
+                    onSelectFragment={(fragment) => {
+                      // When selecting a single fragment, insert its content
+                      if (naturalLanguageInput.trim()) {
+                        setNaturalLanguageInput(prev => prev + '\n\n' + fragment.content);
+                      } else {
+                        setNaturalLanguageInput(fragment.content);
+                      }
+                    }}
                     onComposePrompt={(composed) => {
-                      // Append or replace the input
+                      // When composing multiple fragments, insert the composed text
                       if (naturalLanguageInput.trim()) {
                         setNaturalLanguageInput(prev => prev + '\n\n' + composed.text);
                       } else {

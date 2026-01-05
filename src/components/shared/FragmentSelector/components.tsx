@@ -13,6 +13,7 @@ import {
   FragmentListProps,
   FragmentSelectorMode,
   UnifiedFragment,
+  CompositionPanelProps,
 } from './types';
 
 /**
@@ -397,6 +398,138 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
           {tab.label}
         </button>
       ))}
+    </div>
+  );
+};
+
+/**
+ * Composition Panel for panel mode
+ * Allows users to build composite prompts from selected fragments
+ */
+export const CompositionPanel: React.FC<CompositionPanelProps> = ({
+  selectedFragments,
+  onRemoveFragment,
+  onClearAll,
+  suggestedConstraints,
+  onAddSuggestion,
+  onCompose,
+  isComposing = false,
+  composedResult,
+  compositionError,
+}) => {
+  return (
+    <div className="flex-1 p-4 overflow-y-auto">
+      {/* Selected Fragments */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium text-zinc-300">Selected Fragments</h3>
+          {selectedFragments.length > 0 && (
+            <button
+              onClick={onClearAll}
+              className="text-xs text-red-400 hover:text-red-300 transition-colors"
+            >
+              Clear All
+            </button>
+          )}
+        </div>
+
+        {selectedFragments.length === 0 ? (
+          <p className="text-sm text-zinc-500">
+            No fragments selected. Browse or search to add fragments.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {selectedFragments.map((fragment, index) => (
+              <div
+                key={fragment.id}
+                className="flex items-center justify-between p-2 bg-zinc-800 rounded-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-500">{index + 1}.</span>
+                  <span className="text-sm text-white">{fragment.name}</span>
+                  <span className="text-xs text-zinc-500 bg-zinc-700 px-1.5 py-0.5 rounded">
+                    {fragment.category}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onRemoveFragment(fragment.id)}
+                  className="text-zinc-500 hover:text-red-400 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Suggested Constraints */}
+      {suggestedConstraints.length > 0 && (
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-zinc-300 mb-2">Suggested Constraints</h3>
+          <div className="flex flex-wrap gap-2">
+            {suggestedConstraints.map(suggestion => (
+              <button
+                key={suggestion.id}
+                onClick={() => onAddSuggestion(suggestion)}
+                className="px-2 py-1 text-xs bg-purple-600/30 text-purple-300 rounded hover:bg-purple-600/50 transition-colors"
+              >
+                + {suggestion.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Composition Preview */}
+      {selectedFragments.length > 0 && (
+        <div className="mt-4 p-3 bg-zinc-800 rounded-lg">
+          <h3 className="text-sm font-medium text-zinc-300 mb-2">Composition Syntax</h3>
+          <code className="text-xs text-purple-300 font-mono">
+            {selectedFragments.map(f => f.id).join(' | ')}
+          </code>
+        </div>
+      )}
+
+      {/* Compose Button */}
+      {selectedFragments.length > 0 && onCompose && (
+        <button
+          onClick={onCompose}
+          disabled={isComposing}
+          className="mt-4 w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg font-medium transition-colors"
+        >
+          {isComposing ? 'Composing...' : 'Compose Prompt'}
+        </button>
+      )}
+
+      {/* Composition Error */}
+      {compositionError && (
+        <div className="mt-4 bg-red-900/30 border border-red-700 rounded-lg p-3">
+          <p className="text-sm text-red-400">{compositionError}</p>
+        </div>
+      )}
+
+      {/* Composed Result */}
+      {composedResult && (
+        <div className="mt-4 bg-zinc-800 rounded-lg p-4 border border-zinc-700">
+          <h3 className="text-sm font-medium text-zinc-300 mb-2">
+            Composed Prompt
+          </h3>
+          <p className="text-white whitespace-pre-wrap text-sm">
+            {composedResult.text}
+          </p>
+          <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
+            <span>{composedResult.fragmentsUsed.length} fragments</span>
+            {composedResult.suggestionsApplied.length > 0 && (
+              <span>
+                + {composedResult.suggestionsApplied.length} auto-suggested
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

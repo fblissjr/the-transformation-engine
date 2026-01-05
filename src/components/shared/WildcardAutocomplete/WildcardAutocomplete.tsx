@@ -1,7 +1,19 @@
-import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { wildcardService } from '../../services/wildcardService';
+/**
+ * WildcardAutocomplete - Shared Textarea with Wildcard Support
+ *
+ * A textarea with autocomplete for wildcard categories.
+ * Triggered by typing '{' character.
+ * Shows available categories and modifiers.
+ *
+ * Used in:
+ * - Video workspace (CenterPanel.tsx) - main prompt input
+ * - Image Studio (ImageGenerateForm.tsx) - prompt input with fragment insertion
+ */
 
-interface WildcardAutocompleteProps {
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { wildcardService } from '../../../services/wildcardService';
+
+export interface WildcardAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -26,13 +38,6 @@ interface AutocompleteState {
   searchTerm: string;
 }
 
-/**
- * WildcardAutocomplete component
- *
- * A textarea with autocomplete for wildcard categories.
- * Triggered by typing '{' character.
- * Shows available categories and modifiers.
- */
 export const WildcardAutocomplete = forwardRef<WildcardAutocompleteRef, WildcardAutocompleteProps>(({
   value,
   onChange,

@@ -39,4 +39,5 @@ export {
   FragmentCard,
   FragmentList,
   TabNavigation,
+  CompositionPanel,
 } from './components';

@@ -5,6 +5,9 @@
  * panel (Video workspace) and modal (Image Studio) modes.
  */
 
+// Re-export ComposedPrompt from fragmentComposer to ensure type consistency
+export type { ComposedPrompt } from '../../../services/fragmentComposer';
+
 /**
  * Unified fragment structure supporting both IndexedDB and file-based sources
  */
@@ -49,16 +52,6 @@ export interface FragmentCategory {
 export interface FragmentStats {
   totalFragments: number;
   byCategory: Record<string, number>;
-}
-
-/**
- * Composed prompt result from fragment composition
- */
-export interface ComposedPrompt {
-  template: string;
-  resolvedPrompt: string;
-  fragments: UnifiedFragment[];
-  wildcards?: string[];
 }
 
 /**
@@ -229,9 +222,10 @@ export interface CompositionPanelProps {
   selectedFragments: UnifiedFragment[];
   onRemoveFragment: (fragmentId: string) => void;
   onClearAll: () => void;
-  onCompose: () => void;
   suggestedConstraints: UnifiedFragment[];
   onAddSuggestion: (fragment: UnifiedFragment) => void;
-  composedResult: ComposedPrompt | null;
-  isComposing: boolean;
+  onCompose?: () => void;
+  isComposing?: boolean;
+  composedResult?: ComposedPrompt | null;
+  compositionError?: string | null;
 }

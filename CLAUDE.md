@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2026-01-04 | **Status**: v14 WILDCARDS & FRAGMENTS COMPLETE - 80 tests passing
+> **Last Updated**: 2026-01-05 | **Status**: PHASE 2 FRAGMENT SELECTOR MIGRATION COMPLETE - 80 tests passing
 
 ---
 
@@ -149,7 +149,6 @@ See `internal/history/2025-12-22_V13_REFACTOR_SUMMARY.md` for full details.
 **New UI Components** (in `src/components/workspace/`):
 - `WildcardAutocomplete.tsx` - Inline autocomplete triggered by `{` in main input
 - `WildcardExperimenter.tsx` - A/B testing matrix generator
-- `FragmentBrowser.tsx` - Browse, search, compose fragments
 
 **Database**: v14 adds 3 stores: `wildcardCategories`, `fragments`, `fragmentRelationships`
 
@@ -158,3 +157,29 @@ See `internal/history/2025-12-22_V13_REFACTOR_SUMMARY.md` for full details.
 - `prompt_library.json` - 100+ prompt templates
 
 See `internal/history/2026-01-04_WILDCARDS_FRAGMENTS.md` for full details.
+
+## 7. Phase 2: Unified FragmentSelector (2026-01-05)
+
+**855 lines of duplicate code eliminated** - Unified fragment browser for both workspaces:
+
+| Component | Purpose |
+|-----------|---------|
+| `FragmentSelector.tsx` | Main component supporting panel (Video) and modal (Image) modes |
+| `IndexedDBFragmentSource.ts` | Data adapter wrapping fragmentLibraryService |
+| `FileFragmentSource.ts` | Data adapter loading from /public/image-studio/fragments/ |
+| `components.tsx` | Sub-components: Header, Search, CategoryFilter, FragmentList, CompositionPanel |
+| `types.ts` | Unified types, re-exports ComposedPrompt from fragmentComposer |
+
+**Location**: `src/components/shared/FragmentSelector/`
+
+**Deleted Files** (replaced by FragmentSelector):
+- `src/components/workspace/FragmentBrowser.tsx` (474 lines)
+- `src/components/image-studio/FragmentBrowser.tsx` (381 lines)
+
+**Key Features**:
+- Data source adapter pattern for different backends
+- Composition with "Compose Prompt" button
+- Error feedback on composition failures
+- Both panel mode (sidebar categories) and modal mode (tab categories)
+
+See `internal/history/2026-01-05_FRAGMENT_SELECTOR_MIGRATION.md` for full details.

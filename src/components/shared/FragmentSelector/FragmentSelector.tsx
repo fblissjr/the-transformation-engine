@@ -5,7 +5,7 @@
  * Uses data source adapters for flexible fragment sources.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   FragmentSelectorProps,
   UnifiedFragment,
@@ -19,7 +19,9 @@ import {
   CategoryFilter,
   FragmentList,
   TabNavigation,
+  CompositionPanel,
 } from './components';
+import { fragmentComposer } from '../../../services/fragmentComposer';
 
 /**
  * Unified FragmentSelector component
@@ -53,6 +55,9 @@ export const FragmentSelector: React.FC<FragmentSelectorProps> = ({
   // Composition State (only if enableComposition)
   const [compositionFragments, setCompositionFragments] = useState<UnifiedFragment[]>([]);
   const [suggestedConstraints, setSuggestedConstraints] = useState<UnifiedFragment[]>([]);
+  const [isComposing, setIsComposing] = useState(false);
+  const [composedResult, setComposedResult] = useState<ComposedPrompt | null>(null);
+  const [compositionError, setCompositionError] = useState<string | null>(null);
 
   // Infer display modes from mode if not provided
   const effectiveCategoryDisplayMode = categoryDisplayMode || (mode === 'panel' ? 'sidebar' : 'tabs');
@@ -150,6 +155,38 @@ export const FragmentSelector: React.FC<FragmentSelectorProps> = ({
 
     setActiveTab('compose');
   }, [enableComposition, dataSource]);
+
+  // Handle compose - compose selected fragments into a prompt
+  const handleCompose = useCallback(async () => {
+    if (compositionFragments.length === 0) return;
+
+    setIsComposing(true);
+    setCompositionError(null);
+    try {
+      const syntax = compositionFragments.map(f => f.id).join(' | ');
+      const result = await fragmentComposer.compose(syntax, {
+        autoConstraints: false,
+      });
+      setComposedResult(result);
+
+      if (onComposePrompt) {
+        onComposePrompt(result);
+      }
+    } catch (err) {
+      console.error('Failed to compose fragments:', err);
+      setCompositionError(err instanceof Error ? err.message : 'Failed to compose prompt');
+    } finally {
+      setIsComposing(false);
+    }
+  }, [compositionFragments, onComposePrompt]);
+
+  // Handle clear composition
+  const handleClearComposition = useCallback(() => {
+    setCompositionFragments([]);
+    setComposedResult(null);
+    setSuggestedConstraints([]);
+    setCompositionError(null);
+  }, []);
 
   // Handle keyboard events (Escape to close modal)
   useEffect(() => {
@@ -253,13 +290,16 @@ export const FragmentSelector: React.FC<FragmentSelectorProps> = ({
             selectedFragments={compositionFragments}
             onRemoveFragment={(id) => {
               setCompositionFragments(prev => prev.filter(f => f.id !== id));
+              setComposedResult(null);
+              setCompositionError(null);
             }}
-            onClearAll={() => {
-              setCompositionFragments([]);
-              setSuggestedConstraints([]);
-            }}
+            onClearAll={handleClearComposition}
             suggestedConstraints={suggestedConstraints}
             onAddSuggestion={handleAddToComposition}
+            onCompose={handleCompose}
+            isComposing={isComposing}
+            composedResult={composedResult}
+            compositionError={compositionError}
           />
         )}
       </div>
@@ -295,103 +335,6 @@ export const FragmentSelector: React.FC<FragmentSelectorProps> = ({
   }
 
   return content;
-};
-
-/**
- * Simplified Composition Panel for panel mode
- */
-interface CompositionPanelProps {
-  selectedFragments: UnifiedFragment[];
-  onRemoveFragment: (id: string) => void;
-  onClearAll: () => void;
-  suggestedConstraints: UnifiedFragment[];
-  onAddSuggestion: (fragment: UnifiedFragment) => void;
-}
-
-const CompositionPanel: React.FC<CompositionPanelProps> = ({
-  selectedFragments,
-  onRemoveFragment,
-  onClearAll,
-  suggestedConstraints,
-  onAddSuggestion,
-}) => {
-  return (
-    <div className="flex-1 p-4 overflow-y-auto">
-      {/* Selected Fragments */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium text-zinc-300">Selected Fragments</h3>
-          {selectedFragments.length > 0 && (
-            <button
-              onClick={onClearAll}
-              className="text-xs text-red-400 hover:text-red-300 transition-colors"
-            >
-              Clear All
-            </button>
-          )}
-        </div>
-
-        {selectedFragments.length === 0 ? (
-          <p className="text-sm text-zinc-500">
-            No fragments selected. Browse or search to add fragments.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {selectedFragments.map((fragment, index) => (
-              <div
-                key={fragment.id}
-                className="flex items-center justify-between p-2 bg-zinc-800 rounded-lg"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-zinc-500">{index + 1}.</span>
-                  <span className="text-sm text-white">{fragment.name}</span>
-                  <span className="text-xs text-zinc-500 bg-zinc-700 px-1.5 py-0.5 rounded">
-                    {fragment.category}
-                  </span>
-                </div>
-                <button
-                  onClick={() => onRemoveFragment(fragment.id)}
-                  className="text-zinc-500 hover:text-red-400 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Suggested Constraints */}
-      {suggestedConstraints.length > 0 && (
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-zinc-300 mb-2">Suggested Constraints</h3>
-          <div className="flex flex-wrap gap-2">
-            {suggestedConstraints.map(suggestion => (
-              <button
-                key={suggestion.id}
-                onClick={() => onAddSuggestion(suggestion)}
-                className="px-2 py-1 text-xs bg-purple-600/30 text-purple-300 rounded hover:bg-purple-600/50 transition-colors"
-              >
-                + {suggestion.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Composition Preview */}
-      {selectedFragments.length > 0 && (
-        <div className="mt-4 p-3 bg-zinc-800 rounded-lg">
-          <h3 className="text-sm font-medium text-zinc-300 mb-2">Composition</h3>
-          <code className="text-xs text-purple-300 font-mono">
-            {selectedFragments.map(f => f.id).join(' | ')}
-          </code>
-        </div>
-      )}
-    </div>
-  );
 };
 
 export default FragmentSelector;
