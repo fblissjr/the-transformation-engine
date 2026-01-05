@@ -1,6 +1,6 @@
 # The Transformation Engine - Project Overview
 
-> **Last Updated**: 2025-12-22 | **Status**: v13 REFACTOR COMPLETE - 80 tests passing, ~5,000 lines removed (16% reduction)
+> **Last Updated**: 2026-01-04 | **Status**: v14 WILDCARDS & FRAGMENTS COMPLETE - 80 tests passing
 
 ---
 
@@ -62,7 +62,7 @@ Any Source → LLM Derives Schema → Structured Object → LLM Transforms → A
 - **Architecture Constraints:**
   - **Zero Legacy Code:** All generation routes through `taskRouter`.
   - **JSON Mode:** Use native JSON generation for structured outputs.
-  - **Data Safety:** Main DB v13 (16 stores). Fresh-install only (NO MIGRATIONS). Breaking schema changes are acceptable; old data will be lost.
+  - **Data Safety:** Main DB v14 (19 stores). Fresh-install only (NO MIGRATIONS). Breaking schema changes are acceptable; old data will be lost.
   - **Privacy:** API Keys are user-provided and stored encrypted (AES-GCM).
 
 ## 2. Documentation Maintenance
@@ -85,7 +85,8 @@ Any Source → LLM Derives Schema → Structured Object → LLM Transforms → A
   - *Context:* v13 refactor complete - Object System removed, CenterPanel extracted, types simplified
   - *Status:* ~25,545 lines (down from ~30,500)
 - **Image Studio:** `internal/living-docs/25_IMAGE_STUDIO.md` (Phase 2.5 Complete)
-- **Database Schema:** `config/database.ts` (Main DB v13, 16 stores)
+- **Wildcards & Fragments:** `internal/history/2026-01-04_WILDCARDS_FRAGMENTS.md` (v14 Complete)
+- **Database Schema:** `config/database.ts` (Main DB v14, 19 stores)
 
 ### System Components
 - **Prompting:** `internal/living-docs/17_PROMPTING_SYSTEM.md` (Fragments, Templates).
@@ -133,3 +134,27 @@ Any Source → LLM Derives Schema → Structured Object → LLM Transforms → A
 - `SchemaDesigner.tsx` - Schema keys, presets
 
 See `internal/history/2025-12-22_V13_REFACTOR_SUMMARY.md` for full details.
+
+## 6. v14 Wildcards & Fragments System (2026-01-04)
+
+**Ported from gemimg** - Dynamic wildcard substitution and reusable fragment composition:
+
+| Component | Purpose |
+|-----------|---------|
+| `wildcardService.ts` | Core resolution: `{category}`, `{category:random}`, `{category:3random}`, `{category:all}` |
+| `fragmentLibraryService.ts` | IndexedDB storage for reusable fragments with relationships |
+| `fragmentComposer.ts` | Pipe syntax composition: `"fragment1 | fragment2"` |
+| `seedDataService.ts` | Imports gemimg seed data on first run |
+
+**New UI Components** (in `src/components/workspace/`):
+- `WildcardAutocomplete.tsx` - Inline autocomplete triggered by `{` in main input
+- `WildcardExperimenter.tsx` - A/B testing matrix generator
+- `FragmentBrowser.tsx` - Browse, search, compose fragments
+
+**Database**: v14 adds 3 stores: `wildcardCategories`, `fragments`, `fragmentRelationships`
+
+**Seed Data** (in `public/data/`):
+- `wildcards.json` - 50+ categories (style, lighting, camera, composition, etc.)
+- `prompt_library.json` - 100+ prompt templates
+
+See `internal/history/2026-01-04_WILDCARDS_FRAGMENTS.md` for full details.
