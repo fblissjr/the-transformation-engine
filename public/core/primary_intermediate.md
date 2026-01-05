@@ -3,11 +3,18 @@ version: 2.0
 type: intermediate_generation
 purpose: Generate model-agnostic semantic intermediate representation (v2.0 structured JSON)
 ---
-@include[roles/expert_role_template.md | expertise="semantic video scene understanding and structured prompt engineering" | capabilities="analyze natural language and extract temporal, visual, audio, and camera elements into a structured JSON representation" | domain="text-to-video AI systems, multi-modal generation, semantic scene decomposition"]
 
-## Your Task
+**Task**: Convert the natural language input into a **structured JSON intermediate representation** (v2.0) that can be transformed into prompts for multiple generative AI models (video: Sora 2, Veo 3; image: Midjourney, DALL-E, Flux; and future models).
 
-Convert the user's natural language input into a **structured JSON intermediate representation** (v2.0) that can be transformed into prompts for multiple text-to-video models (Sora 2, Veo 3, and future models).
+{{#if duration}}
+**Media Type**: Video ({{duration}} seconds)
+- Include temporal progression describing how the scene evolves
+- Structure with clear beginning, progression, and resolution
+{{else}}
+**Media Type**: Static Image
+- Describe a single captured moment
+- Omit temporal progression (no time-based changes)
+{{/if}}
 
 DO NOT generate model-specific YAML or format-specific output. Instead, extract the underlying semantic content into structured JSON sections.
 
@@ -50,14 +57,17 @@ You MUST respond with valid JSON matching this exact structure:
 ### Scene Types
 
 Choose ONE that best matches the input:
-- `dialogue` - Conversation-focused scenes
-- `cinematic` - Narrative-driven scenes with camera work
-- `animation` - Animated or motion-graphics scenes
-- `music-video` - Music-driven scenes with rhythm
-- `action` - High-energy scenes with movement
-- `establishing` - Setting/location establishment
-- `product` - Product showcase/commercial
-- `abstract` - Non-narrative, experimental
+- `dialogue` - Conversation-focused scenes (video)
+- `cinematic` - Narrative-driven scenes with camera work (video)
+- `animation` - Animated or motion-graphics scenes (video)
+- `music-video` - Music-driven scenes with rhythm (video)
+- `action` - High-energy scenes with movement (video)
+- `establishing` - Setting/location establishment (video or image)
+- `product` - Product showcase/commercial (video or image)
+- `abstract` - Non-narrative, experimental (video or image)
+- `portrait` - Character/person focused (image)
+- `landscape` - Environment/scenery focused (image)
+- `static-image` - General single-frame image (image)
 
 ### Visual Section (REQUIRED)
 
@@ -75,9 +85,9 @@ ALWAYS include this section with ALL fields:
 }
 ```
 
-### Temporal Section (OPTIONAL)
+### Temporal Section (OPTIONAL - Video Only)
 
-Include ONLY if scene has clear time progression:
+Include ONLY for video scenes with clear time progression. OMIT entirely for static images:
 
 ```json
 "temporal": [
@@ -234,7 +244,7 @@ Output:
 }
 ```
 
-### Example 3: Static Establishing Shot
+### Example 3: Static Landscape Image
 
 Input: "A misty mountain range at dawn"
 
@@ -243,7 +253,7 @@ Output:
 {
   "format": "structured",
   "version": "2.0.0",
-  "sceneType": "establishing",
+  "sceneType": "landscape",
   "sections": {
     "visual": {
       "subject": ["mountain peaks"],
@@ -252,7 +262,40 @@ Output:
       "colors": "soft blues and purples transitioning to warm dawn light, white mist",
       "lighting": "early morning diffused light, sun rising behind peaks creating rim light",
       "composition": "wide establishing shot, mountains layered from foreground to background",
-      "style": "serene landscape cinematography, atmospheric depth"
+      "style": "serene landscape photography, atmospheric depth"
+    },
+    "camera": {
+      "angles": ["wide shot"],
+      "lensDetails": "wide angle lens, deep depth of field"
+    }
+  }
+}
+```
+
+### Example 4: Portrait Image
+
+Input: "A cyberpunk samurai in neon-lit Tokyo"
+
+Output:
+```json
+{
+  "format": "structured",
+  "version": "2.0.0",
+  "sceneType": "portrait",
+  "sections": {
+    "visual": {
+      "subject": ["cyberpunk samurai warrior with glowing armor accents"],
+      "setting": "neon-lit Tokyo alleyway at night",
+      "environment": "rain-slicked streets, holographic advertisements, steam rising from vents",
+      "colors": "deep blacks, electric blues, hot pinks, neon greens",
+      "lighting": "harsh neon backlighting creating dramatic silhouette, rim lighting on armor",
+      "composition": "hero shot, subject centered with neon signs framing from above",
+      "style": "cyberpunk aesthetic, high contrast, cinematic color grading"
+    },
+    "camera": {
+      "angles": ["low angle looking up"],
+      "techniques": "shallow depth of field to isolate subject",
+      "lensDetails": "85mm portrait lens, f/1.8 aperture"
     }
   }
 }
@@ -268,7 +311,7 @@ Output:
 4. **Subject must be array** - Even single subject: ["woman walking"]
 5. **Dialogue/ambient/soundEffects must be arrays** - Even single item: ["ocean waves"]
 6. **Time format strict** - Must match pattern "X-Ys" (e.g., "0-3s", "3-7s")
-7. **sceneType must match enum** - One of: dialogue, cinematic, animation, music-video, action, establishing, product, abstract
+7. **sceneType must match enum** - Video: dialogue, cinematic, animation, music-video, action. Video or Image: establishing, product, abstract. Image only: portrait, landscape, static-image
 
 ## Now Process the User's Input
 

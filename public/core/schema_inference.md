@@ -3,11 +3,18 @@ version: 2.0
 type: schema_inference
 purpose: Intelligent schema key suggestion based on creative input analysis
 ---
-@include[roles/expert_role_template.md | expertise="semantic analysis and structured prompt design for text-to-video AI systems" | capabilities="analyze creative concepts and suggest optimal schema keys that capture visual, temporal, audio, and narrative elements" | domain="Sora 2, Veo 3, and general text-to-video models"]
 
-## Your Task
+**Task**: Analyze the creative idea below and suggest an optimal set of **schema keys** (structural fields) to capture the concept effectively. Tailor suggestions to the specific content type, complexity, and creative intent.
 
-Analyze the user's creative idea and suggest an optimal set of **schema keys** (structural fields) to capture their concept effectively. Your suggestions should be tailored to the specific content type, complexity, and creative intent.
+{{#if duration}}
+**Media Type**: Video ({{duration}} seconds)
+- Include temporal keys for progression (e.g., temporal_progression, movement)
+- Consider audio keys for sound design
+{{else}}
+**Media Type**: Static Image
+- Focus on visual composition keys
+- Omit temporal/movement keys
+{{/if}}
 
 **User's Creative Idea:**
 "{{naturalLanguageInput}}"
@@ -39,17 +46,18 @@ Different scenes require different structures. Consider:
 - **Too Specific** (`left_eye_pupil_dilation`) → Overly granular, limits creativity
 - **Just Right** (`facial_expression`, `character_emotion`) → Clear purpose, flexible interpretation
 
-### Consider Model Capabilities
-**Audio-Rich Content** (Veo 3-optimized):
-- Always include: `dialogue`, `ambient_sound`, `music` (or combined `audio_elements`)
-- Veo 3 excels at native audio generation with lip-sync and 40+ voices
+### Consider Media Type
 
-**Visual-Temporal Content** (Sora 2-optimized):
-- Always include: `temporal_progression`, `visual_description`, `camera_movement`
-- Sora 2 uses spacetime patches and benefits from comprehensive detail
+**Video Content**:
+- Include: `temporal_progression`, `visual_description`, `camera_movement`, `audio_elements`
+- Benefits from comprehensive detail about how scenes evolve
+
+**Image Content**:
+- Focus on: `subject`, `setting`, `composition`, `lighting`, `style`, `colors`
+- Omit temporal keys (no progression in static images)
 
 **Universal Content** (Generic):
-- Stick to broad categories: `scene`, `visuals`, `audio`, `style`
+- Stick to broad categories: `scene`, `visuals`, `style`
 
 ## Schema Key Design Principles
 
@@ -76,43 +84,49 @@ Different scenes require different structures. Consider:
 
 ## Common Schema Patterns
 
-### Pattern 1: Veo 3 Nine-Element Framework (Audio-First)
-Best for: Dialogue, narrative, character-driven scenes
+### Pattern 1: Video - Narrative/Dialogue
+Best for: Dialogue, narrative, character-driven video scenes
 ```
 subject, context, action, style, camera_motion, audio_elements, lighting_mood, background_setting, composition
 ```
 
-### Pattern 2: Sora 2 Comprehensive (Visual-First)
-Best for: Cinematic, atmospheric, visual-heavy scenes
+### Pattern 2: Video - Cinematic/Visual
+Best for: Cinematic, atmospheric, visual-heavy video scenes
 ```
 temporal_progression, visual_description, camera_movement, cinematography, lighting, audio_design, style
 ```
 
-### Pattern 3: Generic Four-Key (Universal)
-Best for: Simple concepts, unknown target model
+### Pattern 3: Image - Portrait/Character
+Best for: Character-focused static images
 ```
-scene, visuals, audio, style
+subject, setting, lighting, composition, style, colors, expression
 ```
 
-### Pattern 4: Product/Commercial
+### Pattern 4: Image - Landscape/Environment
+Best for: Environment-focused static images
+```
+environment_description, atmospheric_elements, lighting_conditions, colors, composition, style
+```
+
+### Pattern 5: Generic (Universal)
+Best for: Simple concepts, unknown target media type
+```
+scene, visuals, style
+```
+
+### Pattern 6: Product/Commercial
 Best for: Product showcases, advertisements
 ```
 product_description, camera_movement, lighting, voiceover, brand_aesthetic
 ```
 
-### Pattern 5: Documentary/Street
+### Pattern 7: Documentary/Street
 Best for: Authentic, observational content
 ```
 subject_description, environment, natural_movement, ambient_sound, documentary_style
 ```
 
-### Pattern 6: Landscape/Nature
-Best for: Environmental, no human subjects
-```
-environment_description, atmospheric_elements, natural_sounds, camera_movement, lighting_conditions
-```
-
-### Pattern 7: Abstract/Experimental
+### Pattern 8: Abstract/Experimental
 Best for: Non-narrative, artistic concepts
 ```
 visual_motifs, color_progression, sound_design, abstract_movement, mood
@@ -210,11 +224,12 @@ The JSON object must contain two keys:
 Based on the creative idea above, suggest an optimal schema structure.
 
 **Remember**:
-- Adapt to content type (narrative, action, product, landscape, etc.)
+- Adapt to content type (narrative, action, product, landscape, portrait, etc.)
 - Match user's level of detail (simple = 3-5 keys, complex = 6-9 keys)
 - Use snake_case naming
 - Avoid redundancy
-- Include audio keys for Veo 3 optimization, temporal keys for Sora 2 optimization
+- For video: include temporal and audio keys
+- For images: focus on visual composition, omit temporal keys
 - Provide clear reasoning
 
 Generate the JSON response now (wrapped in ```json code fence).

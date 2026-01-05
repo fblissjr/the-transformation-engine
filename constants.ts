@@ -10,38 +10,33 @@ import {
 /**
  * Primary Generation Prompt
  *
- * The core system prompt used for generating structured video prompts.
- * It instructs the LLM on how to translate creative ideas into detailed,
- * machine-readable prompts optimized for video generation models like Sora and Veo.
+ * The core system prompt used for generating structured intermediates.
+ * Media-agnostic: works for both video and image generation.
  */
 export const PRIMARY_GENERATION_PROMPT = `
-You are a world-class structured prompt generator for text-to-video AI models. Your purpose is to translate a user's creative idea into a detailed, comprehensive, machine-readable prompt optimized for modern video generation systems.
+**Task**: Transform the creative concept below into a structured intermediate representation.
 
 **CRITICAL CONTEXT:**
-- Modern text-to-video models (Sora 2, Veo 3, etc.) are trained on DETAILED captions, not terse descriptions
+- Generative AI models are trained on DETAILED captions, not terse descriptions
 - More visual detail = better results
-- Describe HOW scenes evolve over time, not just static snapshots
-- Use professional cinematography terminology
+- Use professional cinematography and visual terminology
+- {{#if duration}}Describe HOW the scene evolves over {{duration}} seconds{{else}}Describe a single captured moment{{/if}}
 
-**Your Task:**
-Based on the user's creative idea and control parameters below, generate a complete prompt scene. Think like a director who understands visual storytelling, camera work, and (if the model supports it) sound design.
-
-**CRITICAL RULE: Duration Constraints**
-- **Sora 2**: 10 second clips
-- **Veo 3**: 8 second clips
-- **Generic/Unknown**: 8-10 second clips
-
-You must ensure you don't try to cram too much into one clip. Focus on ONE coherent moment with clear beginning, middle, and end.
+{{#if duration}}
+**Temporal Constraint**: This is a {{duration}}-second {{mediaType}}. Structure the content with a clear beginning, progression, and resolution. Do not try to cram too much into this window.
+{{else}}
+**Static Output**: This is a single-frame image. Describe a single captured moment without temporal progression.
+{{/if}}
 
 **CRITICAL RULE: Obscuring Known Figures**
-To foster creative interpretation, you MUST NOT use proper names of well-known figures. Instead, "talk around them" using iconic roles, historical context, signature appearance, famous quotes, or public persona.
+Do NOT use proper names of well-known figures. Instead, describe them using iconic roles, historical context, signature appearance, famous quotes, or public persona.
 
 **Examples:**
-- ❌ "Napoleon Bonaparte" → ✅ "a diminutive Corsican general in a bicorne hat obsessed with destiny"
-- ❌ "Queen Elizabeth" → ✅ "a long-reigning British monarch known for her steadfast composure and love of corgis"
-- ❌ "The Wright Brothers" → ✅ "two American bicycle mechanics from Ohio who achieved the first powered flight"
+- "Napoleon Bonaparte" becomes "a diminutive Corsican general in a bicorne hat obsessed with destiny"
+- "Queen Elizabeth" becomes "a long-reigning British monarch known for her steadfast composure and love of corgis"
+- "The Wright Brothers" becomes "two American bicycle mechanics from Ohio who achieved the first powered flight"
 
-**User's Creative Idea:**
+**Creative Concept:**
 "{{naturalLanguageInput}}"
 
 **Output Structure & Constraints:**
@@ -52,11 +47,11 @@ To foster creative interpretation, you MUST NOT use proper names of well-known f
 
 3. **Transformations:** {{textDirectionInstruction}}
 
-4. **Detail Level:** Be comprehensive and descriptive. Aim for rich visual detail that helps the model understand:
+4. **Detail Level:** Be comprehensive and descriptive. Aim for rich visual detail:
    - WHAT is in the scene (subjects, environment, objects)
-   - HOW things evolve over time (temporal progression)
+   {{#if duration}}- HOW things evolve over time (temporal progression){{/if}}
    - WHERE elements are positioned (spatial relationships)
-   - HOW the camera moves (specific cinematography terminology)
+   - HOW the camera is positioned (cinematography terminology)
    - WHAT the lighting/mood is (atmospheric qualities)
 
 5. **Length Guidelines:**
@@ -64,15 +59,13 @@ To foster creative interpretation, you MUST NOT use proper names of well-known f
    - **Optimal**: 250-400 words (matches training data)
    - **Maximum**: 600 words or 2400 characters (API limits)
 
-**Model-Specific Considerations:**
+**Conditional Elements:**
 - **If schema keys include audio/sound/dialogue**: Provide audio descriptions (dialogue, ambient sounds, music)
-- **If schema keys include temporal_progression**: Describe how scene evolves from start to finish
+- {{#if duration}}**If schema keys include temporal_progression**: Describe how scene evolves from start to finish{{/if}}
 - **If schema keys include character/subject**: Provide 30-50 word detailed character descriptions
-- **For Sora 2**: Audio is generated automatically from visual content; explicit audio descriptions optional but can enhance soundtrack
-- **For Veo 3**: Audio descriptions are REQUIRED (native V2A system, dialogue in quotation marks)
 
 **Final Instruction:**
-Your response must contain ONLY the structured prompt itself, with no additional commentary, introductions, or explanations. Be comprehensive yet efficient - every word should add visual or temporal clarity.
+Your response must contain ONLY the structured output itself, with no additional commentary, introductions, or explanations. Be comprehensive yet efficient - every word should add visual clarity.
 `;
 
 /**
@@ -82,13 +75,16 @@ Your response must contain ONLY the structured prompt itself, with no additional
  * Instructions for blending elements from multiple source prompts into a new, coherent scene.
  */
 export const SYNESTHETIC_MIXER_PROMPT = `
-You are an expert creative prompt blender. Your task is to analyze and synthesize the core cinematic, emotional, and thematic elements from two or more existing structured prompts. You will then generate a single, completely new, and coherent hybrid scene. Do not simply combine the prompts; create a novel synthesis inspired by them.
+**Task**: Analyze and synthesize the core visual, emotional, and thematic elements from two or more existing structured prompts. Generate a single, completely new, and coherent hybrid scene. Do not simply combine the prompts; create a novel synthesis inspired by them.
 
-**CRITICAL RULE: 8-10 second clips**
-All generated video clips are 8-10 seconds in duration. You must ensure you don't try to cram too much into one clip. Be concise and to the point. Pay attention to the formatting specifications provided by the user.
+{{#if duration}}
+**Temporal Constraint**: This is a {{duration}}-second {{mediaType}}. Structure the content with a clear beginning, progression, and resolution.
+{{else}}
+**Static Output**: This is a single-frame image. Describe a single captured moment.
+{{/if}}
 
 **CRITICAL RULE: Obscuring Known Figures**
-This rule still applies. If the source prompts contain descriptions of known figures, maintain the obscured, descriptive style in your new creation.
+If the source prompts contain descriptions of known figures, maintain the obscured, descriptive style in your new creation.
 
 **Source Prompts:**
 {{sourcePrompts}}
@@ -96,17 +92,17 @@ This rule still applies. If the source prompts contain descriptions of known fig
 **User Guidance for the Mix:**
 "{{userGuidance}}"
 
-**Your Task & Output Constraints:**
-1.  Analyze the source prompts to understand their core themes and moods.
-2.  Use the user's guidance to create a new, synthesized scene.
-3.  **Crucially, format your final output using the following new structure, ignoring the formats of the source prompts:**
-    *   **Format:** {{format}}
-        {{formatGuidance}}
-    *   **Schema Keys:** {{schemaKeys}}
-    *   **Text Direction:** {{textDirectionInstruction}}
-4.  The final output must be under 1500 characters.
+**Output Constraints:**
+1. Analyze the source prompts to understand their core themes and moods.
+2. Use the user's guidance to create a new, synthesized scene.
+3. Format your final output using the following structure, ignoring the formats of the source prompts:
+   - **Format:** {{format}}
+     {{formatGuidance}}
+   - **Schema Keys:** {{schemaKeys}}
+   - **Text Direction:** {{textDirectionInstruction}}
+4. The final output must be under 1500 characters.
 
-**Final Instruction:** Your response must contain ONLY the structured prompt itself, with no additional commentary, introductions, or explanations.
+**Final Instruction:** Your response must contain ONLY the structured output itself, with no additional commentary, introductions, or explanations.
 `;
 
 /**
@@ -116,15 +112,19 @@ This rule still applies. If the source prompts contain descriptions of known fig
  * Useful for readability and cross-model compatibility.
  */
 export const NORMALIZER_PROMPT = `
-You are an expert prompt de-constructor and creative writer. Your task is to take a structured, machine-readable prompt and translate it into a single, coherent, and **cinematic** scene description in a flowing paragraph.
+**Task**: Take a structured, machine-readable prompt and translate it into a single, coherent, **vivid** scene description in a flowing paragraph.
 
-**CRITICAL RULE: 8-10 second clips**
-All generated video clips are 8-10 seconds in duration. You must ensure you don't try to cram too much into one clip. Be concise and to the point. Pay attention to the formatting specifications provided by the user.
+{{#if duration}}
+**Temporal Constraint**: This describes a {{duration}}-second scene. Convey the temporal progression naturally.
+{{else}}
+**Static Output**: This describes a single captured moment.
+{{/if}}
 
 **Instructions:**
-1.  Synthesize all the elements (scene, sound, music, speech) into a cohesive narrative.
-2.  Do not just list the elements; weave them together to evoke the full mood and intent of the prompt.
-3.  Write in the present tense, as if describing a scene from a screenplay.
+1. Synthesize all the elements (scene, visuals, sound if present) into a cohesive narrative.
+2. Do not just list the elements; weave them together to evoke the full mood and intent.
+3. Write in the present tense, as if describing a scene from a screenplay.
+4. Be concise and to the point.
 
 **Target Language:** {{language}}
 
@@ -133,7 +133,7 @@ All generated video clips are 8-10 seconds in duration. You must ensure you don'
 {{structuredOutput}}
 \`\`\`
 
-Write the cinematic scene description now.
+Write the scene description now.
 `;
 
 /**
@@ -143,23 +143,30 @@ Write the cinematic scene description now.
  * Helps in automatically selecting relevant tags for the generated prompt.
  */
 export const SCHEMA_INFERENCE_PROMPT = `
-You are an expert schema designer for creative, structured prompts. Your task is to analyze a user's creative idea and suggest a set of structured keys (a schema) to represent it effectively for a text-to-video model. The keys should be concise, lowercase, and use snake_case.
+**Task**: Analyze the creative idea below and suggest a set of structured keys (a schema) to represent it effectively for a generative AI model. The keys should be concise, lowercase, and use snake_case.
 
-**User's Creative Idea:**
+**Media Type**: {{mediaType}}
+{{#if duration}}
+**Duration**: {{duration}} seconds (include temporal keys like temporal_progression)
+{{else}}
+**Static Image**: No temporal progression needed
+{{/if}}
+
+**Creative Idea:**
 "{{naturalLanguageInput}}"
 
 {{instructions}}
 
 **Output Format:**
-You MUST respond with a single, valid JSON object. Do not include any text or formatting before or after the JSON object.
+Respond with a single, valid JSON object. Do not include any text or formatting before or after the JSON object.
 The JSON object must contain two keys:
 1. "newSchemaKeys": An array of strings representing the suggested schema keys.
 2. "reasoning": A brief, user-friendly explanation for your key choices.
 
 **Example Response:**
 {
-  "newSchemaKeys": ["setting_description", "character_action", "internal_monologue", "ambient_sound"],
-  "reasoning": "The idea involves a character's internal thoughts and specific actions in a detailed setting, so keys were chosen to capture these distinct elements."
+  "newSchemaKeys": ["setting_description", "character_action", "visual_style", "lighting"],
+  "reasoning": "The idea involves a character's actions in a detailed setting, so keys were chosen to capture these distinct visual elements."
 }
 
 Generate the JSON response now.

@@ -1,162 +1,201 @@
-import React, { useEffect, useState } from 'react';
-import { SecondaryButton } from './FormPrimitives';
-import { getImageGeneration, getImageGenerationsByProject } from '../../services/imageDbService';
-import type { ImageGeneration } from '../../types/imageTypes';
+import React, { useState, useMemo } from 'react';
 
 /**
  * ImageOutputPanel component
  *
- * Displays the generated image, metadata, and history for the current project.
- * Allows downloading the image and using it as a first frame for video generation (future feature).
+ * Displays the generated structured intermediate and formatted output.
+ * Supports multiple output templates: Natural Language, YAML, JSON, Tag List.
  *
- * @param projectId - The ID of the current project.
- * @param currentImageId - The ID of the currently displayed image.
- * @param onUseAsFirstFrame - Optional callback to use the image as a first frame.
+ * NOTE: This does NOT display images - it displays structured prompt text.
+ *
+ * @param intermediate - The generated intermediate data (YAML, original prompt, aspect ratio).
  * @returns The rendered ImageOutputPanel component.
  */
 
+type OutputFormat = 'natural' | 'yaml' | 'json' | 'tags';
+
 interface ImageOutputPanelProps {
-  projectId: string;
-  currentImageId?: string;
-  onUseAsFirstFrame?: (imageId: string) => void;
+  intermediate?: {
+    yaml: string;
+    originalPrompt: string;
+    aspectRatio: string;
+  };
 }
 
-export const ImageOutputPanel: React.FC<ImageOutputPanelProps> = ({
-  projectId,
-  currentImageId,
-  onUseAsFirstFrame,
-}) => {
-  const [currentImage, setCurrentImage] = useState<ImageGeneration | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [recentImages, setRecentImages] = useState<ImageGeneration[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+/**
+ * Parse YAML-like intermediate to a structured object for formatting.
+ */
+function parseIntermediate(yaml: string): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  const lines = yaml.split('\n');
+  let currentSection = '';
 
-  // Load current image
-  useEffect(() => {
-    if (!currentImageId) {
-      setCurrentImage(null);
-      setImageUrl(null);
-      return;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    // Section header (no indent, ends with colon)
+    if (!line.startsWith(' ') && !line.startsWith('\t') && trimmed.endsWith(':')) {
+      currentSection = trimmed.slice(0, -1).toLowerCase();
+      result[currentSection] = {};
+      continue;
     }
 
-    let isMounted = true;
-    let objectUrl: string | null = null;
+    // Key-value pair
+    const keyMatch = trimmed.match(/^(\w+):\s*(.*)$/);
+    if (keyMatch && currentSection) {
+      const [, key, value] = keyMatch;
+      const section = result[currentSection] as Record<string, unknown>;
+      if (section) {
+        section[key.toLowerCase()] = value || '';
+      }
+    }
 
-    const loadImage = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const image = await getImageGeneration(currentImageId);
-
-        if (!isMounted) return;
-
-        if (!image) {
-          setError('Image not found');
-          return;
-        }
-
-        setCurrentImage(image);
-
-        // Convert Blob to URL for display
-        if (image.imageData && image.imageData.size > 0) {
-          objectUrl = URL.createObjectURL(image.imageData);
-          setImageUrl(objectUrl);
-        } else {
-          setImageUrl(null);
-        }
-      } catch (err) {
-        if (!isMounted) return;
-        setError(err instanceof Error ? err.message : 'Failed to load image');
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
+    // Array item
+    if (trimmed.startsWith('- ') && currentSection) {
+      const value = trimmed.slice(2);
+      const section = result[currentSection] as Record<string, unknown>;
+      if (section) {
+        const lastKey = Object.keys(section).pop();
+        if (lastKey) {
+          const existing = section[lastKey];
+          if (Array.isArray(existing)) {
+            existing.push(value);
+          } else if (typeof existing === 'string' && !existing) {
+            section[lastKey] = [value];
+          }
         }
       }
-    };
+    }
+  }
 
-    loadImage();
+  return result;
+}
 
-    // Cleanup: revoke object URL to prevent memory leaks
-    return () => {
-      isMounted = false;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
+/**
+ * Format intermediate to natural language.
+ */
+function formatAsNaturalLanguage(yaml: string): string {
+  const parsed = parseIntermediate(yaml);
+  const parts: string[] = [];
+
+  // Visual section
+  const visual = parsed.visual as Record<string, string> | undefined;
+  if (visual) {
+    if (visual.subject) parts.push(visual.subject);
+    if (visual.setting) parts.push(`in ${visual.setting}`);
+    if (visual.environment) parts.push(`with ${visual.environment}`);
+    if (visual.lighting) parts.push(`${visual.lighting} lighting`);
+    if (visual.composition) parts.push(`${visual.composition} composition`);
+    if (visual.style) parts.push(`${visual.style} style`);
+    if (visual.colors) parts.push(`${visual.colors} color palette`);
+  }
+
+  // Camera section
+  const camera = parsed.camera as Record<string, string> | undefined;
+  if (camera) {
+    const cameraParts: string[] = [];
+    if (camera.lens) cameraParts.push(`${camera.lens} lens`);
+    if (camera.aperture) cameraParts.push(`at ${camera.aperture}`);
+    if (camera.angle) cameraParts.push(`${camera.angle} angle`);
+    if (cameraParts.length > 0) {
+      parts.push(`Shot with ${cameraParts.join(', ')}`);
+    }
+  }
+
+  return parts.join('. ').replace(/\.\./g, '.').trim() || yaml;
+}
+
+/**
+ * Format intermediate as JSON.
+ */
+function formatAsJson(yaml: string): string {
+  const parsed = parseIntermediate(yaml);
+  return JSON.stringify(parsed, null, 2);
+}
+
+/**
+ * Format intermediate as comma-separated tags.
+ */
+function formatAsTags(yaml: string): string {
+  const parsed = parseIntermediate(yaml);
+  const tags: string[] = [];
+
+  // Extract all string values
+  const extractTags = (obj: Record<string, unknown>) => {
+    for (const value of Object.values(obj)) {
+      if (typeof value === 'string' && value) {
+        // Split on commas if present
+        const subTags = value.split(',').map(t => t.trim()).filter(Boolean);
+        tags.push(...subTags);
+      } else if (Array.isArray(value)) {
+        tags.push(...value.filter(v => typeof v === 'string'));
+      } else if (typeof value === 'object' && value) {
+        extractTags(value as Record<string, unknown>);
       }
-    };
-  }, [currentImageId]);
-
-  // Load recent images for history
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadRecent = async () => {
-      try {
-        const images = await getImageGenerationsByProject(projectId);
-
-        if (!isMounted) return;
-
-        // Sort by created date (newest first), limit to 10
-        const sorted = images
-          .filter((img) => img.status === 'ready')
-          .sort((a, b) => b.created.getTime() - a.created.getTime())
-          .slice(0, 10);
-
-        setRecentImages(sorted);
-      } catch (err) {
-        console.error('Failed to load recent images:', err);
-      }
-    };
-
-    loadRecent();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [projectId, currentImageId]); // Reload when currentImageId changes (new generation)
-
-  const handleDownload = () => {
-    if (!currentImage || !imageUrl) return;
-
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = `${currentImage.id}.png`;
-    link.click();
+    }
   };
 
-  const formatTimestamp = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
+  extractTags(parsed);
+  return tags.join(', ');
+}
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hours ago`;
-    return date.toLocaleDateString();
+const FORMAT_OPTIONS: { value: OutputFormat; label: string; description: string }[] = [
+  { value: 'natural', label: 'Natural Language', description: 'Prose description for most platforms' },
+  { value: 'yaml', label: 'Structured YAML', description: 'Original structured format' },
+  { value: 'json', label: 'JSON', description: 'Machine-readable export' },
+  { value: 'tags', label: 'Tag List', description: 'Comma-separated tags' },
+];
+
+export const ImageOutputPanel: React.FC<ImageOutputPanelProps> = ({
+  intermediate,
+}) => {
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>('natural');
+  const [showRawYaml, setShowRawYaml] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Format the output based on selected format
+  const formattedOutput = useMemo(() => {
+    if (!intermediate?.yaml) return '';
+
+    switch (outputFormat) {
+      case 'natural':
+        return formatAsNaturalLanguage(intermediate.yaml);
+      case 'yaml':
+        return intermediate.yaml;
+      case 'json':
+        return formatAsJson(intermediate.yaml);
+      case 'tags':
+        return formatAsTags(intermediate.yaml);
+      default:
+        return intermediate.yaml;
+    }
+  }, [intermediate?.yaml, outputFormat]);
+
+  const handleCopy = async () => {
+    if (!formattedOutput) return;
+
+    try {
+      await navigator.clipboard.writeText(formattedOutput);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   return (
     <div className="right-panel w-96 bg-zinc-900 border-l border-zinc-800 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-zinc-800">
-        <h2 className="text-lg font-semibold text-zinc-100">Generated Image</h2>
+        <h2 className="text-lg font-semibold text-zinc-100">Prompt Output</h2>
+        <p className="text-xs text-zinc-500 mt-1">
+          Copy and use in any image generation platform
+        </p>
       </div>
 
-      {/* Content */}
-      {isLoading && (
-        <div className="p-4 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
-        </div>
-      )}
-
-      {error && (
-        <div className="p-4 bg-red-900/20 border-b border-red-900/50">
-          <p className="text-sm text-red-400">{error}</p>
-        </div>
-      )}
-
-      {!isLoading && !error && !currentImage && (
+      {/* Empty State */}
+      {!intermediate && (
         <div className="p-4 flex-1 flex flex-col items-center justify-center text-center">
           <svg
             className="w-16 h-16 text-zinc-700 mb-4"
@@ -168,125 +207,108 @@ export const ImageOutputPanel: React.FC<ImageOutputPanelProps> = ({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={1.5}
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <h3 className="text-sm font-medium text-zinc-400 mb-2">No image generated yet</h3>
+          <h3 className="text-sm font-medium text-zinc-400 mb-2">No prompt generated yet</h3>
           <p className="text-xs text-zinc-600">
-            Enter a prompt and click Generate to create your first image
+            Enter a description and click Generate to create a structured prompt
           </p>
         </div>
       )}
 
-      {!isLoading && !error && currentImage && (
+      {/* Output Content */}
+      {intermediate && (
         <>
-          {/* Image Preview */}
+          {/* Format Selector */}
           <div className="p-4 border-b border-zinc-800">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={currentImage.prompt}
-                className="w-full rounded-lg border border-zinc-700"
-              />
-            ) : currentImage.status === 'generating' ? (
-              <div className="w-full aspect-square bg-zinc-800 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-2"></div>
-                  <p className="text-xs text-zinc-500">Generating...</p>
-                </div>
-              </div>
-            ) : (
-              <div className="w-full aspect-square bg-zinc-800 rounded-lg flex items-center justify-center">
-                <p className="text-xs text-zinc-500">Image data not available</p>
-              </div>
-            )}
+            <label className="text-xs font-medium text-zinc-400 block mb-2">
+              Output Format
+            </label>
+            <select
+              value={outputFormat}
+              onChange={(e) => setOutputFormat(e.target.value as OutputFormat)}
+              className="w-full bg-zinc-800 border border-zinc-700 text-zinc-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              {FORMAT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-zinc-600 mt-1">
+              {FORMAT_OPTIONS.find(o => o.value === outputFormat)?.description}
+            </p>
           </div>
 
-          {/* Metadata */}
-          <div className="p-4 border-b border-zinc-800 space-y-2 text-xs">
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Model:</span>
-              <span className="text-zinc-200">{currentImage.model}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Status:</span>
-              <span
-                className={`font-medium ${
-                  currentImage.status === 'ready'
-                    ? 'text-green-400'
-                    : currentImage.status === 'generating'
-                      ? 'text-amber-400'
-                      : 'text-red-400'
-                }`}
-              >
-                {currentImage.status}
+          {/* Formatted Output */}
+          <div className="p-4 border-b border-zinc-800 flex-1 overflow-auto">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-zinc-400">
+                Formatted Prompt
+              </span>
+              <span className="text-xs text-zinc-600">
+                {formattedOutput.length} chars
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Generated:</span>
-              <span className="text-zinc-200">{formatTimestamp(currentImage.created)}</span>
+            <div className="bg-zinc-800 rounded-lg p-3 border border-zinc-700">
+              <pre className="text-sm text-zinc-200 whitespace-pre-wrap font-mono leading-relaxed">
+                {formattedOutput}
+              </pre>
             </div>
-            {currentImage.prompt && (
-              <div className="pt-2 border-t border-zinc-800">
-                <span className="text-zinc-500 block mb-1">Prompt:</span>
-                <p className="text-zinc-300 text-xs leading-relaxed line-clamp-3">
-                  {currentImage.prompt}
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Actions */}
-          {currentImage.status === 'ready' && (
-            <div className="p-4 flex gap-2">
-              <button
-                onClick={() => onUseAsFirstFrame?.(currentImage.id)}
-                className="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-sm py-2 rounded transition-colors"
-              >
-                Use as First Frame
-              </button>
-              <button
-                onClick={handleDownload}
-                className="bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-sm px-3 py-2 rounded transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-              </button>
+          <div className="p-4 border-b border-zinc-800 flex gap-2">
+            <button
+              onClick={handleCopy}
+              className={`flex-1 py-2 px-4 rounded text-sm font-medium transition-colors ${
+                copied
+                  ? 'bg-green-600 text-white'
+                  : 'bg-amber-600 hover:bg-amber-500 text-white'
+              }`}
+            >
+              {copied ? 'Copied!' : 'Copy Prompt'}
+            </button>
+            <button
+              onClick={() => setShowRawYaml(!showRawYaml)}
+              className="bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-sm px-3 py-2 rounded transition-colors"
+            >
+              {showRawYaml ? 'Hide' : 'View'} Raw
+            </button>
+          </div>
+
+          {/* Raw YAML (Collapsible) */}
+          {showRawYaml && (
+            <div className="p-4 border-b border-zinc-800 bg-zinc-950">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-zinc-400">
+                  Structured Intermediate (YAML)
+                </span>
+              </div>
+              <pre className="text-xs text-zinc-400 whitespace-pre-wrap font-mono overflow-auto max-h-64">
+                {intermediate.yaml}
+              </pre>
             </div>
           )}
+
+          {/* Metadata */}
+          <div className="p-4 text-xs text-zinc-500 space-y-1">
+            <div className="flex justify-between">
+              <span>Aspect Ratio:</span>
+              <span className="text-zinc-300">{intermediate.aspectRatio}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Original Prompt:</span>
+              <span className="text-zinc-300 truncate max-w-48" title={intermediate.originalPrompt}>
+                {intermediate.originalPrompt.substring(0, 50)}...
+              </span>
+            </div>
+          </div>
         </>
       )}
-
-      {/* Generation History */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <h3 className="text-sm font-medium text-zinc-400 mb-3">Recent Generations</h3>
-        {recentImages.length === 0 ? (
-          <p className="text-xs text-zinc-600">No generations yet</p>
-        ) : (
-          <div className="space-y-2">
-            {recentImages.map((img) => (
-              <button
-                key={img.id}
-                onClick={() => {
-                  /* Will wire up in Week 2 - set as current image */
-                }}
-                className={`w-full bg-zinc-800 border rounded-lg p-2 text-left hover:bg-zinc-700 transition-colors ${
-                  img.id === currentImageId ? 'border-amber-500' : 'border-zinc-700'
-                }`}
-              >
-                <p className="text-xs text-zinc-300 line-clamp-2 mb-1">{img.prompt}</p>
-                <p className="text-xs text-zinc-600">{formatTimestamp(img.created)}</p>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };
+
+export default ImageOutputPanel;

@@ -4,9 +4,8 @@ import { ImageOutputPanel } from './ImageOutputPanel';
 import {
   createImageProject,
   getAllImageProjects,
-  getImageGenerationsByProject,
 } from '../../services/imageDbService';
-import type { ImageProject, ImageGeneration } from '../../types/imageTypes';
+import type { ImageProject } from '../../types/imageTypes';
 
 /**
  * ImageWorkspace component
@@ -14,15 +13,25 @@ import type { ImageProject, ImageGeneration } from '../../types/imageTypes';
  * The main layout for the Image Studio workspace.
  * Implements a 3-panel layout:
  * - Left: Project selector
- * - Center: Image generation form
- * - Right: Image output and history
+ * - Center: Prompt generation form
+ * - Right: Prompt output and formatting
+ *
+ * NOTE: This workspace creates PROMPTS, not images. The output panel
+ * displays formatted prompt text that can be copied to any image generation platform.
  *
  * @returns The rendered ImageWorkspace component.
  */
+
+interface IntermediateData {
+  yaml: string;
+  originalPrompt: string;
+  aspectRatio: string;
+}
+
 export const ImageWorkspace: React.FC = () => {
   const [projects, setProjects] = useState<ImageProject[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
-  const [currentImageId, setCurrentImageId] = useState<string | null>(null);
+  const [intermediate, setIntermediate] = useState<IntermediateData | null>(null);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,20 +63,14 @@ export const ImageWorkspace: React.FC = () => {
     }
   };
 
-  const handleImageGenerated = (imageId: string) => {
-    setCurrentImageId(imageId);
+  const handleIntermediateGenerated = (data: IntermediateData) => {
+    setIntermediate(data);
   };
 
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
     // Clear error after 5 seconds
     setTimeout(() => setError(null), 5000);
-  };
-
-  const handleUseAsFirstFrame = async (imageId: string) => {
-    // Week 2: Implement cross-workspace integration
-    // For now, just show a message
-    alert('Use as First Frame feature coming in Week 2!');
   };
 
   if (isLoadingProjects) {
@@ -158,20 +161,18 @@ export const ImageWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Center Panel - Image Generation Form */}
+        {/* Center Panel - Prompt Generation Form */}
         <div className="center-panel flex-1 bg-zinc-950 p-6 overflow-y-auto">
           <ImageGenerateForm
             projectId={currentProjectId}
-            onImageGenerated={handleImageGenerated}
+            onIntermediateGenerated={handleIntermediateGenerated}
             onError={handleError}
           />
         </div>
 
-        {/* Right Panel - Image Output */}
+        {/* Right Panel - Prompt Output */}
         <ImageOutputPanel
-          projectId={currentProjectId}
-          currentImageId={currentImageId}
-          onUseAsFirstFrame={handleUseAsFirstFrame}
+          intermediate={intermediate || undefined}
         />
       </div>
     </div>
