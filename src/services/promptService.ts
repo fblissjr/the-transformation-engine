@@ -7,7 +7,6 @@ import {
   MODEL_PRESETS,
 } from "../constants";
 import { fragmentLoader } from "./fragmentLoader";
-import { selectFewShotExamples, shouldUseFewShot } from "./fewShotService";
 import { taskRouter } from "./taskRouter";
 import { TASK_IDS } from "../types/providers";
 

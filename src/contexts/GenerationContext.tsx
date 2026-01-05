@@ -20,7 +20,7 @@ import { useMedia } from './MediaContext';
 import { usePromptLibrary } from './PromptLibraryContext';
 import { taskRouter } from '../services/taskRouter';
 import { TASK_IDS } from '../../types/providers';
-import { parseRevisionRequest, formatAnswersForPrompt } from '../services/revisionRequestParser';
+import { formatAnswersForPrompt } from '../services/revisionRequestParser';
 
 export interface StreamingState {
   accumulatedContent: string;

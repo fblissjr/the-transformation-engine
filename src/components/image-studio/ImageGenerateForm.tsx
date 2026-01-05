@@ -8,11 +8,13 @@ import {
   UserIcon,
   WandIcon,
 } from './FormPrimitives';
-import { FragmentBrowser } from './FragmentBrowser';
+import { FragmentSelector, fileFragmentSource } from '../shared/FragmentSelector';
 import { CharacterSelector } from './CharacterSelector';
+import { WildcardAutocomplete, WildcardAutocompleteRef } from '../workspace/WildcardAutocomplete';
 import { taskRouter } from '../../services/taskRouter';
 import { TASK_IDS } from '../../../types/providers';
 import { FragmentLoader } from '../../services/fragmentLoader';
+import { createImageGeneration } from '../../services/imageDbService';
 
 /**
  * ImageGenerateForm component
@@ -58,7 +60,7 @@ export const ImageGenerateForm: React.FC<ImageGenerateFormProps> = ({
   const [showFragmentBrowser, setShowFragmentBrowser] = useState(false);
 
   // Ref for prompt textarea to track cursor position
-  const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const promptTextareaRef = useRef<WildcardAutocompleteRef>(null);
 
   // Aspect ratio options
   const aspectRatioOptions = [
@@ -129,15 +131,14 @@ export const ImageGenerateForm: React.FC<ImageGenerateFormProps> = ({
 
   // Fragment insertion handler
   const handleInsertFragment = (fragmentContent: string) => {
-    const textarea = promptTextareaRef.current;
-    if (!textarea) {
+    const autocompleteRef = promptTextareaRef.current;
+    if (!autocompleteRef || !autocompleteRef.textarea) {
       // Fallback: just append to end
       setPrompt(prompt + '\n\n' + fragmentContent);
       return;
     }
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    const { start, end } = autocompleteRef.getSelectionRange();
     const currentText = prompt;
 
     // Insert fragment at cursor position
@@ -160,8 +161,8 @@ export const ImageGenerateForm: React.FC<ImageGenerateFormProps> = ({
     // Move cursor to end of inserted fragment
     setTimeout(() => {
       const newCursorPos = start + (needsSpaceBefore ? 2 : 0) + fragmentContent.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-      textarea.focus();
+      autocompleteRef.setSelectionRange(newCursorPos, newCursorPos);
+      autocompleteRef.focus();
     }, 0);
   };
 
@@ -176,15 +177,62 @@ export const ImageGenerateForm: React.FC<ImageGenerateFormProps> = ({
     try {
       // Generate structured intermediate from text prompt
       const fragmentLoader = new FragmentLoader();
-      const systemPrompt = await fragmentLoader.load('image/image_intermediate.md');
+      // Path starts with / for absolute path (file is at /public/image/, not /public/fragments/)
+      const fragment = await fragmentLoader.loadFragment('/image/image_intermediate.md');
+      const systemPrompt = fragment.content;
 
-      const intermediateTurn = await taskRouter.executeTask(
-        TASK_IDS.IMAGE_INTERMEDIATE_GENERATION,
-        prompt,
-        systemPrompt
-      );
+      let intermediateTurn;
+
+      // If reference images are provided, use vision task
+      if (referenceImages.length > 0) {
+        // Convert dataUrls to the format taskRouter expects
+        const media = referenceImages.map((img) => {
+          // Parse data URL: "data:image/png;base64,..." -> extract mimeType and data
+          const match = img.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+          if (!match) {
+            throw new Error(`Invalid image data URL for ${img.file.name}`);
+          }
+          return {
+            mimeType: match[1],
+            data: match[2],
+          };
+        });
+
+        // Build enhanced prompt describing the reference images
+        const enhancedPrompt = `${prompt}\n\nReference Images: ${referenceImages.length} image(s) have been provided for visual reference. Use them to inform the style, composition, and visual details of the generated intermediate.`;
+
+        intermediateTurn = await taskRouter.executeVisionTask(
+          TASK_IDS.IMAGE_INTERMEDIATE_GENERATION,
+          enhancedPrompt,
+          media,
+          systemPrompt
+        );
+      } else {
+        intermediateTurn = await taskRouter.executeTask(
+          TASK_IDS.IMAGE_INTERMEDIATE_GENERATION,
+          prompt,
+          systemPrompt
+        );
+      }
 
       const structuredYaml = intermediateTurn.response;
+
+      // Save to database for persistence
+      if (projectId) {
+        await createImageGeneration({
+          projectId,
+          prompt,
+          model: intermediateTurn.modelId,
+          providerId: intermediateTurn.providerId,
+          structuredYaml,
+          status: 'ready',
+          metadata: {
+            aspectRatio,
+            generationType: 'intermediate',
+            referenceImageCount: referenceImages.length,
+          },
+        });
+      }
 
       // Pass the intermediate to the output panel (no image generation!)
       onIntermediateGenerated?.({
@@ -210,14 +258,14 @@ export const ImageGenerateForm: React.FC<ImageGenerateFormProps> = ({
           <SparklesIcon className="w-4 h-4 text-amber-500" />
           Describe your image
         </label>
-        <textarea
+        <WildcardAutocomplete
           ref={promptTextareaRef}
           rows={6}
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="A cyberpunk samurai standing in neon-lit Tokyo alley, rain reflecting colors, cinematic lighting..."
+          onChange={setPrompt}
+          placeholder="A cyberpunk samurai standing in neon-lit Tokyo alley... Use {category} for wildcards"
           disabled={isGenerating}
-          className="w-full bg-zinc-900 border border-zinc-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 text-zinc-100 placeholder:text-zinc-500 text-sm resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-zinc-900 border-zinc-700 focus:ring-amber-500 text-zinc-100 placeholder:text-zinc-500 text-sm"
         />
         <div className="mt-2 flex items-center gap-2">
           <button
@@ -228,7 +276,6 @@ export const ImageGenerateForm: React.FC<ImageGenerateFormProps> = ({
             <WandIcon className="w-3 h-3" />
             Browse Fragments
           </button>
-          <span className="text-xs text-zinc-500">Use wildcards like {"{character}"} or {"{style}"}</span>
         </div>
       </div>
 
@@ -342,10 +389,12 @@ export const ImageGenerateForm: React.FC<ImageGenerateFormProps> = ({
       </PrimaryButton>
 
       {/* Fragment Browser Modal */}
-      <FragmentBrowser
+      <FragmentSelector
+        mode="modal"
+        dataSource={fileFragmentSource}
         isOpen={showFragmentBrowser}
         onClose={() => setShowFragmentBrowser(false)}
-        onInsertFragment={handleInsertFragment}
+        onSelectFragment={(fragment) => handleInsertFragment(fragment.content)}
       />
 
       {/* Character Selector Modal */}

@@ -817,47 +817,6 @@ const CenterPanel: React.FC = () => {
 };
 
 /**
- * CompactSlider component
- *
- * A compact range slider component with labels.
- *
- * @param label - The main label for the slider.
- * @param leftLabel - Label for the minimum end.
- * @param rightLabel - Label for the maximum end.
- * @param value - The current value of the slider.
- * @param onChange - Callback when the value changes.
- * @returns The rendered CompactSlider component.
- */
-const CompactSlider: React.FC<{
-  label: string,
-  leftLabel: string,
-  rightLabel: string,
-  value: number,
-  onChange: (value: number) => void
-}> = ({ label, leftLabel, rightLabel, value, onChange }) => {
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-1.5">
-        <span className="text-xs font-medium text-gray-400">{label}</span>
-        <span className="text-xs font-bold text-amber-400 bg-gray-800 px-2 py-0.5 rounded">{value}</span>
-      </div>
-      <input
-        type="range"
-        min="0"
-        max="10"
-        value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
-      />
-      <div className="flex justify-between text-xs text-gray-600 mt-1">
-        <span>{leftLabel}</span>
-        <span>{rightLabel}</span>
-      </div>
-    </div>
-  );
-}
-
-/**
  * CharacterCount component
  *
  * Displays the character count and validates against model limits.

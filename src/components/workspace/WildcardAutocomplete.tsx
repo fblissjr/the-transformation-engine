@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { wildcardService } from '../../services/wildcardService';
 
 interface WildcardAutocompleteProps {
@@ -7,6 +7,14 @@ interface WildcardAutocompleteProps {
   placeholder?: string;
   className?: string;
   rows?: number;
+  disabled?: boolean;
+}
+
+export interface WildcardAutocompleteRef {
+  textarea: HTMLTextAreaElement | null;
+  focus: () => void;
+  getSelectionRange: () => { start: number; end: number };
+  setSelectionRange: (start: number, end: number) => void;
 }
 
 interface AutocompleteState {
@@ -25,15 +33,37 @@ interface AutocompleteState {
  * Triggered by typing '{' character.
  * Shows available categories and modifiers.
  */
-export const WildcardAutocomplete: React.FC<WildcardAutocompleteProps> = ({
+export const WildcardAutocomplete = forwardRef<WildcardAutocompleteRef, WildcardAutocompleteProps>(({
   value,
   onChange,
   placeholder = 'Type your prompt... Use {category} for wildcards',
   className = '',
   rows = 4,
-}) => {
+  disabled = false,
+}, ref) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Expose ref methods to parent components
+  useImperativeHandle(ref, () => ({
+    textarea: textareaRef.current,
+    focus: () => textareaRef.current?.focus(),
+    getSelectionRange: () => {
+      if (!textareaRef.current) {
+        return { start: 0, end: 0 };
+      }
+      return {
+        start: textareaRef.current.selectionStart,
+        end: textareaRef.current.selectionEnd,
+      };
+    },
+    setSelectionRange: (start: number, end: number) => {
+      if (!textareaRef.current) {
+        return;
+      }
+      textareaRef.current.setSelectionRange(start, end);
+    },
+  }));
 
   const [autocomplete, setAutocomplete] = useState<AutocompleteState>({
     isOpen: false,
@@ -186,7 +216,8 @@ export const WildcardAutocomplete: React.FC<WildcardAutocompleteProps> = ({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         rows={rows}
-        className={`w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${className}`}
+        disabled={disabled}
+        className={`w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       />
 
       {/* Autocomplete dropdown */}
@@ -255,6 +286,8 @@ export const WildcardAutocomplete: React.FC<WildcardAutocompleteProps> = ({
       )}
     </div>
   );
-};
+});
+
+WildcardAutocomplete.displayName = 'WildcardAutocomplete';
 
 export default WildcardAutocomplete;
